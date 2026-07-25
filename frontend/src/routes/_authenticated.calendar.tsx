@@ -5,6 +5,7 @@ export const Route = createFileRoute('/_authenticated/calendar')({
 })
 
 function RouteComponent() {
+
   return (
     <div className="px-5">
       Calendar
