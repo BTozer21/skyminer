@@ -1,23 +1,12 @@
-const server = Bun.serve({
+import { Hono } from 'hono';
+
+const app = new Hono()
+
+app.get('/', (c) => c.text('Hello Bun'))
+app.get('/jobs', (c) => c.json({body: [{id: 1}, {id: 2}, {id: 3},]}), 200)
+
+export default {
   port: 3000,
-  routes: {
-    "/": () => new Response('Bun!'),
-
-    "/jobs": () => Response.json({status:200, body: [
-      {id: 1, name: "Testing", description: "This is a test"},
-      {id: 2, name: "Testing 2", description: "This is another test"},
-    ]}),
-
-    "/jobs/:id": (req) => {
-      const jobs = [
-        {id: 1, name: "Testing", description: "This is a test"},
-        {id: 2, name: "Testing 2", description: "This is another test"},
-      ];
-      const job = jobs.find(j => j.id === Number(req.params.id));
-      if (!job) return Response.json({message: "Job not found"}, {status: 404});
-      return Response.json({body: job}, {status: 200});
-    }
-  }
-});
-
-console.log(`Listening on ${server.url}`);
+  fetch: app.fetch,
+}
+console.log(`Server Running!`);
