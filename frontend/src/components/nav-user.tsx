@@ -3,6 +3,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar"
+import { Link } from '@tanstack/react-router';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,9 +81,11 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <BadgeCheckIcon
-                />
-                Account
+                <Link to={'/account/settings'} className="flex gap-2 items-center">
+                  <BadgeCheckIcon
+                  />
+                  Account
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <CreditCardIcon

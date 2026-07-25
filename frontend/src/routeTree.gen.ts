@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated.calendar'
+import { Route as AuthPathnameRouteImport } from './routes/auth.$pathname'
+import { Route as AuthenticatedAccountPathnameRouteImport } from './routes/_authenticated.account.$pathname'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -27,35 +29,55 @@ const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthPathnameRoute = AuthPathnameRouteImport.update({
+  id: '/auth/$pathname',
+  path: '/auth/$pathname',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAccountPathnameRoute =
+  AuthenticatedAccountPathnameRouteImport.update({
+    id: '/account/$pathname',
+    path: '/account/$pathname',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/calendar': typeof AuthenticatedCalendarRoute
+  '/auth/$pathname': typeof AuthPathnameRoute
+  '/account/$pathname': typeof AuthenticatedAccountPathnameRoute
 }
 export interface FileRoutesByTo {
   '/calendar': typeof AuthenticatedCalendarRoute
+  '/auth/$pathname': typeof AuthPathnameRoute
   '/': typeof AuthenticatedIndexRoute
+  '/account/$pathname': typeof AuthenticatedAccountPathnameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
+  '/auth/$pathname': typeof AuthPathnameRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/account/$pathname': typeof AuthenticatedAccountPathnameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/calendar'
+  fullPaths: '/' | '/calendar' | '/auth/$pathname' | '/account/$pathname'
   fileRoutesByTo: FileRoutesByTo
-  to: '/calendar' | '/'
+  to: '/calendar' | '/auth/$pathname' | '/' | '/account/$pathname'
   id:
     | '__root__'
     | '/_authenticated'
     | '/_authenticated/calendar'
+    | '/auth/$pathname'
     | '/_authenticated/'
+    | '/_authenticated/account/$pathname'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AuthPathnameRoute: typeof AuthPathnameRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -81,17 +103,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCalendarRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/auth/$pathname': {
+      id: '/auth/$pathname'
+      path: '/auth/$pathname'
+      fullPath: '/auth/$pathname'
+      preLoaderRoute: typeof AuthPathnameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/account/$pathname': {
+      id: '/_authenticated/account/$pathname'
+      path: '/account/$pathname'
+      fullPath: '/account/$pathname'
+      preLoaderRoute: typeof AuthenticatedAccountPathnameRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedAccountPathnameRoute: typeof AuthenticatedAccountPathnameRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedAccountPathnameRoute: AuthenticatedAccountPathnameRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -100,6 +138,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AuthPathnameRoute: AuthPathnameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
