@@ -21,7 +21,7 @@ function AuthenticatedLayout() {
 					</SidebarInset>
 				</SidebarProvider>
 			</SignedIn>
-			<RedirectToSignIn />
+			<RedirectToSignIn redirectTo="/auth/sign-in" />
 		</>
 	)
 }

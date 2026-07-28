@@ -3,7 +3,8 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar"
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { authClient } from '@/auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +32,18 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const navigate = useNavigate()
+
+  const handleSignOut = async () => {
+    console.log('sign out clicked')
+    try {
+      const result = await authClient.signOut()
+      console.log('sign out result:', result)
+      navigate({ to: '/auth/sign-in' })
+    } catch (err) {
+      console.error('sign out error:', err)
+    }
+  }
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -99,9 +112,8 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOutIcon
-              />
+            <DropdownMenuItem onClick={handleSignOut}>
+              <LogOutIcon />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
