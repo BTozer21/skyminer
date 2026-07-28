@@ -1,9 +1,15 @@
+import { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client'
-import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { routeTree } from './routeTree.gen'
+import { Toaster } from 'sonner';
+
+const queryClient = new QueryClient();
 
 const router = createRouter({
   routeTree,
+  context: {queryClient},
   defaultPreload: 'intent',
   scrollRestoration: true,
 })
@@ -18,5 +24,12 @@ const rootElement = document.getElementById('app')!
 
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
-  root.render(<RouterProvider router={router} />)
+  root.render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <Toaster />
+      </QueryClientProvider>
+    </StrictMode>
+  )
 }
