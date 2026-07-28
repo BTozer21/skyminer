@@ -117,29 +117,11 @@ const data = {
     },
     {
       title: "Settings",
-      url: "#",
+      url: "/settings",
       icon: (
         <Settings2Icon
         />
       ),
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
     },
   ],
   projects: [
