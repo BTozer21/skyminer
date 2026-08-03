@@ -6,10 +6,12 @@ import { eq, desc } from 'drizzle-orm';
 import * as jose from 'jose';
 import 'dotenv/config';
 
+import { db } from './src/db/index.ts';
+import { userInNeonAuth } from './src/db/schema.ts';
 import { jobsRoute } from './routes/jobs.ts';
 import { leaveRequestsRoute } from './routes/leave-requests.ts';
 
-type AppVariables = { userId: string };
+type AppVariables = { userId: string; userRoles: string[] };
 
 const app = new Hono()
 
@@ -32,12 +34,30 @@ const authMiddleware = async (c: Context<{ Variables: AppVariables }>, next: Nex
     if (!payload.sub) {
       return c.json({ error: 'Invalid Token' }, 401);
     }
+    // The JWT's own `role` claim is the Postgres/RLS role ("authenticated"),
+    // not the admin-plugin role, so look the real role up in neon_auth.user.
+    const [user] = await db
+      .select({ role: userInNeonAuth.role, banned: userInNeonAuth.banned })
+      .from(userInNeonAuth)
+      .where(eq(userInNeonAuth.id, payload.sub))
+      .limit(1);
+    if (!user || user.banned) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
     c.set('userId', payload.sub);
+    c.set('userRoles', user.role?.split(',') ?? []);
     await next();
   } catch (err) {
     console.error('Verification failed:', err);
     return c.json({ error: 'Invalid Token' }, 401);
   }
+};
+
+const adminOnly = async (c: Context<{ Variables: AppVariables }>, next: Next) => {
+  if (!c.get('userRoles')?.includes('admin')) {
+    return c.json({ error: 'Forbidden' }, 403);
+  }
+  await next();
 };
 
 app.use(logger());

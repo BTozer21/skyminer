@@ -1,19 +1,34 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query';
 import { getJobs, getLeaveRequests } from '../lib/api.ts';
+import { authClient } from '../auth';
 
 export const Route = createFileRoute('/_authenticated/')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const { data: session, isPending } = authClient.useSession();
+  // role is a comma-separated list, e.g. "user" or "admin" or "user,admin"
+  const roles = session?.user.role?.split(',') ?? [];
+  const isAdmin = roles.includes('admin');
   const query = useQuery({ queryKey: ['jobs'], queryFn: getJobs, staleTime: Infinity });
   const leaves = useQuery({ queryKey: ['leave-requests'], queryFn: getLeaveRequests, staleTime: Infinity })
   return (
     <div className="flex flex-col px-5">
       <div className="px-4 py-4 w-fit self-center rounded-sm border border-foreground/80 bg-foreground/60">
-        <p className="font-bold">Hello there,</p>
+        <p className="font-bold">Hello there, {session?.user.name}</p>
+        {!isPending && (
+          <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded-sm ${isAdmin ? 'bg-amber-400 dark:bg-amber-600' : 'bg-sky-400 dark:bg-sky-600'}`}>
+            {isAdmin ? 'Admin' : 'User'}
+          </span>
+        )}
       </div>
+      {isAdmin && (
+        <div className="mt-2 p-2 w-fit self-center rounded-sm border border-amber-500 text-sm">
+          Admin-only content goes here
+        </div>
+      )}
       <div>
         <h1 className="font-bold text-xl">Jobs</h1>
         {query.data?.map((x) => (
