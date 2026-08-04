@@ -10,6 +10,7 @@ import { db } from './src/db/index.ts';
 import { userInNeonAuth } from './src/db/schema.ts';
 import { jobsRoute } from './routes/jobs.ts';
 import { leaveRequestsRoute } from './routes/leave-requests.ts';
+import { adminRoute } from './routes/admin.ts';
 
 type AppVariables = { userId: string; userRoles: string[] };
 
@@ -71,7 +72,7 @@ app.use(
   })
 );
 
-const apiRoutes = app.basePath('/api').use(authMiddleware).route("/jobs", jobsRoute).route("/leave-requests", leaveRequestsRoute)
+const apiRoutes = app.basePath('/api').use(authMiddleware).route("/admin", adminRoute).use(adminOnly).route("/jobs", jobsRoute).route("/leave-requests", leaveRequestsRoute)
 
 serve(
   {
