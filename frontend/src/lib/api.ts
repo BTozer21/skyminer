@@ -11,7 +11,7 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   return { Authorization: `Bearer ${token}` };
 }
 
-const client = hc<ApiRoutes>('http://localhost:3000/');
+const client = hc<ApiRoutes>(import.meta.env.VITE_API_URL || 'http://localhost:3000/');
 
 export const api = client.api;
 
