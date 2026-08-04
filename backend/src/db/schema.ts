@@ -190,3 +190,12 @@ export const leaveRequests = pgTable("leave_requests", {
 	pgPolicy("crud-authenticated_backend-policy-update", { as: "permissive", for: "update", to: ["authenticated_backend"] }),
 	pgPolicy("crud-authenticated_backend-policy-insert", { as: "permissive", for: "insert", to: ["authenticated_backend"] }),
 ]);
+
+export const clients = pgTable("clients", {
+	// no maxValue here: as a JS number 9223372036854775807 rounds out of bigint range; drizzle's default is correct
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "clients_id_seq" }),
+	name: text().notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+}, (table) => [
+	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`true` }),
+]);
