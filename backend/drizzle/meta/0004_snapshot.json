@@ -1,6 +1,6 @@
 {
-  "id": "9ab5b0d5-c494-4603-895a-24ae142900f0",
-  "prevId": "45d9f67f-3b33-4a48-99df-5fc83e261098",
+  "id": "fcb9cd1d-c925-4faa-ac01-0a8a1fe399fe",
+  "prevId": "cee79055-b623-45f9-8274-58483e4d1815",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -270,7 +270,7 @@
             "increment": "1",
             "startWith": "1",
             "minValue": "1",
-            "maxValue": "9223372036854775807",
+            "maxValue": "9223372036854776000",
             "cache": "1",
             "cycle": false
           }
@@ -281,8 +281,27 @@
           "primaryKey": false,
           "notNull": true
         },
+        "startDate": {
+          "name": "startDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "endDate": {
+          "name": "endDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
         "created_at": {
           "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false,
@@ -303,33 +322,15 @@
           ],
           "using": "true"
         },
-        "crud-authenticated_backend-policy-insert": {
-          "name": "crud-authenticated_backend-policy-insert",
+        "admin-authenticated_backend-policy-all": {
+          "name": "admin-authenticated_backend-policy-all",
           "as": "PERMISSIVE",
-          "for": "INSERT",
+          "for": "ALL",
           "to": [
             "authenticated_backend"
           ],
-          "withCheck": "false"
-        },
-        "crud-authenticated_backend-policy-update": {
-          "name": "crud-authenticated_backend-policy-update",
-          "as": "PERMISSIVE",
-          "for": "UPDATE",
-          "to": [
-            "authenticated_backend"
-          ],
-          "using": "false",
-          "withCheck": "false"
-        },
-        "crud-authenticated_backend-policy-delete": {
-          "name": "crud-authenticated_backend-policy-delete",
-          "as": "PERMISSIVE",
-          "for": "DELETE",
-          "to": [
-            "authenticated_backend"
-          ],
-          "using": "false"
+          "using": "( SELECT EXISTS ( SELECT 1 FROM neon_auth.\"user\" u WHERE ((u.id = (auth.user_id())::uuid) AND ('admin' = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text))))))",
+          "withCheck": "( SELECT EXISTS ( SELECT 1 FROM neon_auth.\"user\" u WHERE ((u.id = (auth.user_id())::uuid) AND ('admin' = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text))))))"
         }
       },
       "checkConstraints": {},
@@ -395,7 +396,7 @@
             "increment": "1",
             "startWith": "1",
             "minValue": "1",
-            "maxValue": "9223372036854775807",
+            "maxValue": "9223372036854776000",
             "cache": "1",
             "cycle": false
           }
@@ -447,7 +448,7 @@
           "to": [
             "authenticated_backend"
           ],
-          "using": "(select auth.user_id() = \"leave_requests\".\"user_id\")"
+          "using": "( SELECT ((auth.user_id())::uuid = leave_requests.user_id))"
         },
         "crud-authenticated_backend-policy-insert": {
           "name": "crud-authenticated_backend-policy-insert",
@@ -456,7 +457,7 @@
           "to": [
             "authenticated_backend"
           ],
-          "withCheck": "(select auth.user_id() = \"leave_requests\".\"user_id\")"
+          "withCheck": "( SELECT ((auth.user_id())::uuid = leave_requests.user_id))"
         },
         "crud-authenticated_backend-policy-update": {
           "name": "crud-authenticated_backend-policy-update",
@@ -465,17 +466,8 @@
           "to": [
             "authenticated_backend"
           ],
-          "using": "(select auth.user_id() = \"leave_requests\".\"user_id\")",
-          "withCheck": "(select auth.user_id() = \"leave_requests\".\"user_id\")"
-        },
-        "crud-authenticated_backend-policy-delete": {
-          "name": "crud-authenticated_backend-policy-delete",
-          "as": "PERMISSIVE",
-          "for": "DELETE",
-          "to": [
-            "authenticated_backend"
-          ],
-          "using": "(select auth.user_id() = \"leave_requests\".\"user_id\")"
+          "using": "( SELECT ((auth.user_id())::uuid = leave_requests.user_id))",
+          "withCheck": "( SELECT ((auth.user_id())::uuid = leave_requests.user_id))"
         }
       },
       "checkConstraints": {},

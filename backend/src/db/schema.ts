@@ -1,4 +1,4 @@
-import { pgTable, pgSchema, index, foreignKey, uuid, text, timestamp, unique, boolean, uniqueIndex, jsonb, pgPolicy, bigint } from "drizzle-orm/pg-core"
+import { pgTable, pgSchema, index, foreignKey, uuid, text, timestamp, date, unique, boolean, uniqueIndex, jsonb, pgPolicy, bigint } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const neonAuth = pgSchema("neon_auth");
@@ -161,9 +161,13 @@ export const jobs = pgTable("jobs", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "jobs_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
 	name: text().notNull(),
+  startDate: date().notNull(),
+  endDate: date().notNull(),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
 }, (table) => [
 	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`true` }),
+	pgPolicy("admin-authenticated_backend-policy-all", { as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT EXISTS ( SELECT 1 FROM neon_auth."user" u WHERE ((u.id = (auth.user_id())::uuid) AND ('admin' = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text))))))`, withCheck: sql`( SELECT EXISTS ( SELECT 1 FROM neon_auth."user" u WHERE ((u.id = (auth.user_id())::uuid) AND ('admin' = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text))))))` }),
 ]);
 
 export const leaveRequests = pgTable("leave_requests", {
