@@ -179,4 +179,6 @@ export const leaveRequests = pgTable("leave_requests", {
 			name: "leave_requests_user_id_user_id_fk"
 		}),
 	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`( SELECT ((auth.user_id())::uuid = leave_requests.user_id))` }),
+	pgPolicy("crud-authenticated_backend-policy-insert", { as: "permissive", for: "insert", to: ["authenticated_backend"], withCheck: sql`( SELECT ((auth.user_id())::uuid = leave_requests.user_id))` }),
+	pgPolicy("crud-authenticated_backend-policy-update", { as: "permissive", for: "update", to: ["authenticated_backend"], using: sql`( SELECT ((auth.user_id())::uuid = leave_requests.user_id))`, withCheck: sql`( SELECT ((auth.user_id())::uuid = leave_requests.user_id))` }),
 ]);

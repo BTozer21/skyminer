@@ -1,6 +1,6 @@
 {
-  "id": "45d9f67f-3b33-4a48-99df-5fc83e261098",
-  "prevId": "44e1e608-ee95-43f7-85a7-edd0cd1bb5cf",
+  "id": "9c605065-c6d6-4439-bd19-fe990aeb33ea",
+  "prevId": "cee79055-b623-45f9-8274-58483e4d1815",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -270,7 +270,7 @@
             "increment": "1",
             "startWith": "1",
             "minValue": "1",
-            "maxValue": "9223372036854775807",
+            "maxValue": "9223372036854776000",
             "cache": "1",
             "cycle": false
           }
@@ -294,42 +294,14 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {
-        "crud-authenticated-policy-select": {
-          "name": "crud-authenticated-policy-select",
+        "crud-authenticated_backend-policy-select": {
+          "name": "crud-authenticated_backend-policy-select",
           "as": "PERMISSIVE",
           "for": "SELECT",
           "to": [
-            "authenticated"
+            "authenticated_backend"
           ],
           "using": "true"
-        },
-        "crud-authenticated-policy-insert": {
-          "name": "crud-authenticated-policy-insert",
-          "as": "PERMISSIVE",
-          "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
-          "withCheck": "false"
-        },
-        "crud-authenticated-policy-update": {
-          "name": "crud-authenticated-policy-update",
-          "as": "PERMISSIVE",
-          "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
-          "using": "false",
-          "withCheck": "false"
-        },
-        "crud-authenticated-policy-delete": {
-          "name": "crud-authenticated-policy-delete",
-          "as": "PERMISSIVE",
-          "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
-          "using": "false"
         }
       },
       "checkConstraints": {},
@@ -395,7 +367,7 @@
             "increment": "1",
             "startWith": "1",
             "minValue": "1",
-            "maxValue": "9223372036854775807",
+            "maxValue": "9223372036854776000",
             "cache": "1",
             "cycle": false
           }
@@ -439,7 +411,36 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "policies": {},
+      "policies": {
+        "crud-authenticated_backend-policy-select": {
+          "name": "crud-authenticated_backend-policy-select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated_backend"
+          ],
+          "using": "( SELECT ((auth.user_id())::uuid = leave_requests.user_id))"
+        },
+        "crud-authenticated_backend-policy-insert": {
+          "name": "crud-authenticated_backend-policy-insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated_backend"
+          ],
+          "withCheck": "( SELECT ((auth.user_id())::uuid = leave_requests.user_id))"
+        },
+        "crud-authenticated_backend-policy-update": {
+          "name": "crud-authenticated_backend-policy-update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated_backend"
+          ],
+          "using": "( SELECT ((auth.user_id())::uuid = leave_requests.user_id))",
+          "withCheck": "( SELECT ((auth.user_id())::uuid = leave_requests.user_id))"
+        }
+      },
       "checkConstraints": {},
       "isRLSEnabled": false
     },

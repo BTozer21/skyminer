@@ -1,0 +1,3 @@
+CREATE POLICY "crud-authenticated_backend-policy-insert" ON "leave_requests" AS PERMISSIVE FOR INSERT TO "authenticated_backend" WITH CHECK (( SELECT ((auth.user_id())::uuid = leave_requests.user_id)));--> statement-breakpoint
+CREATE POLICY "crud-authenticated_backend-policy-update" ON "leave_requests" AS PERMISSIVE FOR UPDATE TO "authenticated_backend" USING (( SELECT ((auth.user_id())::uuid = leave_requests.user_id))) WITH CHECK (( SELECT ((auth.user_id())::uuid = leave_requests.user_id)));--> statement-breakpoint
+ALTER POLICY "crud-authenticated_backend-policy-select" ON "leave_requests" TO authenticated_backend USING (( SELECT ((auth.user_id())::uuid = leave_requests.user_id)));
