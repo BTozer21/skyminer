@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query';
 import { authClient } from '../auth';
+import { CreateJobForm } from '@/components/forms/v1/create-job-form';
 
 export const Route = createFileRoute('/_authenticated/admin/')({
   component: RouteComponent,
@@ -19,6 +20,10 @@ function RouteComponent() {
   return (
     <div className="flex flex-col px-5">
       <h1 className="font-bold text-xl">This is an admin route</h1>
+      <div className="my-4">
+        <h1 className="font-bold text-xl">Create job</h1>
+        <CreateJobForm />
+      </div>
       <div>
         <h1 className="font-bold text-xl">Users ({users.data?.total ?? 0})</h1>
         <div className="flex flex-col gap-2">

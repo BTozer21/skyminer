@@ -1,5 +1,5 @@
 import { hc } from 'hono/client';
-import type { ApiRoutes } from '@server/app';
+import type { ApiRoutes } from '@server/index';
 import { authClient } from '../auth';
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
@@ -23,6 +23,15 @@ export async function getJobs() {
   }
   const { data } = await res.json();
   return data;
+}
+
+export async function createJob(job: { name: string; startDate: string; endDate: string }) {
+  const headers = await getAuthHeaders();
+  const res = await api.jobs.$post({ json: job }, { headers });
+  if (!res.ok) {
+    throw new Error("There was an error here");
+  }
+  return res.json();
 }
 
 export async function getLeaveRequests() {

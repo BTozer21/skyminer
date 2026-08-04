@@ -72,7 +72,7 @@ app.use(
   })
 );
 
-const apiRoutes = app.basePath('/api').use(authMiddleware).route("/admin", adminRoute).use(adminOnly).route("/jobs", jobsRoute).route("/leave-requests", leaveRequestsRoute)
+const apiRoutes = app.basePath('/api').use(authMiddleware).use('/admin/*', adminOnly).route("/admin", adminRoute).route("/jobs", jobsRoute).route("/leave-requests", leaveRequestsRoute)
 
 serve(
   {
