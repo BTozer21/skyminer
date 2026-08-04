@@ -1,4 +1,4 @@
-import { pgTable, pgSchema, index, foreignKey, uuid, text, timestamp, date, unique, boolean, uniqueIndex, jsonb, pgPolicy, bigint } from "drizzle-orm/pg-core"
+import { pgTable, pgSchema, index, foreignKey, uuid, text, timestamp, unique, boolean, uniqueIndex, jsonb, pgPolicy, bigint, date } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const neonAuth = pgSchema("neon_auth");
@@ -161,13 +161,17 @@ export const jobs = pgTable("jobs", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "jobs_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
 	name: text().notNull(),
-  startDate: date().notNull(),
-  endDate: date().notNull(),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
+	startDate: date().notNull(),
+	endDate: date().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
 }, (table) => [
-	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`true` }),
-	pgPolicy("admin-authenticated_backend-policy-all", { as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT EXISTS ( SELECT 1 FROM neon_auth."user" u WHERE ((u.id = (auth.user_id())::uuid) AND ('admin' = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text))))))`, withCheck: sql`( SELECT EXISTS ( SELECT 1 FROM neon_auth."user" u WHERE ((u.id = (auth.user_id())::uuid) AND ('admin' = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text))))))` }),
+	pgPolicy("admin-authenticated_backend-policy-all", { as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
+           FROM neon_auth."user" u
+          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`, withCheck: sql`( SELECT (EXISTS ( SELECT 1
+           FROM neon_auth."user" u
+          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`  }),
+	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"] }),
 ]);
 
 export const leaveRequests = pgTable("leave_requests", {
@@ -183,6 +187,6 @@ export const leaveRequests = pgTable("leave_requests", {
 			name: "leave_requests_user_id_user_id_fk"
 		}),
 	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`( SELECT ((auth.user_id())::uuid = leave_requests.user_id))` }),
-	pgPolicy("crud-authenticated_backend-policy-insert", { as: "permissive", for: "insert", to: ["authenticated_backend"], withCheck: sql`( SELECT ((auth.user_id())::uuid = leave_requests.user_id))` }),
-	pgPolicy("crud-authenticated_backend-policy-update", { as: "permissive", for: "update", to: ["authenticated_backend"], using: sql`( SELECT ((auth.user_id())::uuid = leave_requests.user_id))`, withCheck: sql`( SELECT ((auth.user_id())::uuid = leave_requests.user_id))` }),
+	pgPolicy("crud-authenticated_backend-policy-update", { as: "permissive", for: "update", to: ["authenticated_backend"] }),
+	pgPolicy("crud-authenticated_backend-policy-insert", { as: "permissive", for: "insert", to: ["authenticated_backend"] }),
 ]);

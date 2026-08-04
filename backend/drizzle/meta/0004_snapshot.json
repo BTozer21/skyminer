@@ -1,6 +1,6 @@
 {
-  "id": "fcb9cd1d-c925-4faa-ac01-0a8a1fe399fe",
-  "prevId": "cee79055-b623-45f9-8274-58483e4d1815",
+  "id": "bd66d347-ac05-4f14-9de3-b9a442486743",
+  "prevId": "44e1e608-ee95-43f7-85a7-edd0cd1bb5cf",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -281,6 +281,13 @@
           "primaryKey": false,
           "notNull": true
         },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
         "startDate": {
           "name": "startDate",
           "type": "date",
@@ -292,13 +299,6 @@
           "type": "date",
           "primaryKey": false,
           "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
@@ -313,15 +313,6 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {
-        "crud-authenticated_backend-policy-select": {
-          "name": "crud-authenticated_backend-policy-select",
-          "as": "PERMISSIVE",
-          "for": "SELECT",
-          "to": [
-            "authenticated_backend"
-          ],
-          "using": "true"
-        },
         "admin-authenticated_backend-policy-all": {
           "name": "admin-authenticated_backend-policy-all",
           "as": "PERMISSIVE",
@@ -329,8 +320,16 @@
           "to": [
             "authenticated_backend"
           ],
-          "using": "( SELECT EXISTS ( SELECT 1 FROM neon_auth.\"user\" u WHERE ((u.id = (auth.user_id())::uuid) AND ('admin' = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text))))))",
-          "withCheck": "( SELECT EXISTS ( SELECT 1 FROM neon_auth.\"user\" u WHERE ((u.id = (auth.user_id())::uuid) AND ('admin' = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text))))))"
+          "using": "( SELECT (EXISTS ( SELECT 1\n           FROM neon_auth.\"user\" u\n          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS \"exists\")",
+          "withCheck": "( SELECT (EXISTS ( SELECT 1\n           FROM neon_auth.\"user\" u\n          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS \"exists\")"
+        },
+        "crud-authenticated_backend-policy-select": {
+          "name": "crud-authenticated_backend-policy-select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated_backend"
+          ]
         }
       },
       "checkConstraints": {},
@@ -450,24 +449,21 @@
           ],
           "using": "( SELECT ((auth.user_id())::uuid = leave_requests.user_id))"
         },
-        "crud-authenticated_backend-policy-insert": {
-          "name": "crud-authenticated_backend-policy-insert",
-          "as": "PERMISSIVE",
-          "for": "INSERT",
-          "to": [
-            "authenticated_backend"
-          ],
-          "withCheck": "( SELECT ((auth.user_id())::uuid = leave_requests.user_id))"
-        },
         "crud-authenticated_backend-policy-update": {
           "name": "crud-authenticated_backend-policy-update",
           "as": "PERMISSIVE",
           "for": "UPDATE",
           "to": [
             "authenticated_backend"
-          ],
-          "using": "( SELECT ((auth.user_id())::uuid = leave_requests.user_id))",
-          "withCheck": "( SELECT ((auth.user_id())::uuid = leave_requests.user_id))"
+          ]
+        },
+        "crud-authenticated_backend-policy-insert": {
+          "name": "crud-authenticated_backend-policy-insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated_backend"
+          ]
         }
       },
       "checkConstraints": {},
