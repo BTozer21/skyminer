@@ -15,8 +15,9 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { Home, AudioLinesIcon, TerminalIcon, TerminalSquareIcon, BotIcon, BookOpenIcon, Settings2Icon, FrameIcon, PieChartIcon, MapIcon, Calendars } from "lucide-react";
+import { Home, AudioLinesIcon, TerminalIcon, TerminalSquareIcon, BotIcon, BookOpenIcon, Settings2Icon, FrameIcon, PieChartIcon, MapIcon, Calendars, ShieldIcon } from "lucide-react";
 import skyminerIcon from "@/assets/skyminer-192.png";
+import { useIsAdmin } from "@/auth";
 
 // This is sample data.
 const data = {
@@ -100,6 +101,15 @@ const data = {
         />
       ),
     },
+    {
+      title: "Admin",
+      url: "/admin",
+      icon: (
+        <ShieldIcon
+        />
+      ),
+      adminOnly: true,
+    },
   ],
   projects: [
     {
@@ -130,6 +140,16 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { isAdmin } = useIsAdmin();
+  // Drop admin-only entries (top-level and sub-items) for non-admins.
+  // Hiding is UX only — the backend still enforces the role on every request.
+  const navMain = data.navMain
+    .filter((item) => !("adminOnly" in item && item.adminOnly) || isAdmin)
+    .map((item) =>
+      item.items
+        ? { ...item, items: item.items.filter((sub) => !("adminOnly" in sub && sub.adminOnly) || isAdmin) }
+        : item
+    );
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -147,7 +167,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMain} />
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>

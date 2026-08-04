@@ -1,17 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query';
 import { getJobs, getLeaveRequests } from '../lib/api.ts';
-import { authClient } from '../auth';
+import { authClient, useIsAdmin } from '../auth';
 
 export const Route = createFileRoute('/_authenticated/')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { data: session, isPending } = authClient.useSession();
-  // role is a comma-separated list, e.g. "user" or "admin" or "user,admin"
-  const roles = session?.user.role?.split(',') ?? [];
-  const isAdmin = roles.includes('admin');
+  const { data: session } = authClient.useSession();
+  const { isAdmin, isPending } = useIsAdmin();
   const query = useQuery({ queryKey: ['jobs'], queryFn: getJobs, staleTime: Infinity });
   const leaves = useQuery({ queryKey: ['leave-requests'], queryFn: getLeaveRequests, staleTime: Infinity })
   return (
