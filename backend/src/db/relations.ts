@@ -23,6 +23,7 @@ export const userInNeonAuthRelations = relations(userInNeonAuth, ({many}) => ({
 	accountInNeonAuths: many(accountInNeonAuth),
 	memberInNeonAuths: many(memberInNeonAuth),
 	leaveRequests: many(leaveRequests),
+	jobAssignments: many(jobAssignments),
 }));
 
 export const sessionInNeonAuthRelations = relations(sessionInNeonAuth, ({one}) => ({
