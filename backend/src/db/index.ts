@@ -8,9 +8,12 @@ export const db = drizzle(pool);
 const authenticatedPool = new Pool({ connectionString: process.env.DATABASE_AUTHENTICATED_BACKEND_URL! });
 const authenticatedDb = drizzle(authenticatedPool);
 
+// the tx type drizzle hands to transaction(), derived so we don't hand-write its generics
+type Tx = Parameters<Parameters<typeof authenticatedDb.transaction>[0]>[0];
+
 export const getAuthenticatedDb = async <T>(
   userId: string,
-  callback: (tx: any) => Promise<T>
+  callback: (tx: Tx) => Promise<T>
 ): Promise<T> => {
   const claims = JSON.stringify({ sub: userId });
   return authenticatedDb.transaction(async (tx) => {
