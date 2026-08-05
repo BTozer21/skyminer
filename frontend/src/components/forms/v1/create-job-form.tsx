@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { toast } from '@/components/ui/toast';
 import { createJob, getClients } from '@/lib/api';
 
@@ -11,7 +10,7 @@ export function CreateJobForm() {
   const [name, setName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [client, setClient] = useState<{ id: number; name: string } | null>(null);
+  const [clientId, setClientId] = useState('');
 
   const { data: clients } = useQuery({ queryKey: ['clients'], queryFn: getClients, staleTime: Infinity });
 
@@ -22,7 +21,7 @@ export function CreateJobForm() {
       setName('');
       setStartDate('');
       setEndDate('');
-      setClient(null);
+      setClientId('');
       toast.add({ title: 'Job created', type: 'success' });
     },
     onError: (error) => {
@@ -35,8 +34,8 @@ export function CreateJobForm() {
       className="flex flex-col gap-2 w-fit"
       onSubmit={(e) => {
         e.preventDefault();
-        if (!client) return;
-        mutation.mutate({ name, startDate, endDate, clientId: client.id });
+        if (!clientId) return;
+        mutation.mutate({ name, startDate, endDate, clientId: Number(clientId) });
       }}
     >
       <div className="flex flex-col gap-1">
@@ -45,18 +44,18 @@ export function CreateJobForm() {
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="job-client" className="text-sm font-medium">Client</label>
-        <Select value={client} onValueChange={setClient} itemToStringValue={(c) => String(c.id)}>
-          <SelectTrigger id="job-client" className="w-full">
-            <SelectValue>
-              {(c: { id: number; name: string } | null) => c?.name ?? 'Select a client'}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent alignItemWithTrigger={false} >
-            {clients?.map((c) => (
-              <SelectItem key={c.id} value={c}>{c.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <select
+          id="job-client"
+          value={clientId}
+          onChange={(e) => setClientId(e.target.value)}
+          required
+          className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-2.5 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30"
+        >
+          <option value="" disabled>Select a client</option>
+          {clients?.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="job-start-date" className="text-sm font-medium">Start date</label>
