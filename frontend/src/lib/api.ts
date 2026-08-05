@@ -25,6 +25,17 @@ export async function getJobs() {
   return data;
 }
 
+export async function getClients() {
+  const headers = await getAuthHeaders();
+  const res = await api.clients.$get({}, { headers });
+  if (!res.ok) {
+    throw new Error("There was an error here");
+  }
+
+  const { data } = await res.json();
+  return data;
+};
+
 type CreateJobInput = InferRequestType<typeof api.jobs.$post>['json'];
 
 type CreateClientInput = InferRequestType<typeof api.clients.$post>['json'];

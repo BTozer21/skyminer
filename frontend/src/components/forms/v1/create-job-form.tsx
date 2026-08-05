@@ -1,15 +1,18 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/toast';
-import { createJob } from '@/lib/api';
+import { createJob, getClients } from '@/lib/api';
 
 export function CreateJobForm() {
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [clientId, setClientId] = useState('');
+
+  const { data: clients } = useQuery({ queryKey: ['clients'], queryFn: getClients, staleTime: Infinity });
 
   const mutation = useMutation({
     mutationFn: createJob,
@@ -18,6 +21,7 @@ export function CreateJobForm() {
       setName('');
       setStartDate('');
       setEndDate('');
+      setClientId('');
       toast.add({ title: 'Job created', type: 'success' });
     },
     onError: (error) => {
@@ -30,12 +34,27 @@ export function CreateJobForm() {
       className="flex flex-col gap-2 w-fit"
       onSubmit={(e) => {
         e.preventDefault();
-        mutation.mutate({ name, startDate, endDate });
+        mutation.mutate({ name, startDate, endDate, clientId: Number(clientId) });
       }}
     >
       <div className="flex flex-col gap-1">
         <label htmlFor="job-name" className="text-sm font-medium">Name</label>
         <Input id="job-name" value={name} onChange={(e) => setName(e.target.value)} required />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="job-client" className="text-sm font-medium">Client</label>
+        <select
+          id="job-client"
+          className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+          value={clientId}
+          onChange={(e) => setClientId(e.target.value)}
+          required
+        >
+          <option value="" disabled>Select a client</option>
+          {clients?.map((client) => (
+            <option key={client.id} value={client.id}>{client.name}</option>
+          ))}
+        </select>
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="job-start-date" className="text-sm font-medium">Start date</label>

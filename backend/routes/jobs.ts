@@ -9,6 +9,7 @@ const createJobSchema = createInsertSchema(jobs).pick({
   name: true,
   startDate: true,
   endDate: true,
+  clientId: true,
 });
 
 export const jobsRoute = new Hono<{ Variables: AppVariables }>()
