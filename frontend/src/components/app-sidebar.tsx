@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from "react"
 
 import { NavMain } from "@/components/nav-main";
@@ -15,7 +13,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { Home, AudioLinesIcon, TerminalIcon, TerminalSquareIcon, BotIcon, BookOpenIcon, Settings2Icon, FrameIcon, PieChartIcon, MapIcon, Calendars, ShieldIcon } from "lucide-react";
+import { Home, Users, Building2, TerminalIcon, TerminalSquareIcon, BotIcon, BookOpenIcon, Settings2Icon, FrameIcon, PieChartIcon, MapIcon, Calendars, ShieldIcon } from "lucide-react";
 import skyminerIcon from "@/assets/skyminer-192.png";
 import { useIsAdmin } from "@/auth";
 
@@ -36,31 +34,30 @@ const data = {
       ),
       isActive: true,
     },
+  ],
+  navAdmin: [
     {
-      title: "Calendar",
-      url: "/calendar",
+      title: "Schedule",
+      url: "/admin",
       icon: (
         <Calendars
         />
       ),
-      isActive: true,
+      adminOnly: true,
     },
     {
-      title: "Settings",
-      url: "/settings",
+      title: "Clients",
+      url: "/admin/clients",
       icon: (
-        <Settings2Icon
-        />
+        <Building2 />
       ),
+      adminOnly: true,
     },
-  ],
-  navAdmin: [
     {
-      title: "Admin",
-      url: "/admin",
+      title: "Team",
+      url: "/admin/team",
       icon: (
-        <ShieldIcon
-        />
+        <Users />
       ),
       adminOnly: true,
     },
