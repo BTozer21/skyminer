@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query';
+import { CreateClientForm } from '@/components/forms/v1/create-client-form.tsx';
 
 export const Route = createFileRoute('/_authenticated/admin/clients')({
   component: RouteComponent,
@@ -12,6 +13,7 @@ function RouteComponent() {
       <h1 className="font-bold text-xl">This is an admin route</h1>
       <div className="my-4">
         <h1 className="font-bold text-xl">Create Clients</h1>
+        <CreateClientForm />
       </div>
     </div>
   )
