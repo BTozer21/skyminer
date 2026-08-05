@@ -195,6 +195,29 @@ export const jobs = pgTable("jobs", {
 	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"] }),
 ]);
 
+export const jobAssignments = pgTable("job_assignments", {
+  id: bigint({mode: "number"}).primaryKey().generatedByDefaultAsIdentity({ name: "job_assignments_id_seq" }),
+  userId: uuid("user_id").notNull(),
+  jobId: bigint({ mode: "number"}).notNull(),
+}, (table) => [
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [userInNeonAuth.id],
+    name: "job_assignments_user_id_user_id_fk"
+  }),
+  foreignKey({
+    columns: [table.jobId],
+    foreignColumns: [jobs.id],
+    name: "job_assignments_job_id_job_id_fk"
+  }),
+	pgPolicy("admin-authenticated_backend-policy-all", { as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
+           FROM neon_auth."user" u
+          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`, withCheck: sql`( SELECT (EXISTS ( SELECT 1
+           FROM neon_auth."user" u
+          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`  }),
+	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`( SELECT ((auth.user_id())::uuid = job_assignments.user_id))` }),
+]);
+
 export const leaveRequests = pgTable("leave_requests", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "leave_requests_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
