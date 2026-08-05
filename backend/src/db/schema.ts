@@ -157,6 +157,21 @@ export const projectConfigInNeonAuth = neonAuth.table("project_config", {
 	unique("project_config_endpoint_id_key").on(table.endpointId),
 ]);
 
+export const clients = pgTable("clients", {
+	// no maxValue here: as a JS number 9223372036854775807 rounds out of bigint range; drizzle's default is correct
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "clients_id_seq" }),
+	name: text().notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
+}, (table) => [
+	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`true` }),
+	pgPolicy("admin-authenticated_backend-policy-all", { as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
+           FROM neon_auth."user" u
+          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`, withCheck: sql`( SELECT (EXISTS ( SELECT 1
+           FROM neon_auth."user" u
+          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`  }),
+]);
+
 export const jobs = pgTable("jobs", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "jobs_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
@@ -165,7 +180,13 @@ export const jobs = pgTable("jobs", {
 	startDate: date().notNull(),
 	endDate: date().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
+	clientId: bigint("client_id", { mode: "number" }).notNull(),
 }, (table) => [
+	foreignKey({
+			columns: [table.clientId],
+			foreignColumns: [clients.id],
+			name: "jobs_client_id_clients_id_fk"
+		}),
 	pgPolicy("admin-authenticated_backend-policy-all", { as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
            FROM neon_auth."user" u
           WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`, withCheck: sql`( SELECT (EXISTS ( SELECT 1
@@ -189,19 +210,4 @@ export const leaveRequests = pgTable("leave_requests", {
 	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`( SELECT ((auth.user_id())::uuid = leave_requests.user_id))` }),
 	pgPolicy("crud-authenticated_backend-policy-update", { as: "permissive", for: "update", to: ["authenticated_backend"] }),
 	pgPolicy("crud-authenticated_backend-policy-insert", { as: "permissive", for: "insert", to: ["authenticated_backend"] }),
-]);
-
-export const clients = pgTable("clients", {
-	// no maxValue here: as a JS number 9223372036854775807 rounds out of bigint range; drizzle's default is correct
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "clients_id_seq" }),
-	name: text().notNull(),
-	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
-}, (table) => [
-	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`true` }),
-	pgPolicy("admin-authenticated_backend-policy-all", { as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
-           FROM neon_auth."user" u
-          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`, withCheck: sql`( SELECT (EXISTS ( SELECT 1
-           FROM neon_auth."user" u
-          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`  }),
 ]);

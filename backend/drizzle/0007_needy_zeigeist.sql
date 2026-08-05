@@ -1,0 +1,2 @@
+ALTER TABLE "jobs" ADD COLUMN "client_id" bigint NOT NULL;--> statement-breakpoint
+ALTER TABLE "jobs" ADD CONSTRAINT "jobs_client_id_clients_id_fk" FOREIGN KEY ("client_id") REFERENCES "public"."clients"("id") ON DELETE no action ON UPDATE no action;

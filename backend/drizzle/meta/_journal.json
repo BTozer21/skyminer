@@ -50,6 +50,13 @@
       "when": 1785928050580,
       "tag": "0006_empty_wild_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1785928634892,
+      "tag": "0007_needy_zeigeist",
+      "breakpoints": true
     }
   ]
 }
