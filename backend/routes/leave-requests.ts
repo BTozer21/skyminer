@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
 import { getAuthenticatedDb } from '../src/db/index.ts';
 import { leaveRequests } from '../src/db/schema.ts';
+import type { AppVariables } from '../src/types.ts';
 
-export const leaveRequestsRoute = new Hono()
+export const leaveRequestsRoute = new Hono<{ Variables: AppVariables }>()
 .get('/', async (c) => {
   const userId = c.get('userId');
 

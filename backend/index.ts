@@ -11,8 +11,7 @@ import { userInNeonAuth } from './src/db/schema.ts';
 import { jobsRoute } from './routes/jobs.ts';
 import { leaveRequestsRoute } from './routes/leave-requests.ts';
 import { adminRoute } from './routes/admin.ts';
-
-type AppVariables = { userId: string; userRoles: string[] };
+import type { AppVariables } from './src/types.ts';
 
 const app = new Hono()
 

@@ -1,4 +1,4 @@
-import { hc } from 'hono/client';
+import { hc, type InferRequestType } from 'hono/client';
 import type { ApiRoutes } from '@server/index';
 import { authClient } from '../auth';
 
@@ -25,7 +25,9 @@ export async function getJobs() {
   return data;
 }
 
-export async function createJob(job: { name: string; startDate: string; endDate: string }) {
+type CreateJobInput = InferRequestType<typeof api.jobs.$post>['json'];
+
+export async function createJob(job: CreateJobInput) {
   const headers = await getAuthHeaders();
   const res = await api.jobs.$post({ json: job }, { headers });
   if (!res.ok) {
