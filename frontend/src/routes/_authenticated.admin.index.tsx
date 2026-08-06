@@ -10,6 +10,7 @@ import {
   getISOWeek,
   isSameDay,
   startOfWeek,
+  isWeekend,
 } from 'date-fns';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -119,7 +120,7 @@ function RouteComponent2() {
     const job = jobsByUser
       .get(userId)
       ?.find((j) => j.startDate <= day && day <= j.endDate);
-    return job?.name ?? '—';
+    return (job?.name ? (<span className="text-muted-foreground p-2 bg-muted/30 rounded-sm">{job.name}</span>) : '—');
   };
 
   // Virtualize whole week blocks so only on-screen weeks are in the DOM.
@@ -166,8 +167,9 @@ function RouteComponent2() {
         <h1 className="text-xl font-bold">
           Week of {format(topWeekStart, 'MMM d, yyyy')}
         </h1>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1">
           <Button
+            title="Previous Week"
             variant="outline"
             size="icon"
             onClick={() =>
@@ -180,13 +182,14 @@ function RouteComponent2() {
             <ChevronLeftIcon />
           </Button>
           <Button
+            title="Return to Today"
             variant="ghost"
-            size="sm"
             onClick={() => virtualizer.scrollToIndex(0, { align: 'start' })}
           >
             Today
           </Button>
           <Button
+            title="Next Week"
             variant="outline"
             size="icon"
             onClick={() => virtualizer.scrollToIndex(topIndex + 1, { align: 'start' })}
@@ -200,31 +203,34 @@ function RouteComponent2() {
       {/* Outer: horizontal scroll for many users. */}
       <div className="mt-4 overflow-x-auto">
         <div className="min-w-max">
-          {/* Header sits above the vertical scroll region and shares its columns. */}
-          <div className="flex">
-            <div className="w-12 shrink-0 border p-2 text-xs font-medium">WK</div>
-            <div
-              className="grid flex-1"
-              style={{
-                gridTemplateColumns: `7rem repeat(${users.length}, minmax(140px, 1fr))`,
-              }}
-            >
-              <div className="border p-2 font-medium">
-                {format(topWeekStart, 'MMM yyyy')}
-              </div>
-              {users.map((user) => (
-                <div
-                  key={user.id}
-                  className="border p-2 text-center text-xs font-medium uppercase"
-                >
-                  {user.name}
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Inner: vertical scroll region = the virtualizer viewport. */}
-          <div ref={parentRef} className="h-[70vh] overflow-x-hidden overflow-y-auto">
+          <div ref={parentRef} className="border h-[85dvh] overflow-x-hidden overflow-y-auto">
+            {/* The header lives inside the scroll region so it loses the same
+                width to the scrollbar as the rows do. Platforms with classic
+                (non-overlay) scrollbars — most Linux setups — misalign it by
+                the scrollbar width if it sits outside. */}
+            <div className="bg-muted sticky top-0 z-10 flex">
+              <div className="w-12 shrink-0 border p-2 text-md font-medium">WK</div>
+              <div
+                className="grid flex-1"
+                style={{
+                  gridTemplateColumns: `7rem repeat(${users.length}, minmax(140px, 1fr))`,
+                }}
+              >
+                <div className="border p-2 font-medium">
+                  {format(topWeekStart, 'MMM yyyy')}
+                </div>
+                {users.map((user) => (
+                  <div
+                    key={user.id}
+                    className="content-center border p-2 text-center text-xs font-medium uppercase"
+                  >
+                    {user.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div
               style={{ height: virtualizer.getTotalSize(), position: 'relative' }}
             >
@@ -260,8 +266,9 @@ function RouteComponent2() {
                             end: endOfWeek(weekStart, weekOpts),
                           }).map((day) => {
                             const isToday = isSameDay(day, today);
+                            const weekend = isWeekend(day)
                             // Faint blue on every cell => whole-row highlight.
-                            const rowBg = isToday ? 'bg-blue-500/10' : '';
+                            const rowBg = isToday ? 'bg-blue-500/20 dark:bg-blue-500/10' : weekend ? 'bg-muted/80' : '';
                             return (
                               <Fragment key={day.toISOString()}>
                                 <div
@@ -270,12 +277,12 @@ function RouteComponent2() {
                                   <span className="text-muted-foreground text-xs uppercase">
                                     {format(day, 'EEE')}
                                   </span>{' '}
-                                  {format(day, 'd')}
+                                  <span className={`${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-foreground'}`}>{format(day, 'd')}</span>
                                 </div>
                                 {users.map((user) => (
                                   <div
                                     key={user.id}
-                                    className={`border p-2 text-sm ${rowBg}`}
+                                    className={`content-center text-center w-full border p-2 text-sm ${rowBg}`}
                                   >
                                     {getCell(day, user.id)}
                                   </div>
