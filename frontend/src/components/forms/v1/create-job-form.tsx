@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/toast';
+import { Field, FieldGroup, FieldLabel, FieldSet, FieldLegend, FieldDescription } from '@/components/ui/field';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createJob, getClients } from '@/lib/api';
 
 export function CreateJobForm() {
@@ -13,6 +15,10 @@ export function CreateJobForm() {
   const [clientId, setClientId] = useState('');
 
   const { data: clients } = useQuery({ queryKey: ['clients'], queryFn: getClients, staleTime: Infinity });
+  const clientMap = clients?.map((x) => ({
+    value: String(x.id),
+    label: x.name
+  })) ?? [];
 
   const mutation = useMutation({
     mutationFn: createJob,
@@ -30,45 +36,75 @@ export function CreateJobForm() {
   });
 
   return (
-    <form
-      className="flex flex-col gap-2 w-fit"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (!clientId) return;
-        mutation.mutate({ name, startDate, endDate, clientId: Number(clientId) });
-      }}
-    >
-      <div className="flex flex-col gap-1">
-        <label htmlFor="job-name" className="text-sm font-medium">Name</label>
-        <Input id="job-name" value={name} onChange={(e) => setName(e.target.value)} required />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="job-client" className="text-sm font-medium">Client</label>
-        <select
-          id="job-client"
-          value={clientId}
-          onChange={(e) => setClientId(e.target.value)}
-          required
-          className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-2.5 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30"
-        >
-          <option value="" disabled>Select a client</option>
-          {clients?.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="job-start-date" className="text-sm font-medium">Start date</label>
-        <Input id="job-start-date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="job-end-date" className="text-sm font-medium">End date</label>
-        <Input id="job-end-date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} required />
-      </div>
-      <Button type="submit" disabled={mutation.isPending}>
-        {mutation.isPending ? 'Creating…' : 'Create job'}
-      </Button>
-      {mutation.isError && <p className="text-red-500 text-sm">{mutation.error.message}</p>}
-    </form>
+    <div className="w-full max-w-md">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!clientId) return;
+          mutation.mutate({ name, startDate, endDate, clientId: Number(clientId) });
+        }}
+      >
+        <FieldGroup>
+          <FieldSet>
+            <FieldLegend>Job</FieldLegend>
+            <FieldDescription>Add a Job to the schedule.</FieldDescription>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="job-name">
+                  Name
+                </FieldLabel>
+                <Input 
+                  id="job-name"
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  required
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="clientId">
+                  Client
+                </FieldLabel>
+                <Select
+                  name="clientId"
+                  items={clientMap}
+                  value={clientId}
+                  onValueChange={(value) => setClientId(value ?? '')}
+                  required
+                >
+                  <SelectTrigger id="job-client">
+                    <SelectValue placeholder="Select a client" />
+                  </SelectTrigger>
+                  <SelectContent alignItemWithTrigger={false}>
+                    {clientMap.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="job-start-date">
+                  Start date
+                </FieldLabel>
+                <Input id="job-start-date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="job-end-date">
+                  End date
+                </FieldLabel>
+                <Input id="job-end-date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} required />
+              </Field>
+            </FieldGroup>
+          </FieldSet>
+          <Field orientation="horizontal">
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Creating…' : 'Create job'}
+          </Button>
+          {mutation.isError && <p className="text-red-500 text-sm">{mutation.error.message}</p>}
+          </Field>
+        </FieldGroup>
+      </form>
+    </div>
   );
 }
