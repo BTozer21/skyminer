@@ -1,7 +1,6 @@
 import * as React from "react"
 
-import { NavMain } from "@/components/nav-main";
-import { NavAdmin } from "@/components/nav-admin";
+import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
@@ -13,7 +12,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { Home, Users, Building2, TerminalIcon, TerminalSquareIcon, BotIcon, BookOpenIcon, Settings2Icon, FrameIcon, PieChartIcon, MapIcon, Calendars, ShieldIcon } from "lucide-react";
+import { Building2, Home, Users, GalleryVerticalEndIcon, AudioLinesIcon, TerminalIcon, TerminalSquareIcon, BotIcon, BookOpenIcon, Settings2Icon, FrameIcon, PieChartIcon, MapIcon } from "lucide-react"
 import skyminerIcon from "@/assets/skyminer-192.png";
 import { useIsAdmin } from "@/auth";
 
@@ -28,37 +27,25 @@ const data = {
     {
       title: "Home",
       url: "/",
-      icon: (
-        <Home
-        />
-      ),
+      icon: <Home />,
       isActive: true,
     },
-  ],
-  navAdmin: [
     {
       title: "Schedule",
       url: "/admin",
-      icon: (
-        <Calendars
-        />
-      ),
+      icon: <BotIcon />,
       adminOnly: true,
     },
     {
       title: "Clients",
       url: "/admin/clients",
-      icon: (
-        <Building2 />
-      ),
+      icon: <Building2 />,
       adminOnly: true,
     },
     {
       title: "Team",
       url: "/admin/team",
-      icon: (
-        <Users />
-      ),
+      icon: <Users />,
       adminOnly: true,
     },
   ],
@@ -66,8 +53,6 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isAdmin } = useIsAdmin();
-  // Drop admin-only entries (top-level and sub-items) for non-admins.
-  // Hiding is UX only — the backend still enforces the role on every request.
   const navMain = data.navMain
     .filter((item) => !("adminOnly" in item && item.adminOnly) || isAdmin)
     .map((item) =>
@@ -93,9 +78,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMain} />
-        { isAdmin && 
-          <NavAdmin items={data.navAdmin} />
-        }
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

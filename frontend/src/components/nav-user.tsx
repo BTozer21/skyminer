@@ -35,33 +35,29 @@ export function NavUser({
   const navigate = useNavigate()
 
   const handleSignOut = async () => {
-    console.log('sign out clicked')
-    try {
-      const result = await authClient.signOut()
-      console.log('sign out result:', result)
-      navigate({ to: '/auth/sign-in' })
-    } catch (err) {
-      console.error('sign out error:', err)
-    }
+    const result = await authClient.signOut()
+    navigate({ to: '/auth/sign-in' })
   }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />
-            }
-          >
-            <Avatar>
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">{user.name}</span>
-              <span className="truncate text-xs">{user.email}</span>
-            </div>
-            <ChevronsUpDownIcon className="ml-auto size-4" />
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            >
+              <Avatar className="h-8 w-8 rounded-lg">
+                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate text-xs">{user.email}</span>
+              </div>
+              <ChevronsUpDownIcon className="ml-auto size-4" />
+            </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-fit"
@@ -69,46 +65,25 @@ export function NavUser({
             align="end"
             sideOffset={4}
           >
-            <DropdownMenuGroup>
-              <DropdownMenuLabel className="p-0 font-normal">
-                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                  <Avatar>
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>CN</AvatarFallback>
-                  </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{user.name}</span>
-                    <span className="truncate text-xs">{user.email}</span>
-                  </div>
+            <DropdownMenuLabel className="p-0 font-normal">
+              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                <Avatar className="h-8 w-8 rounded-lg">
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                </Avatar>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate text-xs">{user.email}</span>
                 </div>
-              </DropdownMenuLabel>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <SparklesIcon
-                />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
+              </div>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Link to={'/account/settings'} className="flex gap-2 items-center">
-                  <BadgeCheckIcon
-                  />
+                  <BadgeCheckIcon />
                   Account
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon
-                />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon
-                />
-                Notifications
+                </ Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

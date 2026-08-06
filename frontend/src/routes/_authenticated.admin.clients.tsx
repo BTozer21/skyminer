@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query';
 import { CreateClientForm } from '@/components/forms/v1/create-client-form.tsx';
-import { CreateJobForm } from '@/components/forms/v1/create-job-form.tsx';
 import { getClients } from '@/lib/api.ts';
 
 export const Route = createFileRoute('/_authenticated/admin/clients')({
@@ -27,7 +26,6 @@ function RouteComponent() {
         ))}
       </div>
       <div>
-        <CreateJobForm />
       </div>
     </div>
   )

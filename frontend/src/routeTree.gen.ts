@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated.settings'
 import { Route as AuthPathnameRouteImport } from './routes/auth.$pathname'
 import { Route as AuthenticatedAccountPathnameRouteImport } from './routes/_authenticated.account.$pathname'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
@@ -31,11 +30,6 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthPathnameRoute = AuthPathnameRouteImport.update({
@@ -69,7 +63,6 @@ const AuthenticatedAdminTeamRoute = AuthenticatedAdminTeamRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/settings': typeof AuthenticatedSettingsRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/account/$pathname': typeof AuthenticatedAccountPathnameRoute
   '/admin/clients': typeof AuthenticatedAdminClientsRoute
@@ -77,7 +70,6 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
-  '/settings': typeof AuthenticatedSettingsRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/': typeof AuthenticatedIndexRoute
   '/account/$pathname': typeof AuthenticatedAccountPathnameRoute
@@ -89,7 +81,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/account/$pathname': typeof AuthenticatedAccountPathnameRoute
@@ -102,7 +93,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
-    | '/settings'
     | '/auth/$pathname'
     | '/account/$pathname'
     | '/admin/clients'
@@ -110,7 +100,6 @@ export interface FileRouteTypes {
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/settings'
     | '/auth/$pathname'
     | '/'
     | '/account/$pathname'
@@ -121,7 +110,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/_authenticated/admin'
-    | '/_authenticated/settings'
     | '/auth/$pathname'
     | '/_authenticated/'
     | '/_authenticated/account/$pathname'
@@ -156,13 +144,6 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/auth/$pathname': {
@@ -220,14 +201,12 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
-  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedAccountPathnameRoute: typeof AuthenticatedAccountPathnameRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
-  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAccountPathnameRoute: AuthenticatedAccountPathnameRoute,
 }
