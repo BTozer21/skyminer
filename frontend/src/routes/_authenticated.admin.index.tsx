@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -14,6 +14,7 @@ import {
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { authClient } from '../auth';
+import { getJobAssignments } from '@/lib/api.ts';
 
 export const Route = createFileRoute('/_authenticated/admin/')({
   component: RouteComponent,
@@ -27,10 +28,11 @@ const weekOpts = { weekStartsOn: 1 } as const;
 const TOTAL_WEEKS = 240; // ~10 years each way
 const CURRENT_INDEX = TOTAL_WEEKS / 2;
 
-// TODO: replace with a real per-(day, user) data lookup.
-function getCell(_date: Date, _userId: string) {
-  return '—';
-}
+// Job-assignment fetch window, in weeks. The window snaps to FETCH_BLOCK steps
+// (so scrolling within a block doesn't refetch) and is padded FETCH_PAD weeks
+// each side (so the data is already there when you cross into the next block).
+const FETCH_BLOCK = 12;
+const FETCH_PAD = 12;
 
 function RouteComponent() {
   const [today] = useState(() => new Date());
@@ -76,6 +78,52 @@ function RouteComponent() {
   const topItem = items.find((item) => item.end > scrollOffset) ?? items[0];
   const topIndex = topItem?.index ?? CURRENT_INDEX;
   const topWeekStart = weekStartForIndex(topIndex);
+
+  // Fetch only the weeks around the viewport, padded so scrolling stays ahead
+  // of the data. Quantize the anchor to FETCH_BLOCK-week steps so the query key
+  // (and thus refetches) changes only when you scroll a whole block, not on
+  // every scroll frame. PAD >= BLOCK means the next block's data was already in
+  // the previous fetch, so cells don't blank out as you cross a boundary.
+  const anchorIndex = Math.floor(topIndex / FETCH_BLOCK) * FETCH_BLOCK;
+  const windowFrom = format(weekStartForIndex(anchorIndex - FETCH_PAD), 'yyyy-MM-dd');
+  const windowTo = format(
+    endOfWeek(weekStartForIndex(anchorIndex + FETCH_BLOCK + FETCH_PAD), weekOpts),
+    'yyyy-MM-dd',
+  );
+
+  const assignmentsQuery = useQuery({
+    queryKey: ['job-assignments', windowFrom, windowTo],
+    queryFn: () => getJobAssignments(windowFrom, windowTo),
+    staleTime: Infinity,
+    // Keep the current grid visible while the next block loads instead of
+    // flashing empty on every boundary crossing.
+    placeholderData: (prev) => prev,
+  });
+
+  // The endpoint returns jobs-with-users-nested (clean date filter on the top
+  // level); the grid renders by user, so invert once into userId -> their jobs.
+  const jobsByUser = useMemo(() => {
+    const map = new Map<string, { name: string; startDate: string; endDate: string }[]>();
+    for (const job of assignmentsQuery.data ?? []) {
+      for (const assignment of job.jobAssignments) {
+        const user = assignment.userInNeonAuth;
+        if (!user) continue;
+        const list = map.get(user.id) ?? [];
+        list.push({ name: job.name, startDate: job.startDate, endDate: job.endDate });
+        map.set(user.id, list);
+      }
+    }
+    return map;
+  }, [assignmentsQuery.data]);
+
+  // A cell is the job (if any) covering this user on this day.
+  const getCell = (date: Date, userId: string) => {
+    const day = format(date, 'yyyy-MM-dd');
+    const job = jobsByUser
+      .get(userId)
+      ?.find((j) => j.startDate <= day && day <= j.endDate);
+    return job?.name ?? '—';
+  };
 
   // Day column + one column per user. Inline because the user count is dynamic.
   const columnStyle = {

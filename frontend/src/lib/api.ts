@@ -58,6 +58,16 @@ export async function createClient(client: CreateClientInput) {
   return res.json();
 }
 
+export async function getJobAssignments(from: string, to: string) {
+  const headers = await getAuthHeaders();
+  const res = await api.admin['job-assignments'].$get({ query: { from, to } }, { headers });
+  if (!res.ok) {
+    throw new Error("There was an error here");
+  }
+  const { data } = await res.json();
+  return data;
+}
+
 export async function getLeaveRequests() {
   const headers = await getAuthHeaders();
   const res = await api["leave-requests"].$get({}, { headers });
