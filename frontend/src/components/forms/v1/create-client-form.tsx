@@ -42,7 +42,7 @@ export function CreateClientForm() {
       }}
     >
       <DialogTrigger asChild>
-        <Button name="Add client" variant="outline" size="icon">
+        <Button title="Add client" aria-label="Add client" variant="outline" size="icon">
           <Plus />
         </Button>
       </DialogTrigger>
