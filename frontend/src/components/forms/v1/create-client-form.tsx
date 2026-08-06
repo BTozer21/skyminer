@@ -42,7 +42,7 @@ export function CreateClientForm() {
       }}
     >
       <DialogTrigger asChild>
-        <Button>
+        <Button name="Add client" variant="outline" size="icon">
           <Plus />
         </Button>
       </DialogTrigger>
@@ -90,6 +90,9 @@ export function CreateClientForm() {
               </FieldGroup>
             </FieldSet>
             <Field orientation="horizontal">
+              <Button variant="outline" type="button" onClick={() => form.reset()}>
+                Reset
+              </Button>
               <form.Subscribe selector={(state) => state.isSubmitting}>
                 {(isSubmitting) => (
                   <Button type="submit" disabled={isSubmitting}>
@@ -97,9 +100,6 @@ export function CreateClientForm() {
                   </Button>
                 )}
               </form.Subscribe>
-              <Button variant="outline" type="button" onClick={() => form.reset()}>
-                Reset
-              </Button>
             </Field>
           </FieldGroup>
         </form>
