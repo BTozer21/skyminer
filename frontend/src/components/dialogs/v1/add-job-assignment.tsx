@@ -108,7 +108,7 @@ function AssignForm({
         <p className="text-muted-foreground text-sm">No jobs run on this day.</p>
       )}
 
-      <DialogFooter>
+      <div className="flex flex-row gap-2">
         <Button variant="outline" onClick={() => onOpenChange(false)}>
           Cancel
         </Button>
@@ -118,7 +118,7 @@ function AssignForm({
         >
           {mutation.isPending ? 'Assigning…' : 'Assign'}
         </Button>
-      </DialogFooter>
+      </div>
     </>
   )
 }

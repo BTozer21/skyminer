@@ -17,17 +17,4 @@ export const columns = columnHelper.columns([
     header: "Role",
     cell: ({ getValue }) => <div className="uppercase">{getValue()}</div>
   }),
-  columnHelper.display({
-    id: "actions",
-    header: () => <div className="text-right">Action</div>,
-    cell: ({ row }) => {
-      const user = row.original
-
-      return (
-        <div className="text-right">
-          Action for {user.name}
-        </div>
-      )
-    }
-  })
 ])

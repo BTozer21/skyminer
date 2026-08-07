@@ -14,58 +14,66 @@ import {
 } from "@/components/ui/sidebar"
 import { Building2, Home, Calendars, Users, ListTodo } from "lucide-react"
 import skyminerIcon from "@/assets/skyminer-192.png";
-import { useIsAdmin } from "@/auth";
+import { authClient, useIsAdmin } from "@/auth";
 
-// This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
+// `admin` gates who sees the item: true for admins only, false for non-admins
+// only, omitted for everyone. Typed rather than inferred so the optional keys
+// survive on every item in the array.
+type NavItem = {
+  title: string
+  url: string
+  icon?: React.ReactNode
+  isActive?: boolean
+  admin?: boolean
+  items?: { title: string; url: string; admin?: boolean }[]
+}
+
+const data: { navMain: NavItem[] } = {
   navMain: [
     {
       title: "Home",
       url: "/",
       icon: <Home />,
       isActive: true,
+      // Admins are redirected off "/" to the schedule, so the link would be a
+      // dead end for them.
+      admin: false,
     },
     {
       title: "Schedule",
       url: "/admin",
       icon: <Calendars />,
-      adminOnly: true,
+      admin: true,
     },
     {
       title: "Jobs",
       url: "/admin/jobs",
       icon: <ListTodo />,
-      adminOnly: true,
+      admin: true,
     },
     {
       title: "Clients",
       url: "/admin/clients",
       icon: <Building2 />,
-      adminOnly: true,
+      admin: true,
     },
     {
       title: "Team",
       url: "/admin/team",
       icon: <Users />,
-      adminOnly: true,
+      admin: true,
     },
   ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isAdmin } = useIsAdmin();
+  const { data: session } = authClient.useSession();
+  // undefined means "no opinion", so only compare when the flag is set.
+  const visible = (item: { admin?: boolean }) => item.admin === undefined || item.admin === isAdmin;
   const navMain = data.navMain
-    .filter((item) => !("adminOnly" in item && item.adminOnly) || isAdmin)
-    .map((item) =>
-      item.items
-        ? { ...item, items: item.items.filter((sub) => !("adminOnly" in sub && sub.adminOnly) || isAdmin) }
-        : item
-    );
+    .filter(visible)
+    .map((item) => (item.items ? { ...item, items: item.items.filter(visible) } : item));
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -87,7 +95,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        {/* The session is undefined on the first render, so the row renders
+            empty rather than flashing someone else's details. */}
+        <NavUser user={session?.user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
