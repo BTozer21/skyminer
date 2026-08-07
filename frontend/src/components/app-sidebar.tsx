@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { Building2, Home, Calendars, Users, ListTodo } from "lucide-react"
+import { Building2, Home, Calendars, Users, Parasol, ListTodo } from "lucide-react"
 import skyminerIcon from "@/assets/skyminer-192.png";
 import { authClient, useIsAdmin } from "@/auth";
 
@@ -34,6 +34,15 @@ const data: { navMain: NavItem[] } = {
       title: "Home",
       url: "/",
       icon: <Home />,
+      isActive: true,
+      // Admins are redirected off "/" to the schedule, so the link would be a
+      // dead end for them.
+      admin: false,
+    },
+    {
+      title: "Leave Requests",
+      url: "/leave-requests",
+      icon: <Parasol />,
       isActive: true,
       // Admins are redirected off "/" to the schedule, so the link would be a
       // dead end for them.
