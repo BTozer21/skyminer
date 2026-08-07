@@ -5,167 +5,168 @@ export const neonAuth = pgSchema("neon_auth");
 
 
 export const invitationInNeonAuth = neonAuth.table("invitation", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	organizationId: uuid().notNull(),
-	email: text().notNull(),
-	role: text(),
-	status: text().notNull(),
-	expiresAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	inviterId: uuid().notNull(),
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  organizationId: uuid().notNull(),
+  email: text().notNull(),
+  role: text(),
+  status: text().notNull(),
+  expiresAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
+  createdAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+  inviterId: uuid().notNull(),
 }, (table) => [
-	index("invitation_email_idx").using("btree", table.email.asc().nullsLast().op("text_ops")),
-	index("invitation_organizationId_idx").using("btree", table.organizationId.asc().nullsLast().op("uuid_ops")),
-	foreignKey({
-			columns: [table.organizationId],
-			foreignColumns: [organizationInNeonAuth.id],
-			name: "invitation_organizationId_fkey"
-		}).onDelete("cascade"),
-	foreignKey({
-			columns: [table.inviterId],
-			foreignColumns: [userInNeonAuth.id],
-			name: "invitation_inviterId_fkey"
-		}).onDelete("cascade"),
+  index("invitation_email_idx").using("btree", table.email.asc().nullsLast().op("text_ops")),
+  index("invitation_organizationId_idx").using("btree", table.organizationId.asc().nullsLast().op("uuid_ops")),
+  foreignKey({
+    columns: [table.organizationId],
+    foreignColumns: [organizationInNeonAuth.id],
+    name: "invitation_organizationId_fkey"
+  }).onDelete("cascade"),
+  foreignKey({
+    columns: [table.inviterId],
+    foreignColumns: [userInNeonAuth.id],
+    name: "invitation_inviterId_fkey"
+  }).onDelete("cascade"),
 ]);
 
 export const userInNeonAuth = neonAuth.table("user", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	name: text().notNull(),
-	email: text().notNull(),
-	emailVerified: boolean().notNull(),
-	image: text(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	updatedAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	role: text(),
-	banned: boolean(),
-	banReason: text(),
-	banExpires: timestamp({ withTimezone: true, mode: 'string' }),
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  name: text().notNull(),
+  email: text().notNull(),
+  emailVerified: boolean().notNull(),
+  image: text(),
+  createdAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+  role: text(),
+  banned: boolean(),
+  banReason: text(),
+  banExpires: timestamp({ withTimezone: true, mode: 'string' }),
 }, (table) => [
-	unique("user_email_key").on(table.email),
+  unique("user_email_key").on(table.email),
 ]);
 
 export const sessionInNeonAuth = neonAuth.table("session", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	expiresAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
-	token: text().notNull(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	updatedAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
-	ipAddress: text(),
-	userAgent: text(),
-	userId: uuid().notNull(),
-	impersonatedBy: text(),
-	activeOrganizationId: text(),
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  expiresAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
+  token: text().notNull(),
+  createdAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
+  ipAddress: text(),
+  userAgent: text(),
+  userId: uuid().notNull(),
+  impersonatedBy: text(),
+  activeOrganizationId: text(),
 }, (table) => [
-	index("session_userId_idx").using("btree", table.userId.asc().nullsLast().op("uuid_ops")),
-	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [userInNeonAuth.id],
-			name: "session_userId_fkey"
-		}).onDelete("cascade"),
-	unique("session_token_key").on(table.token),
+  index("session_userId_idx").using("btree", table.userId.asc().nullsLast().op("uuid_ops")),
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [userInNeonAuth.id],
+    name: "session_userId_fkey"
+  }).onDelete("cascade"),
+  unique("session_token_key").on(table.token),
 ]);
 
 export const organizationInNeonAuth = neonAuth.table("organization", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	name: text().notNull(),
-	slug: text().notNull(),
-	logo: text(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
-	metadata: text(),
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  name: text().notNull(),
+  slug: text().notNull(),
+  logo: text(),
+  createdAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
+  metadata: text(),
 }, (table) => [
-	uniqueIndex("organization_slug_uidx").using("btree", table.slug.asc().nullsLast().op("text_ops")),
-	unique("organization_slug_key").on(table.slug),
+  uniqueIndex("organization_slug_uidx").using("btree", table.slug.asc().nullsLast().op("text_ops")),
+  unique("organization_slug_key").on(table.slug),
 ]);
 
 export const accountInNeonAuth = neonAuth.table("account", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	accountId: text().notNull(),
-	providerId: text().notNull(),
-	userId: uuid().notNull(),
-	accessToken: text(),
-	refreshToken: text(),
-	idToken: text(),
-	accessTokenExpiresAt: timestamp({ withTimezone: true, mode: 'string' }),
-	refreshTokenExpiresAt: timestamp({ withTimezone: true, mode: 'string' }),
-	scope: text(),
-	password: text(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	updatedAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  accountId: text().notNull(),
+  providerId: text().notNull(),
+  userId: uuid().notNull(),
+  accessToken: text(),
+  refreshToken: text(),
+  idToken: text(),
+  accessTokenExpiresAt: timestamp({ withTimezone: true, mode: 'string' }),
+  refreshTokenExpiresAt: timestamp({ withTimezone: true, mode: 'string' }),
+  scope: text(),
+  password: text(),
+  createdAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
 }, (table) => [
-	index("account_userId_idx").using("btree", table.userId.asc().nullsLast().op("uuid_ops")),
-	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [userInNeonAuth.id],
-			name: "account_userId_fkey"
-		}).onDelete("cascade"),
+  index("account_userId_idx").using("btree", table.userId.asc().nullsLast().op("uuid_ops")),
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [userInNeonAuth.id],
+    name: "account_userId_fkey"
+  }).onDelete("cascade"),
 ]);
 
 export const verificationInNeonAuth = neonAuth.table("verification", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	identifier: text().notNull(),
-	value: text().notNull(),
-	expiresAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	updatedAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  identifier: text().notNull(),
+  value: text().notNull(),
+  expiresAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
+  createdAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 }, (table) => [
-	index("verification_identifier_idx").using("btree", table.identifier.asc().nullsLast().op("text_ops")),
+  index("verification_identifier_idx").using("btree", table.identifier.asc().nullsLast().op("text_ops")),
 ]);
 
 export const jwksInNeonAuth = neonAuth.table("jwks", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	publicKey: text().notNull(),
-	privateKey: text().notNull(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
-	expiresAt: timestamp({ withTimezone: true, mode: 'string' }),
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  publicKey: text().notNull(),
+  privateKey: text().notNull(),
+  createdAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
+  expiresAt: timestamp({ withTimezone: true, mode: 'string' }),
 });
 
 export const memberInNeonAuth = neonAuth.table("member", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	organizationId: uuid().notNull(),
-	userId: uuid().notNull(),
-	role: text().notNull(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  organizationId: uuid().notNull(),
+  userId: uuid().notNull(),
+  role: text().notNull(),
+  createdAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
 }, (table) => [
-	index("member_organizationId_idx").using("btree", table.organizationId.asc().nullsLast().op("uuid_ops")),
-	index("member_userId_idx").using("btree", table.userId.asc().nullsLast().op("uuid_ops")),
-	foreignKey({
-			columns: [table.organizationId],
-			foreignColumns: [organizationInNeonAuth.id],
-			name: "member_organizationId_fkey"
-		}).onDelete("cascade"),
-	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [userInNeonAuth.id],
-			name: "member_userId_fkey"
-		}).onDelete("cascade"),
+  index("member_organizationId_idx").using("btree", table.organizationId.asc().nullsLast().op("uuid_ops")),
+  index("member_userId_idx").using("btree", table.userId.asc().nullsLast().op("uuid_ops")),
+  foreignKey({
+    columns: [table.organizationId],
+    foreignColumns: [organizationInNeonAuth.id],
+    name: "member_organizationId_fkey"
+  }).onDelete("cascade"),
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [userInNeonAuth.id],
+    name: "member_userId_fkey"
+  }).onDelete("cascade"),
 ]);
 
 export const projectConfigInNeonAuth = neonAuth.table("project_config", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	name: text().notNull(),
-	endpointId: text("endpoint_id").notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	trustedOrigins: jsonb("trusted_origins").notNull(),
-	socialProviders: jsonb("social_providers").notNull(),
-	emailProvider: jsonb("email_provider"),
-	emailAndPassword: jsonb("email_and_password"),
-	allowLocalhost: boolean("allow_localhost").notNull(),
-	pluginConfigs: jsonb("plugin_configs"),
-	webhookConfig: jsonb("webhook_config"),
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  name: text().notNull(),
+  endpointId: text("endpoint_id").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+  trustedOrigins: jsonb("trusted_origins").notNull(),
+  socialProviders: jsonb("social_providers").notNull(),
+  emailProvider: jsonb("email_provider"),
+  emailAndPassword: jsonb("email_and_password"),
+  allowLocalhost: boolean("allow_localhost").notNull(),
+  pluginConfigs: jsonb("plugin_configs"),
+  webhookConfig: jsonb("webhook_config"),
 }, (table) => [
-	unique("project_config_endpoint_id_key").on(table.endpointId),
+  unique("project_config_endpoint_id_key").on(table.endpointId),
 ]);
 
 export const clients = pgTable("clients", {
-	// no maxValue here: as a JS number 9223372036854775807 rounds out of bigint range; drizzle's default is correct
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "clients_id_seq" }),
-	name: text().notNull(),
-	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+  // no maxValue here: as a JS number 9223372036854775807 rounds out of bigint range; drizzle's default is correct
+  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "clients_id_seq" }),
+  name: text().notNull(),
+  createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
 }, (table) => [
-	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`true` }),
-	pgPolicy("admin-authenticated_backend-policy-all", { as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
+  pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`true` }),
+  pgPolicy("admin-authenticated_backend-policy-all", {
+    as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
            FROM neon_auth."user" u
           WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`, withCheck: sql`( SELECT (EXISTS ( SELECT 1
            FROM neon_auth."user" u
@@ -173,32 +174,33 @@ export const clients = pgTable("clients", {
 ]);
 
 export const jobs = pgTable("jobs", {
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "jobs_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
-	name: text().notNull(),
-	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
-	startDate: date().notNull(),
-	endDate: date().notNull(),
-	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
-	clientId: bigint("client_id", { mode: "number" }).notNull(),
+  // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "jobs_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+  name: text().notNull(),
+  createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+  startDate: date().notNull(),
+  endDate: date().notNull(),
+  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
+  clientId: bigint("client_id", { mode: "number" }).notNull(),
 }, (table) => [
-	foreignKey({
-			columns: [table.clientId],
-			foreignColumns: [clients.id],
-			name: "jobs_client_id_clients_id_fk"
-		}),
-	pgPolicy("admin-authenticated_backend-policy-all", { as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
+  foreignKey({
+    columns: [table.clientId],
+    foreignColumns: [clients.id],
+    name: "jobs_client_id_clients_id_fk"
+  }),
+  pgPolicy("admin-authenticated_backend-policy-all", {
+    as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
            FROM neon_auth."user" u
           WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`, withCheck: sql`( SELECT (EXISTS ( SELECT 1
            FROM neon_auth."user" u
           WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`  }),
-	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"] }),
+  pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"] }),
 ]);
 
 export const jobAssignments = pgTable("job_assignments", {
-  id: bigint({mode: "number"}).primaryKey().generatedByDefaultAsIdentity({ name: "job_assignments_id_seq" }),
+  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "job_assignments_id_seq" }),
   userId: uuid("user_id").notNull(),
-  jobId: bigint({ mode: "number"}).notNull(),
+  jobId: bigint({ mode: "number" }).notNull(),
 }, (table) => [
   foreignKey({
     columns: [table.userId],
@@ -209,28 +211,29 @@ export const jobAssignments = pgTable("job_assignments", {
     columns: [table.jobId],
     foreignColumns: [jobs.id],
     name: "job_assignments_job_id_job_id_fk"
-  }),
-	pgPolicy("admin-authenticated_backend-policy-all", { as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
+  }).onDelete("cascade"),
+  pgPolicy("admin-authenticated_backend-policy-all", {
+    as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
            FROM neon_auth."user" u
           WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`, withCheck: sql`( SELECT (EXISTS ( SELECT 1
            FROM neon_auth."user" u
           WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`  }),
-	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`( SELECT ((auth.user_id())::uuid = job_assignments.user_id))` }),
+  pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`( SELECT ((auth.user_id())::uuid = job_assignments.user_id))` }),
 ]);
 
 export const leaveRequests = pgTable("leave_requests", {
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "leave_requests_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
-	userId: uuid("user_id").notNull(),
-	approved: boolean().notNull(),
-	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+  // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "leave_requests_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+  userId: uuid("user_id").notNull(),
+  approved: boolean().notNull(),
+  createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
 }, (table) => [
-	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [userInNeonAuth.id],
-			name: "leave_requests_user_id_user_id_fk"
-		}),
-	pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`( SELECT ((auth.user_id())::uuid = leave_requests.user_id))` }),
-	pgPolicy("crud-authenticated_backend-policy-update", { as: "permissive", for: "update", to: ["authenticated_backend"] }),
-	pgPolicy("crud-authenticated_backend-policy-insert", { as: "permissive", for: "insert", to: ["authenticated_backend"] }),
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [userInNeonAuth.id],
+    name: "leave_requests_user_id_user_id_fk"
+  }),
+  pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`( SELECT ((auth.user_id())::uuid = leave_requests.user_id))` }),
+  pgPolicy("crud-authenticated_backend-policy-update", { as: "permissive", for: "update", to: ["authenticated_backend"] }),
+  pgPolicy("crud-authenticated_backend-policy-insert", { as: "permissive", for: "insert", to: ["authenticated_backend"] }),
 ]);
