@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { Building2, Home, Users, GalleryVerticalEndIcon, AudioLinesIcon, TerminalIcon, TerminalSquareIcon, BotIcon, BookOpenIcon, Settings2Icon, FrameIcon, PieChartIcon, MapIcon } from "lucide-react"
+import { Building2, Home, Calendars, Users } from "lucide-react"
 import skyminerIcon from "@/assets/skyminer-192.png";
 import { useIsAdmin } from "@/auth";
 
@@ -33,7 +33,7 @@ const data = {
     {
       title: "Schedule",
       url: "/admin",
-      icon: <BotIcon />,
+      icon: <Calendars />,
       adminOnly: true,
     },
     {

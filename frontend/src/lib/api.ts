@@ -1,4 +1,5 @@
-import { hc, type InferRequestType } from 'hono/client';
+import { hc } from 'hono/client';
+import type { InferRequestType } from 'hono/client';
 import type { ApiRoutes } from '@server/index';
 import { authClient } from '../auth';
 
@@ -49,9 +50,9 @@ export async function createJob(job: CreateJobInput) {
   return res.json();
 }
 
-export async function createClient(client: CreateClientInput) {
+export async function createClient(clients: CreateClientInput) {
   const headers = await getAuthHeaders();
-  const res = await api.clients.$post({ json: client }, { headers });
+  const res = await api.clients.$post({ json: clients }, { headers });
   if (!res.ok) {
     throw new Error("There was an error here");
   }
@@ -67,6 +68,18 @@ export async function getJobAssignments(from: string, to: string) {
   const { data } = await res.json();
   return data;
 }
+
+export async function listUsers(limit = 100) {
+  const { data, error } = await authClient.admin.listUsers({ query: { limit } });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+// Derived from the call rather than imported from better-auth, which is only a
+// transitive dep of @neondatabase/neon-js.
+export type AdminUser = NonNullable<
+  Awaited<ReturnType<typeof listUsers>>
+>['users'][number];
 
 export async function getLeaveRequests() {
   const headers = await getAuthHeaders();
