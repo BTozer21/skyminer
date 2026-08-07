@@ -1,5 +1,19 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+import { deleteClient } from '@/lib/api';
 
 import type { DataTableFeatures } from '../data-table-features.ts';
 import type { ClientResponse } from '@/lib/api';
@@ -25,11 +39,42 @@ export const columns = columnHelper.columns([
     id: "actions",
     header: () => <div className="text-right">Action</div>,
     cell: ({ row }) => {
-      const user = row.original
+      const data = row.original
+
+      // Hooks are fine here: flexRender renders `cell` as a component, not by
+      // calling it.
+      const queryClient = useQueryClient()
+      const removal = useMutation({
+        mutationFn: deleteClient,
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['clients'] })
+          toast.success('Client deleted')
+        },
+        onError: (error) => {
+          toast.error(error.message)
+        },
+      })
 
       return (
-        <div className="text-right">
-          Action for {user.name}
+        <div className="flex justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={removal.isPending}
+                onClick={() => removal.mutate(data.id)}
+              >
+                {removal.isPending ? 'Deleting…' : 'Delete Client'}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )
     }

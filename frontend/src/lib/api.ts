@@ -76,6 +76,21 @@ export async function createClient(clients: CreateClientInput) {
   return res.json();
 }
 
+export async function deleteClient(id: number) {
+  const headers = await getAuthHeaders();
+  const res = await api.clients[':id'].$delete({ param: { id: String(id) } }, { headers });
+  if (!res.ok) {
+    throw new Error(
+      res.status === 409
+        ? 'That client still has jobs — delete those first'
+        : res.status === 404
+          ? 'That client has already been deleted'
+          : 'There was an error here',
+    );
+  }
+  return res.json();
+}
+
 // A job with its assignments and the assigned users nested inside.
 // Pinned to the 200 response: the path also has a POST whose failure shape has
 // no `data`, which would otherwise widen this to `… | undefined`.
