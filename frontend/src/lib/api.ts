@@ -64,8 +64,11 @@ export async function createClient(clients: CreateClientInput) {
 }
 
 // A job with its assignments and the assigned users nested inside.
+// Pinned to the 200 response: the path also has a POST whose failure shape has
+// no `data`, which would otherwise widen this to `… | undefined`.
 export type ScheduleJob = InferResponseType<
-  typeof api.admin['job-assignments']['$get']
+  typeof api.admin['job-assignments']['$get'],
+  200
 >['data'][number]
 
 export async function getJobAssignments(from: string, to: string) {
@@ -76,6 +79,25 @@ export async function getJobAssignments(from: string, to: string) {
   }
   const { data } = await res.json();
   return data;
+}
+
+type CreateJobAssignmentInput = InferRequestType<
+  typeof api.admin['job-assignments']['$post']
+>['json'];
+
+export async function createJobAssignment(assignment: CreateJobAssignmentInput) {
+  const headers = await getAuthHeaders();
+  const res = await api.admin['job-assignments'].$post({ json: assignment }, { headers });
+  if (!res.ok) {
+    // 409 is the only failure worth spelling out: the person is already on
+    // the job, which the grid can't always show (a cell renders one job).
+    throw new Error(
+      res.status === 409
+        ? 'That person is already assigned to this job'
+        : 'There was an error here',
+    );
+  }
+  return res.json();
 }
 
 export async function listUsers(limit = 100) {

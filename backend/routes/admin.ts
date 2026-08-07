@@ -1,9 +1,15 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
+import { createInsertSchema } from 'drizzle-zod';
 import { db } from '../src/db/index.ts';
-import { userInNeonAuth } from '../src/db/schema.ts';
+import { jobAssignments, userInNeonAuth } from '../src/db/schema.ts';
 import type { AppVariables } from '../src/types.ts';
+
+const createJobAssignmentSchema = createInsertSchema(jobAssignments).pick({
+  jobId: true,
+  userId: true,
+});
 
 export const adminRoute = new Hono<{ Variables: AppVariables }>()
 .get('/users', async (c) => {
@@ -35,5 +41,30 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
     });
 
     return c.json({ data }, 200);
+  }
+)
+
+.post(
+  '/job-assignments',
+  zValidator('json', createJobAssignmentSchema),
+  async (c) => {
+    const { jobId, userId } = c.req.valid('json');
+
+    // The table has no unique constraint on (job_id, user_id), so the same
+    // person could be added to a job twice and show up twice in the grid.
+    const existing = await db.query.jobAssignments.findFirst({
+      where: (assignment, { and, eq }) =>
+        and(eq(assignment.jobId, jobId), eq(assignment.userId, userId)),
+    });
+    if (existing) {
+      return c.json({ message: 'Already assigned to this job' }, 409);
+    }
+
+    const [created] = await db
+      .insert(jobAssignments)
+      .values({ jobId, userId })
+      .returning();
+
+    return c.json({ data: created }, 201);
   }
 )

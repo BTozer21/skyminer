@@ -16,9 +16,11 @@ import { ChevronLeftIcon, ChevronRightIcon, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { authClient } from '../auth';
 import { getJobAssignments } from '@/lib/api.ts';
-import type { ScheduleJob } from '@/lib/api.ts';
+import type { AdminUser, ScheduleJob } from '@/lib/api.ts';
 
 import { JobAssignmentDialog } from '@/components/dialogs/v1/job-assignments';
+import { AddJobAssignmentDialog } from '@/components/dialogs/v1/add-job-assignment';
+import type { AssignmentTarget } from '@/components/dialogs/v1/add-job-assignment';
 
 export const Route = createFileRoute('/_authenticated/admin/')({
   component: RouteComponent2,
@@ -123,12 +125,14 @@ function RouteComponent2() {
   // Hold the id, not the job: the dialog then re-reads jobsById on every
   // render, so a refetch updates what is open instead of leaving it stale.
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+  // The empty cell that was clicked: which person, which day.
+  const [assignTarget, setAssignTarget] = useState<AssignmentTarget | null>(null);
 
   // A cell is the job (if any) covering this user on this day.
-  const getCell = (date: Date, userId: string) => {
+  const getCell = (date: Date, user: AdminUser) => {
     const day = format(date, 'yyyy-MM-dd');
     const job = jobsByUser
-      .get(userId)
+      .get(user.id)
       ?.find((j) => j.startDate <= day && day <= j.endDate);
 
     // Empty cell: the add button only shows on hover of the cell (hence
@@ -138,9 +142,11 @@ function RouteComponent2() {
     if (!job) return (
       <Button
         type="button"
-        onClick={() => console.log('Add Info here')}
-        title="Add job"
-        aria-label="Add job"
+        onClick={() =>
+          setAssignTarget({ userId: user.id, userName: user.name, date })
+        }
+        title={`Assign ${user.name} on ${format(date, 'd MMM')}`}
+        aria-label={`Assign ${user.name} on ${format(date, 'd MMM')}`}
         variant="ghost"
         size="icon"
         className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
@@ -323,7 +329,7 @@ function RouteComponent2() {
                                     key={user.id}
                                     className={`group content-center text-center w-full border p-2 text-sm ${rowBg}`}
                                   >
-                                    {getCell(day, user.id)}
+                                    {getCell(day, user)}
                                   </div>
                                 ))}
                               </Fragment>
@@ -351,6 +357,13 @@ function RouteComponent2() {
         job={selectedJobId !== null ? jobsById.get(selectedJobId) ?? null : null}
         onOpenChange={(open) => {
           if (!open) setSelectedJobId(null);
+        }}
+      />
+
+      <AddJobAssignmentDialog
+        target={assignTarget}
+        onOpenChange={(open) => {
+          if (!open) setAssignTarget(null);
         }}
       />
     </div>
