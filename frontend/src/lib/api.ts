@@ -100,6 +100,22 @@ export async function createJobAssignment(assignment: CreateJobAssignmentInput) 
   return res.json();
 }
 
+export async function deleteJobAssignment(id: number) {
+  const headers = await getAuthHeaders();
+  const res = await api.admin['job-assignments'][':id'].$delete(
+    { param: { id: String(id) } },
+    { headers },
+  );
+  if (!res.ok) {
+    throw new Error(
+      res.status === 404
+        ? 'That assignment has already been removed'
+        : 'There was an error here',
+    );
+  }
+  return res.json();
+}
+
 export async function listUsers(limit = 100) {
   const { data, error } = await authClient.admin.listUsers({ query: { limit } });
   if (error) throw new Error(error.message);
