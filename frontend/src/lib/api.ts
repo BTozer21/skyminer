@@ -39,6 +39,8 @@ export async function getClients() {
 
 export type ClientResponse = InferResponseType<typeof api.clients.$get>['data'][number]
 
+export type JobResponse = InferResponseType<typeof api.jobs.$get>['data'][number]
+
 type CreateJobInput = InferRequestType<typeof api.jobs.$post>['json'];
 
 type CreateClientInput = InferRequestType<typeof api.clients.$post>['json'];

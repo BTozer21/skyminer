@@ -16,7 +16,9 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
 .get('/', async(c) => {
   const userId = c.get('userId');
   const allJobs = await getAuthenticatedDb(userId, async (tx) => {
-    const result = await tx.select().from(jobs);
+    const result = await tx.query.jobs.findMany({
+      with: { client: true },
+    });
     return result;
   });
 

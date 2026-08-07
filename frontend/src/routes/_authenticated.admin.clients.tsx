@@ -15,7 +15,7 @@ function RouteComponent() {
 
   return (
     <div className="flex flex-col px-5">
-      <div className="my-4 flex justify-between items-center">
+      <div className="mb-4 mt-2 flex justify-between items-center">
         <h1 className="font-bold text-xl">Clients</h1>
         <CreateClientForm />
       </div>

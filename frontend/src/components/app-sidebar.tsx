@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { Building2, Home, Calendars, Users } from "lucide-react"
+import { Building2, Home, Calendars, Users, ListTodo } from "lucide-react"
 import skyminerIcon from "@/assets/skyminer-192.png";
 import { useIsAdmin } from "@/auth";
 
@@ -34,6 +34,12 @@ const data = {
       title: "Schedule",
       url: "/admin",
       icon: <Calendars />,
+      adminOnly: true,
+    },
+    {
+      title: "Jobs",
+      url: "/admin/jobs",
+      icon: <ListTodo />,
       adminOnly: true,
     },
     {
@@ -60,6 +66,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ? { ...item, items: item.items.filter((sub) => !("adminOnly" in sub && sub.adminOnly) || isAdmin) }
         : item
     );
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>

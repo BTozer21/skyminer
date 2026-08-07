@@ -21,7 +21,7 @@ function RouteComponent() {
 
   return (
     <div className="flex flex-col px-5">
-      <h1 className="font-bold text-xl mb-4">Users</h1>
+      <h1 className="font-bold text-xl mb-4 mt-2">Users</h1>
       <div>
         {isPending && <p>Waiting for Users</p>}
         {users && <DataTable columns={columns} data={users.users} />}
