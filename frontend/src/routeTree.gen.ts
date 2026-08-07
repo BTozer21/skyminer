@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
+import { Route as AuthenticatedLeaveRequestsRouteImport } from './routes/_authenticated.leave-requests'
 import { Route as AuthPathnameRouteImport } from './routes/auth.$pathname'
 import { Route as AuthenticatedAccountPathnameRouteImport } from './routes/_authenticated.account.$pathname'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
@@ -33,6 +34,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedLeaveRequestsRoute =
+  AuthenticatedLeaveRequestsRouteImport.update({
+    id: '/leave-requests',
+    path: '/leave-requests',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthPathnameRoute = AuthPathnameRouteImport.update({
   id: '/auth/$pathname',
   path: '/auth/$pathname',
@@ -69,6 +76,7 @@ const AuthenticatedAdminTeamRoute = AuthenticatedAdminTeamRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/leave-requests': typeof AuthenticatedLeaveRequestsRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/account/$pathname': typeof AuthenticatedAccountPathnameRoute
   '/admin/clients': typeof AuthenticatedAdminClientsRoute
@@ -77,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
+  '/leave-requests': typeof AuthenticatedLeaveRequestsRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/': typeof AuthenticatedIndexRoute
   '/account/$pathname': typeof AuthenticatedAccountPathnameRoute
@@ -89,6 +98,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/leave-requests': typeof AuthenticatedLeaveRequestsRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/account/$pathname': typeof AuthenticatedAccountPathnameRoute
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/leave-requests'
     | '/auth/$pathname'
     | '/account/$pathname'
     | '/admin/clients'
@@ -110,6 +121,7 @@ export interface FileRouteTypes {
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/leave-requests'
     | '/auth/$pathname'
     | '/'
     | '/account/$pathname'
@@ -121,6 +133,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/_authenticated/admin'
+    | '/_authenticated/leave-requests'
     | '/auth/$pathname'
     | '/_authenticated/'
     | '/_authenticated/account/$pathname'
@@ -156,6 +169,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/leave-requests': {
+      id: '/_authenticated/leave-requests'
+      path: '/leave-requests'
+      fullPath: '/leave-requests'
+      preLoaderRoute: typeof AuthenticatedLeaveRequestsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/auth/$pathname': {
@@ -222,12 +242,14 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedLeaveRequestsRoute: typeof AuthenticatedLeaveRequestsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedAccountPathnameRoute: typeof AuthenticatedAccountPathnameRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedLeaveRequestsRoute: AuthenticatedLeaveRequestsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAccountPathnameRoute: AuthenticatedAccountPathnameRoute,
 }
