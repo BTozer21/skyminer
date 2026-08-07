@@ -79,6 +79,15 @@ body {
   }
 }
 
+/* NeonAuthUIProvider mounts its own sonner <Toaster /> with no theme prop, so
+   it is stuck on sonner's light default. Both Toasters share one toast store,
+   so every toast() rendered twice — one themed, one not. Hide theirs; ours in
+   __root.tsx is the only visible one. Scoped to .neon-auth-ui, the wrapper
+   their provider renders, which ours sits outside of. */
+.neon-auth-ui [data-sonner-toaster] {
+  display: none;
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);

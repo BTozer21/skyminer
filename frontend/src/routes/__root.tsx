@@ -1,11 +1,11 @@
-import { Outlet, createRootRoute } from '@tanstack/react-router'
+import { Outlet, createRootRoute, useNavigate, Link as RouterLink } from '@tanstack/react-router'
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from '@/components/theme-provider';
 
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import { NeonAuthUIProvider } from '@neondatabase/auth-ui';
-import { useNavigate, Link as RouterLink } from '@tanstack/react-router';
+import { Toaster } from '@/components/ui/sonner';
 import { authClient } from '../auth';
 
 import '../styles.css'
@@ -39,6 +39,7 @@ function RootComponent() {
           />
         </TooltipProvider>
       </NeonAuthUIProvider>
+      <Toaster />
     </ThemeProvider>
   )
 }
