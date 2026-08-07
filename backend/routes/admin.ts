@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { createInsertSchema } from 'drizzle-zod';
+import { eq } from 'drizzle-orm';
 import { db } from '../src/db/index.ts';
 import { jobAssignments, userInNeonAuth } from '../src/db/schema.ts';
 import type { AppVariables } from '../src/types.ts';
@@ -66,5 +67,26 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
       .returning();
 
     return c.json({ data: created }, 201);
+  }
+)
+
+.delete(
+  '/job-assignments/:id',
+  zValidator('param', z.object({ id: z.coerce.number().int().positive() })),
+  async (c) => {
+    const { id } = c.req.valid('param');
+
+    const [deleted] = await db
+      .delete(jobAssignments)
+      .where(eq(jobAssignments.id, id))
+      .returning();
+
+    // Distinguishes "already gone" from a successful removal, so a stale grid
+    // clicking remove twice doesn't look like it worked the second time.
+    if (!deleted) {
+      return c.json({ message: 'Assignment not found' }, 404);
+    }
+
+    return c.json({ data: deleted }, 200);
   }
 )
