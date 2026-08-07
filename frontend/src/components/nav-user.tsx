@@ -33,8 +33,12 @@ export function NavUser({
     image?: string | null
   }
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile, setOpenMobile } = useSidebar()
   const navigate = useNavigate()
+
+  const closeOnMobile = () => {
+    if (isMobile) setOpenMobile(false)
+  }
 
   // First letter of the first two words: "Ada Lovelace" -> "AL".
   const initials = (user?.name ?? '')
@@ -89,7 +93,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Link to={'/account/settings'} className="flex gap-2 items-center">
+                <Link to={'/account/settings'} onClick={closeOnMobile} className="flex gap-2 items-center">
                   <BadgeCheckIcon />
                   Account
                 </ Link>

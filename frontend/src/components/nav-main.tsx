@@ -13,6 +13,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { ChevronRightIcon } from "lucide-react"
 
@@ -30,6 +31,10 @@ export function NavMain({
     }[]
   }[]
 }) {
+  const { isMobile, setOpenMobile } = useSidebar()
+  const closeOnMobile = () => {
+    if (isMobile) setOpenMobile(false)
+  }
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
@@ -55,7 +60,7 @@ export function NavMain({
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton asChild>
-                          <Link to={subItem.url}>
+                          <Link to={subItem.url} onClick={closeOnMobile}>
                             <span>{subItem.title}</span>
                           </Link>
                         </SidebarMenuSubButton>
@@ -70,6 +75,7 @@ export function NavMain({
               <SidebarMenuButton asChild tooltip={item.title}>
                 <Link
                   to={item.url}
+                  onClick={closeOnMobile}
                 >
                   {item.icon}
                   <span>{item.title}</span>
