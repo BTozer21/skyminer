@@ -8,16 +8,20 @@ function AuthenticatedLayout() {
 	return (
 		<>
 			<SignedIn>
-        <SidebarProvider defaultOpen={false}>
+        {/* h-svh (not just min-h-svh) so pages can size themselves against the
+            viewport and scroll their own regions instead of the whole page. */}
+        <SidebarProvider defaultOpen={false} className="h-svh">
           <AppSidebar />
-          <SidebarInset className="min-w-0">
+          <SidebarInset className="min-w-0 min-h-0">
             <header className="flex h-12 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
               <div className="flex w-full items-center justify-between gap-2 px-4">
                 <SidebarTrigger className="-ml-1" />
                 <ModeToggle />
               </div>
             </header>
-            <Outlet />
+            <div className="flex-1 min-h-0 overflow-auto">
+              <Outlet />
+            </div>
           </SidebarInset>
         </SidebarProvider>
 			</SignedIn>

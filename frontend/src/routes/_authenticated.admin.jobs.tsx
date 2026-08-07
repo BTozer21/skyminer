@@ -14,15 +14,13 @@ function RouteComponent() {
   const { data: jobs, isPending } = useQuery({ queryKey: ['jobs'], queryFn: getJobs, staleTime: Infinity });
 
   return (
-    <div className="flex flex-col px-5">
-      <div className="mb-4 mt-2 flex justify-between items-center">
+    <div className="flex h-full flex-col px-5 pb-5">
+      <div className="mb-4 mt-2 flex shrink-0 justify-between items-center">
         <h1 className="font-bold text-xl">Jobs</h1>
         <CreateJobForm />
       </div>
-      <div>
-        {isPending && <p>Waiting for Jobs</p>}
-        {jobs && <DataTable columns={columns} data={jobs} />}
-      </div>
+      {isPending && <p>Waiting for Jobs</p>}
+      {jobs && <DataTable columns={columns} data={jobs} className="min-h-0 flex-1" />}
     </div>
   )
 }

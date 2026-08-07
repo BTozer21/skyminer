@@ -1,6 +1,8 @@
 import { useTable } from '@tanstack/react-table';
 import type { ColumnDef, RowData } from '@tanstack/react-table';
 
+import { cn } from '@/lib/utils';
+
 import {
   Table,
   TableBody,
@@ -16,11 +18,15 @@ import type { DataTableFeatures } from './data-table-features.ts';
 interface DataTableProps<TData extends RowData> {
   columns: ColumnDef<DataTableFeatures, TData>[]
   data: TData[]
+  // Pass a bounded height (e.g. "min-h-0 flex-1") to make the rows scroll
+  // inside the table instead of growing the page.
+  className?: string
 }
 
 export function DataTable<TData extends RowData>({
   columns,
   data,
+  className,
 }: DataTableProps<TData>) {
   const table = useTable({
     features,
@@ -29,14 +35,16 @@ export function DataTable<TData extends RowData>({
   })
 
   return (
-    <div className="overflow-hidden rounded-md border">
-      <Table>
+    <div className={cn("flex flex-col overflow-hidden rounded-md border", className)}>
+      <Table containerClassName="min-h-0 flex-1">
         <TableHeader className="bg-muted">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id}>
+                  // Sticky on the cells, not the row: the row's bottom border
+                  // scrolls away with the body, so the border lives here too.
+                  <TableHead key={header.id} className="bg-muted sticky top-0 z-10 border-b">
                     {header.isPlaceholder ? null : (
                       <table.FlexRender header={header} />
                     )}
