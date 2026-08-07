@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button';
 import { authClient } from '../auth';
 import { getJobAssignments } from '@/lib/api.ts';
 
+import { JobAssignmentDialog } from '@/components/dialog/v1/job-assignments';
+
 export const Route = createFileRoute('/_authenticated/admin/')({
   component: RouteComponent2,
 })
@@ -162,8 +164,8 @@ function RouteComponent2() {
   if (status === 'error') return <span className="p-5">Error: {error.message}</span>;
 
   return (
-    <div className="flex flex-col px-5">
-      <div className="mt-2 flex items-center justify-between gap-3">
+    <div className="flex h-full flex-col px-5 pb-2">
+      <div className="mt-2 flex shrink-0 items-center justify-between gap-3">
         <h1 className="text-xl font-bold">
           Week of {format(topWeekStart, 'MMM d, yyyy')}
         </h1>
@@ -200,11 +202,12 @@ function RouteComponent2() {
         </div>
       </div>
 
-      {/* Outer: horizontal scroll for many users. */}
-      <div className="mt-4 overflow-x-auto">
-        <div className="min-w-max">
+      {/* Outer: horizontal scroll for many users. Bounded by flex-1 so the
+          grid ends at the bottom of the page instead of running past it. */}
+      <div className="mt-4 min-h-0 flex-1 overflow-x-auto">
+        <div className="flex h-full min-w-max flex-col">
           {/* Inner: vertical scroll region = the virtualizer viewport. */}
-          <div ref={parentRef} className="border h-[85dvh] overflow-x-hidden overflow-y-auto">
+          <div ref={parentRef} className="border min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
             {/* The header lives inside the scroll region so it loses the same
                 width to the scrollbar as the rows do. Platforms with classic
                 (non-overlay) scrollbars — most Linux setups — misalign it by
@@ -301,7 +304,7 @@ function RouteComponent2() {
         </div>
       </div>
 
-      <div className="text-muted-foreground mt-2 text-xs">
+      <div className="text-muted-foreground mt-2 h-4 shrink-0 text-xs">
         {isFetching && !isFetchingNextPage ? 'Background updating…' : null}
       </div>
     </div>
