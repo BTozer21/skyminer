@@ -28,7 +28,7 @@ export const columns = columnHelper.columns([
   }),
   columnHelper.accessor("role", {
     header: "Role",
-    cell: ({ getValue }) => <div className="uppercase">{getValue()}</div>
+    cell: ({ getValue }) => <div className="first-letter:uppercase">{getValue()}</div>
   }),
   columnHelper.display({
     id: "actions",
@@ -44,7 +44,7 @@ export const columns = columnHelper.columns([
         mutationFn: async () => {
           const { error } = await authClient.admin.setRole({
             userId: user.id,
-            role: isAdmin ? 'user' : ['user', 'admin'],
+            role: isAdmin ? 'user' : 'admin',
           })
           if (error) throw new Error(error.message)
         },
