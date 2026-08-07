@@ -1,5 +1,5 @@
 import { hc } from 'hono/client';
-import type { InferRequestType } from 'hono/client';
+import type { InferRequestType, InferResponseType } from 'hono/client';
 import type { ApiRoutes } from '@server/index';
 import { authClient } from '../auth';
 
@@ -36,6 +36,8 @@ export async function getClients() {
   const { data } = await res.json();
   return data;
 };
+
+export type ClientResponse = InferResponseType<typeof api.clients.$get>['data']
 
 type CreateJobInput = InferRequestType<typeof api.jobs.$post>['json'];
 

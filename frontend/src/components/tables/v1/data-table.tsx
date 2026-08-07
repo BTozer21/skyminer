@@ -10,8 +10,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-import { features } from './users/data-table-features.ts';
-import type { DataTableFeatures } from './users/data-table-features.ts';
+import { features } from './data-table-features.ts';
+import type { DataTableFeatures } from './data-table-features.ts';
 
 interface DataTableProps<TData extends RowData> {
   columns: ColumnDef<DataTableFeatures, TData>[]
@@ -31,7 +31,7 @@ export function DataTable<TData extends RowData>({
   return (
     <div className="overflow-hidden rounded-md border">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-muted">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => {

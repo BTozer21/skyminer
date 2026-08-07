@@ -1,21 +1,17 @@
 import { createColumnHelper } from '@tanstack/react-table';
 
 import type { DataTableFeatures } from '../data-table-features';
-import type { AdminUser } from '@/lib/api';
+import type { ClientResponse } from '@/lib/api';
 
 
-const columnHelper = createColumnHelper<DataTableFeatures, AdminUser>()
+const columnHelper = createColumnHelper<DataTableFeatures, ClientResponse>()
 
 export const columns = columnHelper.columns([
   columnHelper.accessor("name", {
     header: "Name",
   }),
-  columnHelper.accessor("email", {
-    header: "Email",
-  }),
-  columnHelper.accessor("role", {
-    header: "Role",
-    cell: ({ getValue }) => <div className="uppercase">{getValue()}</div>
+  columnHelper.accessor("createdAt", {
+    header: "Added on"
   }),
   columnHelper.display({
     id: "actions",
@@ -31,3 +27,4 @@ export const columns = columnHelper.columns([
     }
   })
 ])
+
