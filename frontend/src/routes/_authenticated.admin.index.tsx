@@ -12,12 +12,13 @@ import {
   startOfWeek,
   isWeekend,
 } from 'date-fns';
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { authClient } from '../auth';
 import { getJobAssignments } from '@/lib/api.ts';
+import type { ScheduleJob } from '@/lib/api.ts';
 
-import { JobAssignmentDialog } from '@/components/dialog/v1/job-assignments';
+import { JobAssignmentDialog } from '@/components/dialogs/v1/job-assignments';
 
 export const Route = createFileRoute('/_authenticated/admin/')({
   component: RouteComponent2,
@@ -99,22 +100,29 @@ function RouteComponent2() {
 
   // The endpoint returns jobs-with-users-nested (clean date filter on the top
   // level); the grid renders by user, so invert every loaded page into
-  // userId -> their jobs.
-  const jobsByUser = useMemo(() => {
-    const map = new Map<string, { name: string; startDate: string; endDate: string }[]>();
+  // userId -> their jobs. jobsById is the same jobs keyed for the dialog,
+  // which is opened by id rather than handed a snapshot of the object.
+  const { jobsByUser, jobsById } = useMemo(() => {
+    const byUser = new Map<string, ScheduleJob[]>();
+    const byId = new Map<number, ScheduleJob>();
     for (const page of data?.pages ?? []) {
       for (const job of page.jobs) {
+        byId.set(job.id, job);
         for (const assignment of job.jobAssignments) {
           const user = assignment.userInNeonAuth;
           if (!user) continue;
-          const list = map.get(user.id) ?? [];
-          list.push({ name: job.name, startDate: job.startDate, endDate: job.endDate });
-          map.set(user.id, list);
+          const list = byUser.get(user.id) ?? [];
+          list.push(job);
+          byUser.set(user.id, list);
         }
       }
     }
-    return map;
+    return { jobsByUser: byUser, jobsById: byId };
   }, [data]);
+
+  // Hold the id, not the job: the dialog then re-reads jobsById on every
+  // render, so a refetch updates what is open instead of leaving it stale.
+  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
 
   // A cell is the job (if any) covering this user on this day.
   const getCell = (date: Date, userId: string) => {
@@ -122,7 +130,35 @@ function RouteComponent2() {
     const job = jobsByUser
       .get(userId)
       ?.find((j) => j.startDate <= day && day <= j.endDate);
-    return (job?.name ? (<span className="text-muted-foreground p-2 bg-muted/30 rounded-sm">{job.name}</span>) : '—');
+
+    // Empty cell: the add button only shows on hover of the cell (hence
+    // group-hover, not hover — the button is what's being revealed). Opacity
+    // rather than hidden/flex so the cell keeps its height either way, and
+    // focus-visible so it is still reachable by keyboard.
+    if (!job) return (
+      <Button
+        type="button"
+        onClick={() => console.log('Add Info here')}
+        title="Add job"
+        aria-label="Add job"
+        variant="ghost"
+        size="icon"
+        className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+      >
+        <Plus />
+      </Button>
+    );
+
+    return (
+      <Button
+        type="button"
+        onClick={() => setSelectedJobId(job.id)}
+        title={`Open ${job.name}`}
+        variant="outline"
+      >
+        {job.name}
+      </Button>
+    );
   };
 
   // Virtualize whole week blocks so only on-screen weeks are in the DOM.
@@ -285,7 +321,7 @@ function RouteComponent2() {
                                 {users.map((user) => (
                                   <div
                                     key={user.id}
-                                    className={`content-center text-center w-full border p-2 text-sm ${rowBg}`}
+                                    className={`group content-center text-center w-full border p-2 text-sm ${rowBg}`}
                                   >
                                     {getCell(day, user.id)}
                                   </div>
@@ -307,6 +343,16 @@ function RouteComponent2() {
       <div className="text-muted-foreground mt-2 h-4 shrink-0 text-xs">
         {isFetching && !isFetchingNextPage ? 'Background updating…' : null}
       </div>
+
+      {/* One instance for the whole page: cells only set the id. Rendering it
+          per cell would mount a portal per cell, and the virtualizer would
+          unmount an open dialog as soon as its week scrolled away. */}
+      <JobAssignmentDialog
+        job={selectedJobId !== null ? jobsById.get(selectedJobId) ?? null : null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedJobId(null);
+        }}
+      />
     </div>
   );
 }

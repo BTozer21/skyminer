@@ -63,6 +63,11 @@ export async function createClient(clients: CreateClientInput) {
   return res.json();
 }
 
+// A job with its assignments and the assigned users nested inside.
+export type ScheduleJob = InferResponseType<
+  typeof api.admin['job-assignments']['$get']
+>['data'][number]
+
 export async function getJobAssignments(from: string, to: string) {
   const headers = await getAuthHeaders();
   const res = await api.admin['job-assignments'].$get({ query: { from, to } }, { headers });
