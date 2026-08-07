@@ -1,9 +1,11 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -11,6 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
+import { deleteJob } from '@/lib/api';
 
 import type { DataTableFeatures } from '../data-table-features.ts';
 import type { JobResponse } from '@/lib/api';
@@ -52,6 +56,23 @@ export const columns = columnHelper.columns([
     cell: ({ row }) => {
       const data = row.original
 
+      // Hooks are fine here: flexRender renders `cell` as a component, not by
+      // calling it.
+      const queryClient = useQueryClient()
+      const removal = useMutation({
+        mutationFn: deleteJob,
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          // The schedule grid is built from assignments, which cascade away
+          // with the job, so it is stale too.
+          queryClient.invalidateQueries({ queryKey: ['schedule'] })
+          toast.success('Job deleted')
+        },
+        onError: (error) => {
+          toast.error(error.message)
+        },
+      })
+
       return (
         <div className="flex justify-end">
           <DropdownMenu>
@@ -64,9 +85,11 @@ export const columns = columnHelper.columns([
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(data.id)}
+                variant="destructive"
+                disabled={removal.isPending}
+                onClick={() => removal.mutate(data.id)}
               >
-                Copy Job ID
+                {removal.isPending ? 'Deleting…' : 'Delete Job'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

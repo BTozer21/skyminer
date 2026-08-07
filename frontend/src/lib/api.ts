@@ -54,6 +54,19 @@ export async function createJob(job: CreateJobInput) {
   return res.json();
 }
 
+export async function deleteJob(id: number) {
+  const headers = await getAuthHeaders();
+  const res = await api.jobs[':id'].$delete({ param: { id: String(id) } }, { headers });
+  if (!res.ok) {
+    throw new Error(
+      res.status === 404
+        ? 'That job has already been deleted'
+        : 'There was an error here',
+    );
+  }
+  return res.json();
+}
+
 export async function createClient(clients: CreateClientInput) {
   const headers = await getAuthHeaders();
   const res = await api.clients.$post({ json: clients }, { headers });
