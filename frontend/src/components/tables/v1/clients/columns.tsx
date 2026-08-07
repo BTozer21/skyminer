@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { format } from 'date-fns';
 
-import type { DataTableFeatures } from '../data-table-features';
+import type { DataTableFeatures } from '../data-table-features.ts';
 import type { ClientResponse } from '@/lib/api';
 
 
@@ -11,7 +12,14 @@ export const columns = columnHelper.columns([
     header: "Name",
   }),
   columnHelper.accessor("createdAt", {
-    header: "Added on"
+    header: "Added on",
+    cell: ({ getValue }) => {
+      const createdAt = getValue()
+
+      if (!createdAt) return <span className="text-muted-foreground">-</span>
+
+      return format(new Date(createdAt), 'd MMM yyyy')
+    }
   }),
   columnHelper.display({
     id: "actions",
