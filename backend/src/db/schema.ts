@@ -215,6 +215,7 @@ export const jobAssignments = pgTable("job_assignments", {
     foreignColumns: [jobs.id],
     name: "job_assignments_job_id_job_id_fk"
   }).onDelete("cascade"),
+  unique("job_assignments_user_id_job_id_unique").on(table.userId, table.jobId),
   pgPolicy("admin-authenticated_backend-policy-all", {
     as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
            FROM neon_auth."user" u
