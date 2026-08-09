@@ -30,6 +30,10 @@ export const columns = columnHelper.columns([
     id: "client",
     header: "Client",
   }),
+  columnHelper.accessor("status", {
+    header: "Status",
+    cell: ({ getValue }) => <div className="first-letter:uppercase">{getValue()}</div>
+  }),
   columnHelper.accessor("startDate", {
     header: "Start Date",
     cell: ({ getValue }) => {
