@@ -71,6 +71,13 @@
       "when": 1786117939219,
       "tag": "0009_flaky_banshee",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786269203991,
+      "tag": "0010_regular_mastermind",
+      "breakpoints": true
     }
   ]
 }

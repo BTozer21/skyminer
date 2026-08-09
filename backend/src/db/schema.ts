@@ -1,4 +1,4 @@
-import { pgTable, pgSchema, index, foreignKey, uuid, text, timestamp, unique, boolean, uniqueIndex, jsonb, pgPolicy, bigint, date } from "drizzle-orm/pg-core"
+import { pgTable, pgSchema, pgEnum, index, foreignKey, uuid, text, timestamp, unique, boolean, uniqueIndex, jsonb, pgPolicy, bigint, date } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const neonAuth = pgSchema("neon_auth");
@@ -173,15 +173,18 @@ export const clients = pgTable("clients", {
           WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`  }),
 ]);
 
+export const statusEnum = pgEnum('status', ['complete', 'planned', 'planning']);
+
 export const jobs = pgTable("jobs", {
   // You can use { mode: "bigint" } if numbers are exceeding js number limitations
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "jobs_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
   name: text().notNull(),
-  createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
   startDate: date().notNull(),
   endDate: date().notNull(),
-  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
+  status: statusEnum().notNull().default('planning'),
   clientId: bigint("client_id", { mode: "number" }).notNull(),
+  createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
 }, (table) => [
   foreignKey({
     columns: [table.clientId],
