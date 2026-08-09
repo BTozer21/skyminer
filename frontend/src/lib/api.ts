@@ -26,6 +26,20 @@ export async function getJobs() {
   return data;
 }
 
+export async function getJob(id: number) {
+  const headers = await getAuthHeaders();
+  const res = await api.jobs[':id'].$get({ param: { id: String(id) } }, { headers });
+  if (!res.ok) {
+    throw new Error(
+      res.status === 404
+        ? 'That job no longer exists'
+        : 'There was an error here',
+    );
+  }
+  const { data } = await res.json();
+  return data;
+}
+
 export async function getClients() {
   const headers = await getAuthHeaders();
   const res = await api.clients.$get({}, { headers });

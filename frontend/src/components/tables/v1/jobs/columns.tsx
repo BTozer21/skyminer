@@ -1,8 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { CheckCircle2, Circle, CircleDashed, MoreHorizontal } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -17,22 +16,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { deleteJob, updateJob } from '@/lib/api';
+import { STATUS_CONFIG, STATUSES } from '@/lib/v1/jobs';
 
 import type { DataTableFeatures } from '../data-table-features.ts';
 import type { JobResponse } from '@/lib/api';
 
 
 const columnHelper = createColumnHelper<DataTableFeatures, JobResponse>()
-
-// One source of truth for status colour, icon, and the set of statuses.
-// `satisfies` makes TS flag it if the enum gains a value this map misses.
-const STATUS_CONFIG = {
-  planning: { icon: CircleDashed, className: 'text-amber-500', hover: 'hover:bg-amber-200/30' },
-  planned: { icon: Circle, className: 'text-blue-500', hover: 'hover:bg-blue-200/30' },
-  complete: { icon: CheckCircle2, className: 'text-green-500', hover: 'hover:bg-green-200/30' },
-} satisfies Record<JobResponse['status'], { icon: LucideIcon; className: string; hover: string }>
-
-const STATUSES = Object.keys(STATUS_CONFIG) as JobResponse['status'][]
 
 export const columns = columnHelper.columns([
   columnHelper.accessor("name", {

@@ -36,6 +36,27 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
   return c.json({ data: allJobs, user: userId }, 200)
 })
 
+.get('/:id', zValidator('param', z.object({ id: z.coerce.number().int().positive() })), async(c) => {
+  const userId = c.get('userId');
+  const { id } = c.req.valid('param');
+
+  const job = await getAuthenticatedDb(userId, async (tx) => {
+    const result = await tx.query.jobs.findFirst({
+      where: (jobs, { eq }) => eq(jobs.id, id),
+      with: { client: true },
+    });
+    return result;
+  });
+
+  // RLS makes a job someone can't touch look identical to one that isn't
+  // there; both are a 404 as far as the caller is concerned.
+  if (!job) {
+    return c.json({ message: "Job not found" }, 404);
+  }
+
+  return c.json({ data: job }, 200);
+})
+
 .post('/', zValidator('json', createJobSchema), async(c) => {
   const userId = c.get('userId');
   const userRoles = c.get('userRoles');
