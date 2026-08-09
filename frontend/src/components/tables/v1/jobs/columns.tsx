@@ -1,7 +1,8 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { MoreHorizontal } from 'lucide-react';
+import { CheckCircle2, Circle, CircleDashed, MoreHorizontal } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -22,6 +23,16 @@ import type { JobResponse } from '@/lib/api';
 
 
 const columnHelper = createColumnHelper<DataTableFeatures, JobResponse>()
+
+// One source of truth for status colour, icon, and the set of statuses.
+// `satisfies` makes TS flag it if the enum gains a value this map misses.
+const STATUS_CONFIG = {
+  planning: { icon: CircleDashed, className: 'text-amber-500', hover: 'hover:bg-amber-200/30' },
+  planned: { icon: Circle, className: 'text-blue-500', hover: 'hover:bg-blue-200/30' },
+  complete: { icon: CheckCircle2, className: 'text-green-500', hover: 'hover:bg-green-200/30' },
+} satisfies Record<JobResponse['status'], { icon: LucideIcon; className: string; hover: string }>
+
+const STATUSES = Object.keys(STATUS_CONFIG) as JobResponse['status'][]
 
 export const columns = columnHelper.columns([
   columnHelper.accessor("name", {
@@ -51,6 +62,7 @@ export const columns = columnHelper.columns([
     size: 140,
     cell: ({ row }) => {
       const job = row.original
+      const { icon: StatusIcon, className: statusClassName, hover: statusHover } = STATUS_CONFIG[job.status]
 
       // Hooks are fine here: flexRender renders `cell` as a component.
       const queryClient = useQueryClient()
@@ -70,21 +82,27 @@ export const columns = columnHelper.columns([
           <DropdownMenuTrigger asChild>
             <button
               disabled={update.isPending}
-              className="capitalize -m-2 block w-[calc(100%+1rem)] p-2 text-left hover:bg-muted disabled:opacity-50"
+              className={`capitalize -m-2 ${statusClassName} ${statusHover} rounded-sm flex items-center gap-2 w-[calc(100%+1rem)] p-2 text-left disabled:opacity-50`}
             >
+              <StatusIcon className="size-4 shrink-0" />
               {job.status}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            {(['planning', 'planned', 'complete'] as const).map((status) => (
-              <DropdownMenuItem
-                key={status}
-                className="capitalize"
-                onClick={() => update.mutate(status)}
-              >
-                {status}
-              </DropdownMenuItem>
-            ))}
+            {STATUSES.map((status) => {
+              const { icon: Icon, className, hover } = STATUS_CONFIG[status]
+
+              return (
+                <DropdownMenuItem
+                  key={status}
+                  className={`capitalize hover:cursor-pointer gap-2 focus:${hover.replace('hover:', '')}`}
+                  onClick={() => update.mutate(status)}
+                >
+                  <Icon className={`size-4 ${className}`} />
+                  {status}
+                </DropdownMenuItem>
+              )
+            })}
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -98,7 +116,7 @@ export const columns = columnHelper.columns([
 
       if (!createdAt) return <span className="text-muted-foreground">-</span>
 
-      return format(new Date(createdAt), 'd MMM yyyy')
+      return format(new Date(createdAt), 'EEE d MMM yy')
     }
   }),
   columnHelper.accessor("endDate", {
@@ -109,7 +127,7 @@ export const columns = columnHelper.columns([
 
       if (!createdAt) return <span className="text-muted-foreground">-</span>
 
-      return format(new Date(createdAt), 'd MMM yyyy')
+      return format(new Date(createdAt), 'EEE d MMM yy')
     }
   }),
   columnHelper.display({
