@@ -54,6 +54,21 @@ export async function createJob(job: CreateJobInput) {
   return res.json();
 }
 
+type UpdateJobInput = InferRequestType<typeof api.jobs[':id']['$patch']>['json'];
+
+export async function updateJob(id: number, job: UpdateJobInput) {
+  const headers = await getAuthHeaders();
+  const res = await api.jobs[':id'].$patch({ param: { id: String(id) }, json: job }, { headers });
+  if (!res.ok) {
+    throw new Error(
+      res.status === 404
+        ? 'That job no longer exists'
+        : 'There was an error here',
+    );
+  }
+  return res.json();
+}
+
 export async function deleteJob(id: number) {
   const headers = await getAuthHeaders();
   const res = await api.jobs[':id'].$delete({ param: { id: String(id) } }, { headers });

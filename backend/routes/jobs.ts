@@ -14,12 +14,21 @@ const createJobSchema = createInsertSchema(jobs).pick({
   clientId: true,
 });
 
+const updateJobSchema = createInsertSchema(jobs).pick({
+  name: true,
+  startDate: true,
+  endDate: true,
+  clientId: true,
+  status: true,
+}).partial();
+
 export const jobsRoute = new Hono<{ Variables: AppVariables }>()
 .get('/', async(c) => {
   const userId = c.get('userId');
   const allJobs = await getAuthenticatedDb(userId, async (tx) => {
     const result = await tx.query.jobs.findMany({
       with: { client: true },
+      orderBy: (jobs, { desc }) => [desc(jobs.createdAt)],
     });
     return result;
   });
@@ -43,6 +52,34 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
   });
 
   return c.json({ message: "Uploaded" }, 201);
+})
+
+.patch('/:id',
+  zValidator('param', z.object({ id: z.coerce.number().int().positive() })),
+  zValidator('json', updateJobSchema),
+  async(c) => {
+  const userId = c.get('userId');
+  const userRoles = c.get('userRoles');
+  if (!userRoles?.includes('admin')) {
+    return c.json({ message: "Not Allowed" }, 403);
+  }
+
+  const { id } = c.req.valid('param');
+  const body = c.req.valid('json');
+
+  const updated = await getAuthenticatedDb(userId, async (tx) => {
+    const [result] = await tx.update(jobs).set(body).where(eq(jobs.id, id)).returning();
+
+    return result;
+  });
+
+  // RLS makes a job someone can't touch look identical to one that isn't
+  // there; both are a 404 as far as the caller is concerned.
+  if (!updated) {
+    return c.json({ message: "Job not found" }, 404);
+  }
+
+  return c.json({ data: updated }, 200);
 })
 
 .delete('/:id', zValidator('param', z.object({ id: z.coerce.number().int().positive() })), async(c) => {

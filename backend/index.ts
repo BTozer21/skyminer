@@ -66,7 +66,7 @@ app.use(
   '/*',
   cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    allowMethods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
     maxAge: 86400,

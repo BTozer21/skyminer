@@ -1,4 +1,5 @@
 import {
+  columnSizingFeature,
   columnFilteringFeature,
   columnVisibilityFeature,
   createFilteredRowModel,
@@ -14,6 +15,7 @@ import {
 } from '@tanstack/react-table';
 
 export const features = tableFeatures({
+  columnSizingFeature,
   columnFilteringFeature,
   columnVisibilityFeature,
   rowPaginationFeature,

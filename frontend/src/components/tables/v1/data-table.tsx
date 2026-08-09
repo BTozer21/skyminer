@@ -32,6 +32,11 @@ export function DataTable<TData extends RowData>({
     features,
     data,
     columns,
+    defaultColumn: {
+      size: 200,
+      minSize: 50,
+      maxSize: 500,
+    },
   })
 
   return (
@@ -44,7 +49,11 @@ export function DataTable<TData extends RowData>({
                 return (
                   // Sticky on the cells, not the row: the row's bottom border
                   // scrolls away with the body, so the border lives here too.
-                  <TableHead key={header.id} className="bg-muted sticky top-0 z-10 border-b">
+                  <TableHead
+                    key={header.id}
+                    className="bg-muted sticky top-0 z-10 border-b"
+                    style={{ width: header.getSize() }}
+                  >
                     {header.isPlaceholder ? null : (
                       <table.FlexRender header={header} />
                     )}

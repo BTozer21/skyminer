@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { deleteJob } from '@/lib/api';
+import { deleteJob, updateJob } from '@/lib/api';
 
 import type { DataTableFeatures } from '../data-table-features.ts';
 import type { JobResponse } from '@/lib/api';
@@ -26,6 +26,7 @@ const columnHelper = createColumnHelper<DataTableFeatures, JobResponse>()
 export const columns = columnHelper.columns([
   columnHelper.accessor("name", {
     header: "Name",
+    size: 240,
     cell: ({ row }) => {
       const job = row.original
 
@@ -43,13 +44,55 @@ export const columns = columnHelper.columns([
   columnHelper.accessor("client.name", {
     id: "client",
     header: "Client",
+    size: 180,
   }),
   columnHelper.accessor("status", {
     header: "Status",
-    cell: ({ getValue }) => <div className="first-letter:uppercase">{getValue()}</div>
+    size: 140,
+    cell: ({ row }) => {
+      const job = row.original
+
+      // Hooks are fine here: flexRender renders `cell` as a component.
+      const queryClient = useQueryClient()
+      const update = useMutation({
+        mutationFn: (status: JobResponse['status']) => updateJob(job.id, { status }),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          toast.success('Status updated')
+        },
+        onError: (error) => {
+          toast.error(error.message)
+        },
+      })
+
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              disabled={update.isPending}
+              className="capitalize -m-2 block w-[calc(100%+1rem)] p-2 text-left hover:bg-muted disabled:opacity-50"
+            >
+              {job.status}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {(['planning', 'planned', 'complete'] as const).map((status) => (
+              <DropdownMenuItem
+                key={status}
+                className="capitalize"
+                onClick={() => update.mutate(status)}
+              >
+                {status}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )
+    }
   }),
   columnHelper.accessor("startDate", {
     header: "Start Date",
+    size: 130,
     cell: ({ getValue }) => {
       const createdAt = getValue()
 
@@ -60,6 +103,7 @@ export const columns = columnHelper.columns([
   }),
   columnHelper.accessor("endDate", {
     header: "End Date",
+    size: 130,
     cell: ({ getValue }) => {
       const createdAt = getValue()
 
@@ -70,6 +114,7 @@ export const columns = columnHelper.columns([
   }),
   columnHelper.display({
     id: "actions",
+    size: 80,
     header: () => <div className="text-right">Action</div>,
     cell: ({ row }) => {
       const data = row.original
