@@ -6,7 +6,7 @@ import { CreateJobForm } from '@/components/forms/v1/create-job-form';
 import { columns } from '@/components/tables/v1/jobs/columns';
 import { DataTable } from '@/components/tables/v1/data-table';
 
-export const Route = createFileRoute('/_authenticated/admin/jobs')({
+export const Route = createFileRoute('/_authenticated/admin/jobs/')({
   component: RouteComponent,
 })
 

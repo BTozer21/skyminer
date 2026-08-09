@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -25,6 +26,19 @@ const columnHelper = createColumnHelper<DataTableFeatures, JobResponse>()
 export const columns = columnHelper.columns([
   columnHelper.accessor("name", {
     header: "Name",
+    cell: ({ row }) => {
+      const job = row.original
+
+      return (
+        <Link
+          to="/admin/jobs/$jobId"
+          params={{ jobId: String(job.id) }}
+          className="font-medium hover:underline"
+        >
+          {job.name}
+        </Link>
+      )
+    }
   }),
   columnHelper.accessor("client.name", {
     id: "client",
