@@ -1,6 +1,7 @@
 # AI files
 CLAUDE.md
 .cursor/
+*.md
 
 # dependencies (bun install)
 node_modules
