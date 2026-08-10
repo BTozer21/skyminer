@@ -3,6 +3,7 @@ import type { ColumnDef, RowData } from '@tanstack/react-table';
 
 import { cn } from '@/lib/utils';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -18,14 +19,16 @@ import type { DataTableFeatures } from './data-table-features.ts';
 interface DataTableProps<TData extends RowData> {
   columns: ColumnDef<DataTableFeatures, TData>[]
   data: TData[]
-  // Pass a bounded height (e.g. "min-h-0 flex-1") to make the rows scroll
-  // inside the table instead of growing the page.
+  isLoading?: boolean
+  skeletonRows?: number
   className?: string
 }
 
 export function DataTable<TData extends RowData>({
   columns,
   data,
+  isLoading = false,
+  skeletonRows = 8,
   className,
 }: DataTableProps<TData>) {
   const table = useTable({
@@ -47,8 +50,6 @@ export function DataTable<TData extends RowData>({
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
                 return (
-                  // Sticky on the cells, not the row: the row's bottom border
-                  // scrolls away with the body, so the border lives here too.
                   <TableHead
                     key={header.id}
                     className="bg-muted sticky top-0 z-10 border-b"
@@ -64,7 +65,17 @@ export function DataTable<TData extends RowData>({
           ))}
         </TableHeader>
         <TableBody>
-          {table.getRowModel().rows.length ? (
+          {isLoading ? (
+            Array.from({ length: skeletonRows }).map((_, i) => (
+              <TableRow key={i}>
+                {table.getAllLeafColumns().map((column) => (
+                  <TableCell key={column.id} style={{ width: column.getSize() }}>
+                    <Skeleton className="h-5 w-[70%]" />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}

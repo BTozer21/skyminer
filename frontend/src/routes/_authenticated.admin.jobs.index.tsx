@@ -19,8 +19,12 @@ function RouteComponent() {
         <h1 className="font-bold text-xl">Jobs</h1>
         <CreateJobForm />
       </div>
-      {isPending && <p>Waiting for Jobs</p>}
-      {jobs && <DataTable columns={columns} data={jobs} className="min-h-0 flex-1" />}
+      <DataTable
+        columns={columns}
+        data={jobs ?? []}
+        isLoading={isPending}
+        className="min-h-0 flex-1"
+      />
     </div>
   )
 }
