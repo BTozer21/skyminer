@@ -80,12 +80,12 @@ export const columns = columnHelper.columns([
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             {STATUSES.map((status) => {
-              const { icon: Icon, className, hover } = STATUS_CONFIG[status]
+              const { icon: Icon, className, hover, focus } = STATUS_CONFIG[status]
 
               return (
                 <DropdownMenuItem
                   key={status}
-                  className={`capitalize hover:cursor-pointer gap-2 focus:${hover.replace('hover:', '')}`}
+                  className={`capitalize hover:cursor-pointer gap-2 ${hover} ${focus}`}
                   onClick={() => update.mutate(status)}
                 >
                   <Icon className={`size-4 ${className}`} />
@@ -118,6 +118,15 @@ export const columns = columnHelper.columns([
       if (!createdAt) return <span className="text-muted-foreground">-</span>
 
       return format(new Date(createdAt), 'EEE d MMM yy')
+    }
+  }),
+  columnHelper.accessor("quote", {
+    header: "Quote",
+    size: 100,
+    cell: ({ getValue }) => {
+      const quote = getValue();
+
+      return <span>{quote ? 'Yes' : 'No'}</span>
     }
   }),
   columnHelper.display({
