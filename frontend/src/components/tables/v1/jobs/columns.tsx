@@ -29,6 +29,11 @@ import type { JobResponse } from '@/lib/api';
 const columnHelper = createColumnHelper<DataTableFeatures, JobResponse>()
 
 export const columns = columnHelper.columns([
+  columnHelper.accessor("client.name", {
+    id: "client",
+    header: "Client",
+    size: 180,
+  }),
   columnHelper.accessor("name", {
     header: "Name",
     size: 240,
@@ -45,11 +50,6 @@ export const columns = columnHelper.columns([
         </Link>
       )
     }
-  }),
-  columnHelper.accessor("client.name", {
-    id: "client",
-    header: "Client",
-    size: 180,
   }),
   columnHelper.accessor("status", {
     header: "Status",

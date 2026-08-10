@@ -77,33 +77,6 @@ export function CreateJobForm() {
                 <FieldDescription>Create a job</FieldDescription>
                 <FieldGroup>
                   <form.Field
-                    name="name"
-                    validators={{
-                      onSubmit: ({ value }) =>
-                        value.trim() ? undefined : { message: 'Name is required' },
-                    }}
-                    children={(field) => {
-                      const isInvalid =
-                        field.state.meta.isTouched && !field.state.meta.isValid
-                      return (
-                        <Field data-invalid={isInvalid}>
-                          <FieldLabel htmlFor={field.name}>Name</FieldLabel>
-                          <Input
-                            id={field.name}
-                            name={field.name}
-                            placeholder="Job name"
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            aria-invalid={isInvalid}
-                            autoComplete="off"
-                          />
-                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                        </Field>
-                      )
-                    }}
-                  />
-                  <form.Field
                     name="clientId"
                     validators={{
                       onSubmit: ({ value }) =>
@@ -135,6 +108,33 @@ export function CreateJobForm() {
                               ))}
                             </SelectContent>
                           </Select>
+                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                        </Field>
+                      )
+                    }}
+                  />
+                  <form.Field
+                    name="name"
+                    validators={{
+                      onSubmit: ({ value }) =>
+                        value.trim() ? undefined : { message: 'Name is required' },
+                    }}
+                    children={(field) => {
+                      const isInvalid =
+                        field.state.meta.isTouched && !field.state.meta.isValid
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+                          <Input
+                            id={field.name}
+                            name={field.name}
+                            placeholder="Job name"
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            aria-invalid={isInvalid}
+                            autoComplete="off"
+                          />
                           {isInvalid && <FieldError errors={field.state.meta.errors} />}
                         </Field>
                       )
