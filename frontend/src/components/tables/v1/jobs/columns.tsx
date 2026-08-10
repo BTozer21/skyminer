@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { CalendarIcon, MoreHorizontal } from 'lucide-react';
+import { CalendarIcon, MoreHorizontal, CheckCircle2, Circle } from 'lucide-react';
 import { format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { toast } from 'sonner';
@@ -56,7 +56,7 @@ export const columns = columnHelper.columns([
     size: 140,
     cell: ({ row }) => {
       const job = row.original
-      const { icon: StatusIcon, className: statusClassName, hover: statusHover } = STATUS_CONFIG[job.status]
+      const { icon: StatusIcon, className: statusClassName } = STATUS_CONFIG[job.status]
 
       // Hooks are fine here: flexRender renders `cell` as a component.
       const queryClient = useQueryClient()
@@ -76,7 +76,7 @@ export const columns = columnHelper.columns([
           <DropdownMenuTrigger asChild>
             <button
               disabled={update.isPending}
-              className={`capitalize -m-2 ${statusClassName} ${statusHover} rounded-sm flex items-center gap-2 w-fit p-2 text-left disabled:opacity-50`}
+              className={`capitalize -m-2 ${statusClassName} hover:bg-muted rounded-sm flex items-center gap-2 w-fit p-2 text-left disabled:opacity-50`}
             >
               <StatusIcon className="size-4 shrink-0" />
               {job.status}
@@ -84,12 +84,12 @@ export const columns = columnHelper.columns([
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             {STATUSES.map((status) => {
-              const { icon: Icon, className, hover, focus } = STATUS_CONFIG[status]
+              const { icon: Icon, className } = STATUS_CONFIG[status]
 
               return (
                 <DropdownMenuItem
                   key={status}
-                  className={`capitalize hover:cursor-pointer gap-2 ${hover} ${focus}`}
+                  className={`capitalize hover:cursor-pointer gap-2`}
                   onClick={() => update.mutate(status)}
                 >
                   <Icon className={`size-4 ${className}`} />
@@ -186,12 +186,198 @@ export const columns = columnHelper.columns([
     }
   }),
   columnHelper.accessor("quote", {
-    header: "Quote",
+    header: () => <div className="text-center">Quote</div>,
     size: 100,
-    cell: ({ getValue }) => {
-      const quote = getValue();
+    cell: ({ row }) => {
+      const job = row.original;
+      const quote = job.quote;
 
-      return <span>{quote ? 'Yes' : 'No'}</span>
+      const queryClient = useQueryClient()
+      const update = useMutation({
+        mutationFn: (quote: JobResponse['quote']) => updateJob(job.id, { quote }),
+        onMutate: async (quote) => {
+          await queryClient.cancelQueries({ queryKey: ['jobs'] })
+          const previous = queryClient.getQueryData<JobResponse[]>(['jobs'])
+          queryClient.setQueryData<JobResponse[]>(['jobs'], (old) =>
+            old?.map((j) => (j.id === job.id ? { ...j, quote } : j))
+          )
+          return { previous }
+        },
+        onError: (error, _quote, context) => {
+          queryClient.setQueryData(['jobs'], context?.previous)
+          toast.error(error.message)
+        },
+        onSettled: () => {
+          queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          toast.success("Quote updated");
+        },
+      })
+      return (
+        <div className="flex justify-center">
+          <button onClick={() => update.mutate(!quote)} disabled={update.isPending}>
+            {quote
+              ? <CheckCircle2 className="text-green-500 hover:text-green-700"/>
+              : <Circle className="text-blue-500 hover:text-blue-700"/>
+            }
+          </button>
+        </div>
+      )
+    }
+  }),
+  columnHelper.accessor("rams", {
+    header: () => <div className="text-center">RAMS</div>,
+    size: 100,
+    cell: ({ row }) => {
+      const job = row.original;
+      const rams = job.rams;
+
+      const queryClient = useQueryClient()
+      const update = useMutation({
+        mutationFn: (rams: JobResponse['rams']) => updateJob(job.id, { rams }),
+        onMutate: async (rams) => {
+          await queryClient.cancelQueries({ queryKey: ['jobs'] })
+          const previous = queryClient.getQueryData<JobResponse[]>(['jobs'])
+          queryClient.setQueryData<JobResponse[]>(['jobs'], (old) =>
+            old?.map((j) => (j.id === job.id ? { ...j, rams } : j))
+          )
+          return { previous }
+        },
+        onError: (error, _rams, context) => {
+          queryClient.setQueryData(['jobs'], context?.previous)
+          toast.error(error.message)
+        },
+        onSettled: () => {
+          queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          toast.success("RAMS updated");
+        },
+      })
+      return (
+        <div className="flex justify-center">
+          <button onClick={() => update.mutate(!rams)} disabled={update.isPending}>
+            {rams
+              ? <CheckCircle2 className="text-green-500 hover:text-green-700"/>
+              : <Circle className="text-blue-500 hover:text-blue-700"/>
+            }
+          </button>
+        </div>
+      )
+    }
+  }),
+  columnHelper.accessor("po", {
+    header: () => <div className="text-center">PO</div>,
+    size: 100,
+    cell: ({ row }) => {
+      const job = row.original;
+      const po = job.po;
+
+      const queryClient = useQueryClient()
+      const update = useMutation({
+        mutationFn: (po: JobResponse['po']) => updateJob(job.id, { po }),
+        onMutate: async (po) => {
+          await queryClient.cancelQueries({ queryKey: ['jobs'] })
+          const previous = queryClient.getQueryData<JobResponse[]>(['jobs'])
+          queryClient.setQueryData<JobResponse[]>(['jobs'], (old) =>
+            old?.map((j) => (j.id === job.id ? { ...j, po } : j))
+          )
+          return { previous }
+        },
+        onError: (error, _po, context) => {
+          queryClient.setQueryData(['jobs'], context?.previous)
+          toast.error(error.message)
+        },
+        onSettled: () => {
+          queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          toast.success("PO updated");
+        },
+      })
+      return (
+        <div className="flex justify-center">
+          <button onClick={() => update.mutate(!po)} disabled={update.isPending}>
+            {po
+              ? <CheckCircle2 className="text-green-500 hover:text-green-700"/>
+              : <Circle className="text-blue-500 hover:text-blue-700"/>
+            }
+          </button>
+        </div>
+      )
+    }
+  }),
+  columnHelper.accessor("report", {
+    header: () => <div className="text-center">Report</div>,
+    size: 100,
+    cell: ({ row }) => {
+      const job = row.original;
+      const report = job.report;
+
+      const queryClient = useQueryClient()
+      const update = useMutation({
+        mutationFn: (report: JobResponse['report']) => updateJob(job.id, { report }),
+        onMutate: async (report) => {
+          await queryClient.cancelQueries({ queryKey: ['jobs'] })
+          const previous = queryClient.getQueryData<JobResponse[]>(['jobs'])
+          queryClient.setQueryData<JobResponse[]>(['jobs'], (old) =>
+            old?.map((j) => (j.id === job.id ? { ...j, report } : j))
+          )
+          return { previous }
+        },
+        onError: (error, _report, context) => {
+          queryClient.setQueryData(['jobs'], context?.previous)
+          toast.error(error.message)
+        },
+        onSettled: () => {
+          queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          toast.success("Report updated");
+        },
+      })
+      return (
+        <div className="flex justify-center">
+          <button onClick={() => update.mutate(!report)} disabled={update.isPending}>
+            {report
+              ? <CheckCircle2 className="text-green-500 hover:text-green-700"/>
+              : <Circle className="text-blue-500 hover:text-blue-700"/>
+            }
+          </button>
+        </div>
+      )
+    }
+  }),
+  columnHelper.accessor("invoice", {
+    header: () => <div className="text-center">Invoice</div>,
+    size: 100,
+    cell: ({ row }) => {
+      const job = row.original;
+      const invoice = job.invoice;
+
+      const queryClient = useQueryClient()
+      const update = useMutation({
+        mutationFn: (invoice: JobResponse['invoice']) => updateJob(job.id, { invoice }),
+        onMutate: async (invoice) => {
+          await queryClient.cancelQueries({ queryKey: ['jobs'] })
+          const previous = queryClient.getQueryData<JobResponse[]>(['jobs'])
+          queryClient.setQueryData<JobResponse[]>(['jobs'], (old) =>
+            old?.map((j) => (j.id === job.id ? { ...j, invoice } : j))
+          )
+          return { previous }
+        },
+        onError: (error, _invoice, context) => {
+          queryClient.setQueryData(['jobs'], context?.previous)
+          toast.error(error.message)
+        },
+        onSettled: () => {
+          queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          toast.success("Invoice updated");
+        },
+      })
+      return (
+        <div className="flex justify-center">
+          <button onClick={() => update.mutate(!invoice)} disabled={update.isPending}>
+            {invoice
+              ? <CheckCircle2 className="text-green-500 hover:text-green-700"/>
+              : <Circle className="text-blue-500 hover:text-blue-700"/>
+            }
+          </button>
+        </div>
+      )
     }
   }),
   columnHelper.display({

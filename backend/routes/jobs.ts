@@ -20,6 +20,11 @@ const updateJobSchema = createInsertSchema(jobs).pick({
   endDate: true,
   clientId: true,
   status: true,
+  quote: true,
+  rams: true,
+  po: true,
+  report: true,
+  invoice: true,
 }).partial();
 
 export const jobsRoute = new Hono<{ Variables: AppVariables }>()
