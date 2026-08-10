@@ -1,11 +1,15 @@
+import { useState } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { MoreHorizontal } from 'lucide-react';
+import { CalendarIcon, MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
+import type { DateRange } from 'react-day-picker';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,7 +76,7 @@ export const columns = columnHelper.columns([
           <DropdownMenuTrigger asChild>
             <button
               disabled={update.isPending}
-              className={`capitalize -m-2 ${statusClassName} ${statusHover} rounded-sm flex items-center gap-2 w-[calc(100%+1rem)] p-2 text-left disabled:opacity-50`}
+              className={`capitalize -m-2 ${statusClassName} ${statusHover} rounded-sm flex items-center gap-2 w-fit p-2 text-left disabled:opacity-50`}
             >
               <StatusIcon className="size-4 shrink-0" />
               {job.status}
@@ -98,26 +102,87 @@ export const columns = columnHelper.columns([
       )
     }
   }),
-  columnHelper.accessor("startDate", {
-    header: "Start Date",
-    size: 130,
-    cell: ({ getValue }) => {
-      const createdAt = getValue()
+  columnHelper.display({
+    id: "dates",
+    header: "Dates",
+    size: 240,
+    cell: ({ row }) => {
+      const job = row.original
 
-      if (!createdAt) return <span className="text-muted-foreground">-</span>
+      const current: DateRange | undefined = job.startDate
+        ? { from: new Date(job.startDate), to: job.endDate ? new Date(job.endDate) : undefined }
+        : undefined
 
-      return format(new Date(createdAt), 'EEE d MMM yy')
-    }
-  }),
-  columnHelper.accessor("endDate", {
-    header: "End Date",
-    size: 130,
-    cell: ({ getValue }) => {
-      const createdAt = getValue()
+      // Hooks are fine here: flexRender renders `cell` as a component.
+      const queryClient = useQueryClient()
+      const [open, setOpen] = useState(false)
+      const [draft, setDraft] = useState<DateRange | undefined>(current)
+      const update = useMutation({
+        mutationFn: (range: { startDate: string; endDate: string }) => updateJob(job.id, range),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          setOpen(false)
+          toast.success('Dates updated')
+        },
+        onError: (error) => {
+          toast.error(error.message)
+        },
+      })
 
-      if (!createdAt) return <span className="text-muted-foreground">-</span>
-
-      return format(new Date(createdAt), 'EEE d MMM yy')
+      return (
+        <Popover
+          open={open}
+          onOpenChange={(next) => {
+            setOpen(next)
+            if (next) setDraft(current)
+          }}
+        >
+          <PopoverTrigger asChild>
+            <button
+              className="-m-2 flex w-fit items-center gap-2 rounded-sm p-2 text-left hover:bg-muted"
+            >
+              <CalendarIcon className="size-4 shrink-0 text-muted-foreground" />
+              {current?.from ? (
+                current.to ? (
+                  <>{format(current.from, 'd MMM yy')} – {format(current.to, 'd MMM yy')}</>
+                ) : (
+                  format(current.from, 'd MMM yy')
+                )
+              ) : (
+                <span className="text-muted-foreground">Set dates</span>
+              )}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="range"
+              defaultMonth={draft?.from}
+              selected={draft}
+              onSelect={setDraft}
+              numberOfMonths={2}
+            />
+            <div className="flex justify-end gap-2 border-t p-3">
+              <Button variant="outline" size="sm" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={!draft?.from || !draft?.to || update.isPending}
+                onClick={() => {
+                  if (draft?.from && draft?.to) {
+                    update.mutate({
+                      startDate: format(draft.from, 'yyyy-MM-dd'),
+                      endDate: format(draft.to, 'yyyy-MM-dd'),
+                    })
+                  }
+                }}
+              >
+                {update.isPending ? 'Saving…' : 'Save'}
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+      )
     }
   }),
   columnHelper.accessor("quote", {
