@@ -12,7 +12,7 @@ import {
   startOfWeek,
   isWeekend,
 } from 'date-fns';
-import { ChevronLeftIcon, ChevronRightIcon, Plus } from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon, Plus, Check, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { authClient } from '../auth';
 import { getJobAssignments } from '@/lib/api.ts';
@@ -156,14 +156,20 @@ function RouteComponent2() {
     );
 
     return (
-      <Button
+      <button
         type="button"
         onClick={() => setSelectedJobId(job.id)}
         title={`Open ${job.name}`}
         variant="outline"
+        className="relative w-full h-full"
       >
         {job.name}
-      </Button>
+        {job.quote && job.rams ? (
+          <CheckCheck className="w-4 h-4 absolute bottom-1 right-1 text-green-600" />
+        ) : job.quote || job.rams ? (
+          <Check className="w-4 h-4 absolute bottom-1 right-1 text-blue-600" />
+        ) : null}
+      </button>
     );
   };
 
@@ -327,7 +333,7 @@ function RouteComponent2() {
                                 {users.map((user) => (
                                   <div
                                     key={user.id}
-                                    className={`group content-center text-center w-full border p-2 text-sm ${rowBg}`}
+                                    className={`group content-center text-center w-full border text-sm ${rowBg}`}
                                   >
                                     {getCell(day, user)}
                                   </div>

@@ -64,6 +64,7 @@ export const columns = columnHelper.columns([
         mutationFn: (status: JobResponse['status']) => updateJob(job.id, { status }),
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          queryClient.invalidateQueries({ queryKey: ['schedule'] })
           toast.success('Status updated')
         },
         onError: (error) => {
@@ -121,6 +122,7 @@ export const columns = columnHelper.columns([
         mutationFn: (range: { startDate: string; endDate: string }) => updateJob(job.id, range),
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          queryClient.invalidateQueries({ queryKey: ['schedule'] })
           setOpen(false)
           toast.success('Dates updated')
         },
@@ -209,6 +211,7 @@ export const columns = columnHelper.columns([
         },
         onSettled: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          queryClient.invalidateQueries({ queryKey: ['schedule'] })
           toast.success("Quote updated");
         },
       })
@@ -248,6 +251,7 @@ export const columns = columnHelper.columns([
         },
         onSettled: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          queryClient.invalidateQueries({ queryKey: ['schedule'] })
           toast.success("RAMS updated");
         },
       })
@@ -287,6 +291,7 @@ export const columns = columnHelper.columns([
         },
         onSettled: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          queryClient.invalidateQueries({ queryKey: ['schedule'] })
           toast.success("PO updated");
         },
       })
@@ -326,6 +331,7 @@ export const columns = columnHelper.columns([
         },
         onSettled: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          queryClient.invalidateQueries({ queryKey: ['schedule'] })
           toast.success("Report updated");
         },
       })
@@ -365,6 +371,7 @@ export const columns = columnHelper.columns([
         },
         onSettled: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          queryClient.invalidateQueries({ queryKey: ['schedule'] })
           toast.success("Invoice updated");
         },
       })
@@ -394,6 +401,7 @@ export const columns = columnHelper.columns([
         mutationFn: deleteJob,
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
+          queryClient.invalidateQueries({ queryKey: ['schedule'] })
           // The schedule grid is built from assignments, which cascade away
           // with the job, so it is stale too.
           queryClient.invalidateQueries({ queryKey: ['schedule'] })

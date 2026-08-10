@@ -1,6 +1,7 @@
+import { Link } from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { X } from 'lucide-react';
+import { X, Circle, CircleCheck, SquareArrowOutUpRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -35,17 +36,27 @@ export function JobAssignmentDialog({ job, onOpenChange }: JobAssignmentDialogPr
   // needs the content mounted while it animates closed.
   return (
     <Dialog open={job !== null} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent showCloseButton={false}>
         {job && (
           <>
             <DialogHeader>
-              <DialogTitle>{job.name}</DialogTitle>
+              <DialogTitle className="flex justify-between">
+                {job.name}
+                <Link to="/admin/jobs/$jobId" params={{ jobId: String(job.id) }}>
+                  <SquareArrowOutUpRight className="w-4 h-fit"/>
+                </Link>
+              </DialogTitle>
               <DialogDescription>
                 {format(new Date(job.startDate), 'd MMM yyyy')} –{' '}
                 {format(new Date(job.endDate), 'd MMM yyyy')}
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-2">
+              <h2 className="text-sm font-medium">Checklist</h2>
+              <div className="flex flex-col gap-1 mb-2">
+                <span className="flex items-center text-sm gap-2">{job.quote ? <CircleCheck className="h-5 w-5 text-green-500" /> : <Circle className="h-5 w-5 text-blue-500" />} Quote sent</span>
+                <span className="flex items-center text-sm gap-2">{job.rams ? <CircleCheck className="h-5 w-5 text-green-500"/> : <Circle className="h-5 w-5 text-blue-500" />} RAMS sent</span>
+              </div>
               <h2 className="text-sm font-medium">Assigned team</h2>
               {job.jobAssignments.length ? (
                 <ul className="flex flex-col gap-1">
