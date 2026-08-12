@@ -7,6 +7,17 @@ import { format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { toast } from 'sonner';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -219,8 +230,8 @@ export const columns = columnHelper.columns([
         <div className="flex justify-center">
           <button onClick={() => update.mutate(!quote)} disabled={update.isPending}>
             {quote
-              ? <CheckCircle2 className="text-green-500 hover:text-green-700"/>
-              : <Circle className="text-blue-500 hover:text-blue-700"/>
+              ? <CheckCircle2 className="text-green-500 hover:text-green-700" />
+              : <Circle className="text-blue-500 hover:text-blue-700" />
             }
           </button>
         </div>
@@ -259,8 +270,8 @@ export const columns = columnHelper.columns([
         <div className="flex justify-center">
           <button onClick={() => update.mutate(!rams)} disabled={update.isPending}>
             {rams
-              ? <CheckCircle2 className="text-green-500 hover:text-green-700"/>
-              : <Circle className="text-blue-500 hover:text-blue-700"/>
+              ? <CheckCircle2 className="text-green-500 hover:text-green-700" />
+              : <Circle className="text-blue-500 hover:text-blue-700" />
             }
           </button>
         </div>
@@ -299,8 +310,8 @@ export const columns = columnHelper.columns([
         <div className="flex justify-center">
           <button onClick={() => update.mutate(!po)} disabled={update.isPending}>
             {po
-              ? <CheckCircle2 className="text-green-500 hover:text-green-700"/>
-              : <Circle className="text-blue-500 hover:text-blue-700"/>
+              ? <CheckCircle2 className="text-green-500 hover:text-green-700" />
+              : <Circle className="text-blue-500 hover:text-blue-700" />
             }
           </button>
         </div>
@@ -339,8 +350,8 @@ export const columns = columnHelper.columns([
         <div className="flex justify-center">
           <button onClick={() => update.mutate(!report)} disabled={update.isPending}>
             {report
-              ? <CheckCircle2 className="text-green-500 hover:text-green-700"/>
-              : <Circle className="text-blue-500 hover:text-blue-700"/>
+              ? <CheckCircle2 className="text-green-500 hover:text-green-700" />
+              : <Circle className="text-blue-500 hover:text-blue-700" />
             }
           </button>
         </div>
@@ -379,8 +390,8 @@ export const columns = columnHelper.columns([
         <div className="flex justify-center">
           <button onClick={() => update.mutate(!invoice)} disabled={update.isPending}>
             {invoice
-              ? <CheckCircle2 className="text-green-500 hover:text-green-700"/>
-              : <Circle className="text-blue-500 hover:text-blue-700"/>
+              ? <CheckCircle2 className="text-green-500 hover:text-green-700" />
+              : <Circle className="text-blue-500 hover:text-blue-700" />
             }
           </button>
         </div>
@@ -401,7 +412,6 @@ export const columns = columnHelper.columns([
         mutationFn: deleteJob,
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
-          queryClient.invalidateQueries({ queryKey: ['schedule'] })
           // The schedule grid is built from assignments, which cascade away
           // with the job, so it is stale too.
           queryClient.invalidateQueries({ queryKey: ['schedule'] })
@@ -414,24 +424,44 @@ export const columns = columnHelper.columns([
 
       return (
         <div className="flex justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                variant="destructive"
-                disabled={removal.isPending}
-                onClick={() => removal.mutate(data.id)}
-              >
-                {removal.isPending ? 'Deleting…' : 'Delete Job'}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* The dialog wraps the menu so closing the menu does not unmount it. */}
+          <AlertDialog>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem variant="destructive" onSelect={(event) => event.preventDefault()}>
+                    Delete Job
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete “{data.name}”?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This permanently deletes the job and everything scheduled
+                  against it. This cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="border-t-0 bg-transparent">
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={() => removal.mutate(data.id)}
+                >
+                  Delete Job
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       )
     }
