@@ -14,6 +14,7 @@ import {
 } from 'date-fns';
 import { ChevronLeftIcon, ChevronRightIcon, Plus, Check, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CreateJobForm } from '@/components/forms/v1/create-job-form';
 import { authClient } from '../auth';
 import { getJobAssignments } from '@/lib/api.ts';
 import type { AdminUser, ScheduleJob } from '@/lib/api.ts';
@@ -247,6 +248,7 @@ function RouteComponent2() {
           >
             <ChevronRightIcon />
           </Button>
+          <CreateJobForm />
         </div>
       </div>
 
