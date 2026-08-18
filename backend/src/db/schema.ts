@@ -230,6 +230,47 @@ export const jobAssignments = pgTable("job_assignments", {
   pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`( SELECT ((auth.user_id())::uuid = job_assignments.user_id))` }),
 ]);
 
+export const locations = pgTable("locations", {
+  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "locations_id_seq" }),
+  customerId: bigint("customer_id", { mode: "number" }).notNull(),
+  postCode: text("post_code").notNull(),
+}, (table) => [
+    foreignKey({
+      columns: [table.customerId],
+      foreignColumns: [customers.id],
+      name: "locations_customer_id_fk"
+    })
+]);
+
+export const machines = pgTable("machines", {
+  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "machines_id_seq" }),
+  type: text().notNull(),
+  locationId: bigint( "location_id", { mode: "number" }).notNull(),
+}, (table) => [
+    foreignKey({
+      columns: [table.locationId],
+      foreignColumns: [locations.id],
+      name: "machines_location_id_fk"
+    })
+]);
+
+export const jobMachines = pgTable("job_machines", {
+  id: bigint({mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "job_machines_id_seq" }),
+  jobId: bigint( "job_id", { mode: "number" }).notNull(),
+  machineId: bigint( "machine_id", { mode: "number" }).notNull(),
+}, (table) => [
+    foreignKey({
+      columns: [table.jobId],
+      foreignColumns: [jobs.id],
+      name: "job_machines_job_id_fk"
+    }),
+    foreignKey({
+      columns: [table.machineId],
+      foreignColumns: [machines.id],
+      name: "job_machines_machine_id_fk"
+    })
+]);
+
 export const leaveRequests = pgTable("leave_requests", {
   // You can use { mode: "bigint" } if numbers are exceeding js number limitations
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "leave_requests_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
