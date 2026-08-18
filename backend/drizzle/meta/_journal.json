@@ -92,6 +92,13 @@
       "when": 1786289477360,
       "tag": "0012_nosy_master_mold",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1787065233384,
+      "tag": "0013_glossy_mastermind",
+      "breakpoints": true
     }
   ]
 }
