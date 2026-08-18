@@ -9,7 +9,7 @@ import 'dotenv/config';
 import { db } from './src/db/index.ts';
 import { userInNeonAuth } from './src/db/schema.ts';
 import { jobsRoute } from './routes/jobs.ts';
-import { clientsRoute } from './routes/clients.ts';
+import { customersRoute } from './routes/customers.ts';
 import { leaveRequestsRoute } from './routes/leave-requests.ts';
 import { adminRoute } from './routes/admin.ts';
 import type { AppVariables } from './src/types.ts';
@@ -73,7 +73,7 @@ app.use(
   })
 );
 
-const apiRoutes = app.basePath('/api').use(authMiddleware).use('/admin/*', adminOnly).route("/admin", adminRoute).route("/jobs", jobsRoute).route("/clients", clientsRoute).route("/leave-requests", leaveRequestsRoute)
+const apiRoutes = app.basePath('/api').use(authMiddleware).use('/admin/*', adminOnly).route("/admin", adminRoute).route("/jobs", jobsRoute).route("/customers", customersRoute).route("/leave-requests", leaveRequestsRoute)
 
 serve(
   {

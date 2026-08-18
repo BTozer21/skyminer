@@ -99,7 +99,7 @@ function AssignForm({
           <SelectContent>
             {candidates.map((job) => (
               <SelectItem key={job.id} value={String(job.id)}>
-                {job.name} — {job.client?.name}
+                {job.name} — {job.customer?.name}
               </SelectItem>
             ))}
           </SelectContent>

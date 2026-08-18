@@ -61,8 +61,8 @@ const data: { navMain: NavItem[] } = {
       admin: true,
     },
     {
-      title: "Clients",
-      url: "/admin/clients",
+      title: "Customers",
+      url: "/admin/customers",
       icon: <Building2 />,
       admin: true,
     },

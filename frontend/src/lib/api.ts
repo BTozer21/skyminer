@@ -40,9 +40,9 @@ export async function getJob(id: number) {
   return data;
 }
 
-export async function getClients() {
+export async function getCustomers() {
   const headers = await getAuthHeaders();
-  const res = await api.clients.$get({}, { headers });
+  const res = await api.customers.$get({}, { headers });
   if (!res.ok) {
     throw new Error("There was an error here");
   }
@@ -51,13 +51,13 @@ export async function getClients() {
   return data;
 };
 
-export type ClientResponse = InferResponseType<typeof api.clients.$get>['data'][number]
+export type CustomerResponse = InferResponseType<typeof api.customers.$get>['data'][number]
 
 export type JobResponse = InferResponseType<typeof api.jobs.$get>['data'][number]
 
 type CreateJobInput = InferRequestType<typeof api.jobs.$post>['json'];
 
-type CreateClientInput = InferRequestType<typeof api.clients.$post>['json'];
+type CreateCustomerInput = InferRequestType<typeof api.customers.$post>['json'];
 
 export async function createJob(job: CreateJobInput) {
   const headers = await getAuthHeaders();
@@ -96,24 +96,24 @@ export async function deleteJob(id: number) {
   return res.json();
 }
 
-export async function createClient(clients: CreateClientInput) {
+export async function createCustomer(customers: CreateCustomerInput) {
   const headers = await getAuthHeaders();
-  const res = await api.clients.$post({ json: clients }, { headers });
+  const res = await api.customers.$post({ json: customers }, { headers });
   if (!res.ok) {
     throw new Error("There was an error here");
   }
   return res.json();
 }
 
-export async function deleteClient(id: number) {
+export async function deleteCustomer(id: number) {
   const headers = await getAuthHeaders();
-  const res = await api.clients[':id'].$delete({ param: { id: String(id) } }, { headers });
+  const res = await api.customers[':id'].$delete({ param: { id: String(id) } }, { headers });
   if (!res.ok) {
     throw new Error(
       res.status === 409
-        ? 'That client still has jobs — delete those first'
+        ? 'That customer still has jobs — delete those first'
         : res.status === 404
-          ? 'That client has already been deleted'
+          ? 'That customer has already been deleted'
           : 'There was an error here',
     );
   }

@@ -11,14 +11,14 @@ const createJobSchema = createInsertSchema(jobs).pick({
   name: true,
   startDate: true,
   endDate: true,
-  clientId: true,
+  customerId: true,
 });
 
 const updateJobSchema = createInsertSchema(jobs).pick({
   name: true,
   startDate: true,
   endDate: true,
-  clientId: true,
+  customerId: true,
   status: true,
   quote: true,
   rams: true,
@@ -32,7 +32,7 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
   const userId = c.get('userId');
   const allJobs = await getAuthenticatedDb(userId, async (tx) => {
     const result = await tx.query.jobs.findMany({
-      with: { client: true },
+      with: { customer: true },
       orderBy: (jobs, { desc }) => [desc(jobs.createdAt)],
     });
     return result;
@@ -48,7 +48,7 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
   const job = await getAuthenticatedDb(userId, async (tx) => {
     const result = await tx.query.jobs.findFirst({
       where: (jobs, { eq }) => eq(jobs.id, id),
-      with: { client: true },
+      with: { customer: true },
     });
     return result;
   });

@@ -159,7 +159,7 @@ export const projectConfigInNeonAuth = neonAuth.table("project_config", {
 
 export const customers = pgTable("customers", {
   // no maxValue here: as a JS number 9223372036854775807 rounds out of bigint range; drizzle's default is correct
-  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "clients_id_seq" }),
+  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "customers_id_seq" }),
   name: text().notNull(),
   createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
@@ -194,7 +194,7 @@ export const jobs = pgTable("jobs", {
   foreignKey({
     columns: [table.customerId],
     foreignColumns: [customers.id],
-    name: "jobs_client_id_clients_id_fk"
+    name: "jobs_customer_id_customers_id_fk"
   }),
   pgPolicy("admin-authenticated_backend-policy-all", {
     as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1

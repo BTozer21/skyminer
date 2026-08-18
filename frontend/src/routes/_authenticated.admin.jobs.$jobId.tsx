@@ -32,8 +32,8 @@ function RouteComponent() {
         <p className="text-destructive">Could not load this job.</p>
       ) : (
         <dl className="grid max-w-md grid-cols-[8rem_1fr] gap-y-2 text-sm">
-          <dt className="text-muted-foreground">Client</dt>
-          <dd>{isPending ? <Skeleton className="h-5 w-40" /> : job?.client?.name ?? '-'}</dd>
+          <dt className="text-muted-foreground">Customer</dt>
+          <dd>{isPending ? <Skeleton className="h-5 w-40" /> : job?.customer?.name ?? '-'}</dd>
 
           <dt className="text-muted-foreground">Status</dt>
           <dd>

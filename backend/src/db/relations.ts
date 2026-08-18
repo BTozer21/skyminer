@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { organizationInNeonAuth, invitationInNeonAuth, userInNeonAuth, sessionInNeonAuth, accountInNeonAuth, memberInNeonAuth, leaveRequests, jobs, clients, jobAssignments } from "./schema";
+import { organizationInNeonAuth, invitationInNeonAuth, userInNeonAuth, sessionInNeonAuth, accountInNeonAuth, memberInNeonAuth, leaveRequests, jobs, customers, jobAssignments } from "./schema";
 
 export const invitationInNeonAuthRelations = relations(invitationInNeonAuth, ({one}) => ({
 	organizationInNeonAuth: one(organizationInNeonAuth, {
@@ -59,9 +59,9 @@ export const leaveRequestsRelations = relations(leaveRequests, ({one}) => ({
 }));
 
 export const jobsRelations = relations(jobs, ({one, many}) => ({
-	client: one(clients, {
-		fields: [jobs.clientId],
-		references: [clients.id]
+	customer: one(customers, {
+		fields: [jobs.customerId],
+		references: [customers.id]
 	}),
 	jobAssignments: many(jobAssignments),
 }));
@@ -77,6 +77,6 @@ export const jobAssignmentsRelations = relations(jobAssignments, ({one}) => ({
 	}),
 }));
 
-export const clientsRelations = relations(clients, ({many}) => ({
+export const customersRelations = relations(customers, ({many}) => ({
 	jobs: many(jobs),
 }));

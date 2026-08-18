@@ -12,12 +12,12 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 import { CalendarIcon, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { createJob, getClients } from '@/lib/api';
+import { createJob, getCustomers } from '@/lib/api';
 
 export function CreateJobForm() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const { data: clients, isPending } = useQuery({ queryKey: ['clients'], queryFn: getClients, staleTime: Infinity });
+  const { data: customers, isPending } = useQuery({ queryKey: ['customers'], queryFn: getCustomers, staleTime: Infinity });
 
   const mutation = useMutation({
     mutationFn: createJob,
@@ -34,13 +34,13 @@ export function CreateJobForm() {
     defaultValues: {
       name: '',
       dateRange: undefined as DateRange | undefined,
-      clientId: '',
+      customerId: '',
     },
     onSubmit: async ({ value }) => {
       const { from, to } = value.dateRange!;
       await mutation.mutateAsync({
         name: value.name.trim(),
-        clientId: Number(value.clientId),
+        customerId: Number(value.customerId),
         startDate: format(from!, 'yyyy-MM-dd'),
         endDate: format(to!, 'yyyy-MM-dd'),
       });
@@ -77,16 +77,16 @@ export function CreateJobForm() {
                 <FieldDescription>Create a job</FieldDescription>
                 <FieldGroup>
                   <form.Field
-                    name="clientId"
+                    name="customerId"
                     validators={{
                       onSubmit: ({ value }) =>
-                        value ? undefined : { message: 'A Client must be selected' }
+                        value ? undefined : { message: 'A Customer must be selected' }
                     }}
                     children={(field) => {
                       const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
                       return (
                         <Field data-invalid={isInvalid}>
-                          <FieldLabel htmlFor={field.name}>Client</FieldLabel>
+                          <FieldLabel htmlFor={field.name}>Customer</FieldLabel>
                           <Select
                             value={field.state.value}
                             onValueChange={(value) => field.handleChange(value)}
@@ -98,12 +98,12 @@ export function CreateJobForm() {
                               aria-invalid={isInvalid}
                               onBlur={field.handleBlur}
                             >
-                              <SelectValue placeholder={isPending ? 'Loading clients…' : 'Select client'} />
+                              <SelectValue placeholder={isPending ? 'Loading customers…' : 'Select customers'} />
                             </SelectTrigger>
                             <SelectContent className="max-h-[400px]" side="bottom" position="popper">
-                              {clients?.map((client) => (
-                                <SelectItem key={client.id} value={String(client.id)}>
-                                  {client.name}
+                              {customers?.map((customer) => (
+                                <SelectItem key={customer.id} value={String(customer.id)}>
+                                  {customer.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>

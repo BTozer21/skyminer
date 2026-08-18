@@ -13,13 +13,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { deleteClient } from '@/lib/api';
+import { deleteCustomer } from '@/lib/api';
 
 import type { DataTableFeatures } from '../data-table-features.ts';
-import type { ClientResponse } from '@/lib/api';
+import type { CustomerResponse } from '@/lib/api';
 
 
-const columnHelper = createColumnHelper<DataTableFeatures, ClientResponse>()
+const columnHelper = createColumnHelper<DataTableFeatures, CustomerResponse>()
 
 export const columns = columnHelper.columns([
   columnHelper.accessor("name", {
@@ -45,10 +45,10 @@ export const columns = columnHelper.columns([
       // calling it.
       const queryClient = useQueryClient()
       const removal = useMutation({
-        mutationFn: deleteClient,
+        mutationFn: deleteCustomer,
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ['clients'] })
-          toast.success('Client deleted')
+          queryClient.invalidateQueries({ queryKey: ['customers'] })
+          toast.success('Customer deleted')
         },
         onError: (error) => {
           toast.error(error.message)
@@ -71,7 +71,7 @@ export const columns = columnHelper.columns([
                 disabled={removal.isPending}
                 onClick={() => removal.mutate(data.id)}
               >
-                {removal.isPending ? 'Deleting…' : 'Delete Client'}
+                {removal.isPending ? 'Deleting…' : 'Delete Customer'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

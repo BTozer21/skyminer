@@ -7,17 +7,17 @@ import { Field, FieldGroup, FieldLabel, FieldDescription, FieldError, FieldSet, 
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/api';
+import { createCustomer } from '@/lib/api';
 
-export function CreateClientForm() {
+export function CreateCustomerForm() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
   const mutation = useMutation({
-    mutationFn: createClient,
+    mutationFn: createCustomer,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
-      toast.success('Client added');
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      toast.success('Customer added');
     },
     onError: (error) => {
       toast.error(error.message);
@@ -42,7 +42,7 @@ export function CreateClientForm() {
       }}
     >
       <DialogTrigger asChild>
-        <Button title="Add client" aria-label="Add client" variant="outline" size="icon">
+        <Button title="Add customer" aria-label="Add customer" variant="outline" size="icon">
           <Plus />
         </Button>
       </DialogTrigger>
@@ -57,8 +57,8 @@ export function CreateClientForm() {
         >
           <FieldGroup>
             <FieldSet>
-              <FieldLegend>Client</FieldLegend>
-              <FieldDescription>Create a client</FieldDescription>
+              <FieldLegend>Customer</FieldLegend>
+              <FieldDescription>Create a customer</FieldDescription>
               <FieldGroup>
                 <form.Field
                   name="name"
@@ -75,7 +75,7 @@ export function CreateClientForm() {
                         <Input
                           id={field.name}
                           name={field.name}
-                          placeholder="Client name"
+                          placeholder="Customer name"
                           value={field.state.value}
                           onBlur={field.handleBlur}
                           onChange={(e) => field.handleChange(e.target.value)}
