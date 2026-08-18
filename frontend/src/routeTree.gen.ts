@@ -16,8 +16,9 @@ import { Route as AuthenticatedLeaveRequestsRouteImport } from './routes/_authen
 import { Route as AuthPathnameRouteImport } from './routes/auth.$pathname'
 import { Route as AuthenticatedAccountPathnameRouteImport } from './routes/_authenticated.account.$pathname'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
-import { Route as AuthenticatedAdminCustomersRouteImport } from './routes/_authenticated.admin.customers'
 import { Route as AuthenticatedAdminTeamRouteImport } from './routes/_authenticated.admin.team'
+import { Route as AuthenticatedAdminCustomersIndexRouteImport } from './routes/_authenticated.admin.customers.index'
+import { Route as AuthenticatedAdminCustomersCustomerIdRouteImport } from './routes/_authenticated.admin.customers.$customerId'
 import { Route as AuthenticatedAdminJobsIndexRouteImport } from './routes/_authenticated.admin.jobs.index'
 import { Route as AuthenticatedAdminJobsJobIdRouteImport } from './routes/_authenticated.admin.jobs.$jobId'
 
@@ -57,17 +58,23 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedAdminCustomersRoute =
-  AuthenticatedAdminCustomersRouteImport.update({
-    id: '/customers',
-    path: '/customers',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
 const AuthenticatedAdminTeamRoute = AuthenticatedAdminTeamRouteImport.update({
   id: '/team',
   path: '/team',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminCustomersIndexRoute =
+  AuthenticatedAdminCustomersIndexRouteImport.update({
+    id: '/customers/',
+    path: '/customers/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminCustomersCustomerIdRoute =
+  AuthenticatedAdminCustomersCustomerIdRouteImport.update({
+    id: '/customers/$customerId',
+    path: '/customers/$customerId',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminJobsIndexRoute =
   AuthenticatedAdminJobsIndexRouteImport.update({
     id: '/jobs/',
@@ -87,10 +94,11 @@ export interface FileRoutesByFullPath {
   '/leave-requests': typeof AuthenticatedLeaveRequestsRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/account/$pathname': typeof AuthenticatedAccountPathnameRoute
-  '/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
   '/admin/jobs/$jobId': typeof AuthenticatedAdminJobsJobIdRoute
+  '/admin/customers/': typeof AuthenticatedAdminCustomersIndexRoute
   '/admin/jobs/': typeof AuthenticatedAdminJobsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -98,10 +106,11 @@ export interface FileRoutesByTo {
   '/auth/$pathname': typeof AuthPathnameRoute
   '/': typeof AuthenticatedIndexRoute
   '/account/$pathname': typeof AuthenticatedAccountPathnameRoute
-  '/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
   '/admin/jobs/$jobId': typeof AuthenticatedAdminJobsJobIdRoute
+  '/admin/customers': typeof AuthenticatedAdminCustomersIndexRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsIndexRoute
 }
 export interface FileRoutesById {
@@ -112,10 +121,11 @@ export interface FileRoutesById {
   '/auth/$pathname': typeof AuthPathnameRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/account/$pathname': typeof AuthenticatedAccountPathnameRoute
-  '/_authenticated/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/_authenticated/admin/team': typeof AuthenticatedAdminTeamRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
   '/_authenticated/admin/jobs/$jobId': typeof AuthenticatedAdminJobsJobIdRoute
+  '/_authenticated/admin/customers/': typeof AuthenticatedAdminCustomersIndexRoute
   '/_authenticated/admin/jobs/': typeof AuthenticatedAdminJobsIndexRoute
 }
 export interface FileRouteTypes {
@@ -126,10 +136,11 @@ export interface FileRouteTypes {
     | '/leave-requests'
     | '/auth/$pathname'
     | '/account/$pathname'
-    | '/admin/customers'
     | '/admin/team'
     | '/admin/'
+    | '/admin/customers/$customerId'
     | '/admin/jobs/$jobId'
+    | '/admin/customers/'
     | '/admin/jobs/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -137,10 +148,11 @@ export interface FileRouteTypes {
     | '/auth/$pathname'
     | '/'
     | '/account/$pathname'
-    | '/admin/customers'
     | '/admin/team'
     | '/admin'
+    | '/admin/customers/$customerId'
     | '/admin/jobs/$jobId'
+    | '/admin/customers'
     | '/admin/jobs'
   id:
     | '__root__'
@@ -150,10 +162,11 @@ export interface FileRouteTypes {
     | '/auth/$pathname'
     | '/_authenticated/'
     | '/_authenticated/account/$pathname'
-    | '/_authenticated/admin/customers'
     | '/_authenticated/admin/team'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/customers/$customerId'
     | '/_authenticated/admin/jobs/$jobId'
+    | '/_authenticated/admin/customers/'
     | '/_authenticated/admin/jobs/'
   fileRoutesById: FileRoutesById
 }
@@ -213,18 +226,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/admin/customers': {
-      id: '/_authenticated/admin/customers'
-      path: '/customers'
-      fullPath: '/admin/customers'
-      preLoaderRoute: typeof AuthenticatedAdminCustomersRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
     '/_authenticated/admin/team': {
       id: '/_authenticated/admin/team'
       path: '/team'
       fullPath: '/admin/team'
       preLoaderRoute: typeof AuthenticatedAdminTeamRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/customers/': {
+      id: '/_authenticated/admin/customers/'
+      path: '/customers'
+      fullPath: '/admin/customers/'
+      preLoaderRoute: typeof AuthenticatedAdminCustomersIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/customers/$customerId': {
+      id: '/_authenticated/admin/customers/$customerId'
+      path: '/customers/$customerId'
+      fullPath: '/admin/customers/$customerId'
+      preLoaderRoute: typeof AuthenticatedAdminCustomersCustomerIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/jobs/': {
@@ -245,18 +265,21 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminCustomersRoute: typeof AuthenticatedAdminCustomersRoute
   AuthenticatedAdminTeamRoute: typeof AuthenticatedAdminTeamRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminCustomersCustomerIdRoute: typeof AuthenticatedAdminCustomersCustomerIdRoute
   AuthenticatedAdminJobsJobIdRoute: typeof AuthenticatedAdminJobsJobIdRoute
+  AuthenticatedAdminCustomersIndexRoute: typeof AuthenticatedAdminCustomersIndexRoute
   AuthenticatedAdminJobsIndexRoute: typeof AuthenticatedAdminJobsIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminCustomersRoute: AuthenticatedAdminCustomersRoute,
   AuthenticatedAdminTeamRoute: AuthenticatedAdminTeamRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminCustomersCustomerIdRoute:
+    AuthenticatedAdminCustomersCustomerIdRoute,
   AuthenticatedAdminJobsJobIdRoute: AuthenticatedAdminJobsJobIdRoute,
+  AuthenticatedAdminCustomersIndexRoute: AuthenticatedAdminCustomersIndexRoute,
   AuthenticatedAdminJobsIndexRoute: AuthenticatedAdminJobsIndexRoute,
 }
 

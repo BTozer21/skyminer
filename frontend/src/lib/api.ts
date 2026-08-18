@@ -51,6 +51,20 @@ export async function getCustomers() {
   return data;
 };
 
+export async function getCustomer(id: number) {
+  const headers = await getAuthHeaders();
+  const res = await api.customers[':id'].$get({ param: { id: String(id) } }, { headers });
+  if (!res.ok) {
+    throw new Error(
+      res.status === 404
+        ? 'That customer no longer exists'
+        : 'There was an error here',
+    );
+  }
+  const { data } = await res.json();
+  return data;
+}
+
 export type CustomerResponse = InferResponseType<typeof api.customers.$get>['data'][number]
 
 export type JobResponse = InferResponseType<typeof api.jobs.$get>['data'][number]

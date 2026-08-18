@@ -44,6 +44,19 @@ export const columns = columnHelper.columns([
     id: "customer",
     header: "Customer",
     size: 180,
+    cell: ({ row }) => {
+      const job = row.original
+
+      return (
+        <Link
+          to="/admin/customers/$customerId"
+          params={{ customerId: String(job.customer.id) }}
+          className="font-medium hover:underline"
+        >
+          {job.customer.name}
+        </Link>
+      )
+    }
   }),
   columnHelper.accessor("name", {
     header: "Name",

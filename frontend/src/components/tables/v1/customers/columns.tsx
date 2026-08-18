@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -24,6 +25,21 @@ const columnHelper = createColumnHelper<DataTableFeatures, CustomerResponse>()
 export const columns = columnHelper.columns([
   columnHelper.accessor("name", {
     header: "Name",
+    size: 240,
+    cell: ({ row }) => {
+      const customer = row.original
+
+      return (
+        <Link
+          to="/admin/customers/$customerId"
+          params={{ customerId: String(customer.id) }}
+          className="font-medium hover:underline"
+        >
+          {customer.name}
+        </Link>
+      )
+    }
+
   }),
   columnHelper.accessor("createdAt", {
     header: "Added on",

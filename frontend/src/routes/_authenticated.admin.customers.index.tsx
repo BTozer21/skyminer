@@ -6,7 +6,7 @@ import { getCustomers } from '@/lib/api.ts';
 import { columns } from '@/components/tables/v1/customers/columns';
 import { DataTable } from '@/components/tables/v1/data-table';
 
-export const Route = createFileRoute('/_authenticated/admin/customers')({
+export const Route = createFileRoute('/_authenticated/admin/customers/')({
   component: RouteComponent,
 })
 
