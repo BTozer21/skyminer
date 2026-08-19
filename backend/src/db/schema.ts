@@ -235,40 +235,47 @@ export const locations = pgTable("locations", {
   customerId: bigint("customer_id", { mode: "number" }).notNull(),
   postCode: text("post_code").notNull(),
 }, (table) => [
-    foreignKey({
-      columns: [table.customerId],
-      foreignColumns: [customers.id],
-      name: "locations_customer_id_fk"
-    })
+  foreignKey({
+    columns: [table.customerId],
+    foreignColumns: [customers.id],
+    name: "locations_customer_id_fk"
+  }),
+  pgPolicy("admin-authenticated_backend-policy-all", {
+    as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
+           FROM neon_auth."user" u
+          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`, withCheck: sql`( SELECT (EXISTS ( SELECT 1
+           FROM neon_auth."user" u
+          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`  }),
+  pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"] })
 ]);
 
 export const machines = pgTable("machines", {
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "machines_id_seq" }),
   type: text().notNull(),
-  locationId: bigint( "location_id", { mode: "number" }).notNull(),
+  locationId: bigint("location_id", { mode: "number" }).notNull(),
 }, (table) => [
-    foreignKey({
-      columns: [table.locationId],
-      foreignColumns: [locations.id],
-      name: "machines_location_id_fk"
-    })
+  foreignKey({
+    columns: [table.locationId],
+    foreignColumns: [locations.id],
+    name: "machines_location_id_fk"
+  })
 ]);
 
 export const jobMachines = pgTable("job_machines", {
-  id: bigint({mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "job_machines_id_seq" }),
-  jobId: bigint( "job_id", { mode: "number" }).notNull(),
-  machineId: bigint( "machine_id", { mode: "number" }).notNull(),
+  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "job_machines_id_seq" }),
+  jobId: bigint("job_id", { mode: "number" }).notNull(),
+  machineId: bigint("machine_id", { mode: "number" }).notNull(),
 }, (table) => [
-    foreignKey({
-      columns: [table.jobId],
-      foreignColumns: [jobs.id],
-      name: "job_machines_job_id_fk"
-    }),
-    foreignKey({
-      columns: [table.machineId],
-      foreignColumns: [machines.id],
-      name: "job_machines_machine_id_fk"
-    })
+  foreignKey({
+    columns: [table.jobId],
+    foreignColumns: [jobs.id],
+    name: "job_machines_job_id_fk"
+  }),
+  foreignKey({
+    columns: [table.machineId],
+    foreignColumns: [machines.id],
+    name: "job_machines_machine_id_fk"
+  })
 ]);
 
 export const leaveRequests = pgTable("leave_requests", {
