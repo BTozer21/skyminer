@@ -22,6 +22,7 @@ function RouteComponent() {
       <DataTable
         columns={columns}
         data={customers ?? []}
+        getRowId={(customer) => String(customer.id)}
         isLoading={isPending}
         className="min-h-0 flex-1"
       />

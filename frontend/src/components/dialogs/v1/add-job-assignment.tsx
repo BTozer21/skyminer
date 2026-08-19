@@ -19,6 +19,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { CreateJobForm } from '@/components/forms/v1/create-job-form';
 import { createJobAssignment, getJobs } from '@/lib/api';
 
 export interface AssignmentTarget {
@@ -105,7 +107,19 @@ function AssignForm({
           </SelectContent>
         </Select>
       ) : (
-        <p className="text-muted-foreground text-sm">No jobs run on this day.</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-muted-foreground text-sm">No jobs run on this day.</p>
+          <CreateJobForm
+            defaultDate={target.date}
+            onCreated={(id) => setJobId(String(id))}
+            trigger={
+              <Button variant="outline">
+                <Plus />
+                Create a job
+              </Button>
+            }
+          />
+        </div>
       )}
 
       <div className="flex flex-row gap-2">

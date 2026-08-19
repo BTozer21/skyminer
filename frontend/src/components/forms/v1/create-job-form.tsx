@@ -14,15 +14,21 @@ import { CalendarIcon, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { createJob, getCustomers } from '@/lib/api';
 
-export function CreateJobForm() {
+interface CreateJobFormProps {
+  defaultDate?: Date
+  trigger?: React.ReactNode
+  onCreated?: (jobId: number) => void
+}
+
+export function CreateJobForm({ defaultDate, trigger, onCreated }: CreateJobFormProps) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const { data: customers, isPending } = useQuery({ queryKey: ['customers'], queryFn: getCustomers, staleTime: Infinity });
 
   const mutation = useMutation({
     mutationFn: createJob,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['jobs'] });
       toast.success('Job added');
     },
     onError: (error) => {
@@ -33,12 +39,15 @@ export function CreateJobForm() {
   const form = useForm({
     defaultValues: {
       name: '',
-      dateRange: undefined as DateRange | undefined,
+      // A single day is a valid range: from and to are the same date.
+      dateRange: (defaultDate
+        ? { from: defaultDate, to: defaultDate }
+        : undefined) as DateRange | undefined,
       customerId: '',
     },
     onSubmit: async ({ value }) => {
       const { from, to } = value.dateRange!;
-      await mutation.mutateAsync({
+      const job = await mutation.mutateAsync({
         name: value.name.trim(),
         customerId: Number(value.customerId),
         startDate: format(from!, 'yyyy-MM-dd'),
@@ -46,6 +55,7 @@ export function CreateJobForm() {
       });
       form.reset();
       setOpen(false);
+      onCreated?.(job.id);
     },
   });
 
@@ -58,9 +68,11 @@ export function CreateJobForm() {
       }}
     >
       <DialogTrigger asChild>
-        <Button title="Add job" aria-label="Add job" variant="outline" size="icon">
-          <Plus />
-        </Button>
+        {trigger ?? (
+          <Button title="Add job" aria-label="Add job" variant="outline" size="icon">
+            <Plus />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <div className="w-full max-w-md">

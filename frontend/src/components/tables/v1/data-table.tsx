@@ -22,6 +22,7 @@ interface DataTableProps<TData extends RowData> {
   isLoading?: boolean
   skeletonRows?: number
   className?: string
+  getRowId?: (row: TData, index: number) => string
 }
 
 export function DataTable<TData extends RowData>({
@@ -30,11 +31,13 @@ export function DataTable<TData extends RowData>({
   isLoading = false,
   skeletonRows = 8,
   className,
+  getRowId,
 }: DataTableProps<TData>) {
   const table = useTable({
     features,
     data,
     columns,
+    getRowId,
     defaultColumn: {
       size: 200,
       minSize: 50,

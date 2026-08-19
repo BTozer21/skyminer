@@ -80,7 +80,8 @@ export async function createJob(job: CreateJobInput) {
   if (!res.ok) {
     throw new Error("There was an error here");
   }
-  return res.json();
+  const { data } = await res.json();
+  return data;
 }
 
 type UpdateJobInput = InferRequestType<typeof api.jobs[':id']['$patch']>['json'];
