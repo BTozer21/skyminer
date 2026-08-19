@@ -46,9 +46,14 @@ export function JobAssignmentDialog({ job, onOpenChange }: JobAssignmentDialogPr
                   <SquareArrowOutUpRight className="w-4 h-fit"/>
                 </Link>
               </DialogTitle>
-              <DialogDescription>
-                {format(new Date(job.startDate), 'd MMM yyyy')} –{' '}
-                {format(new Date(job.endDate), 'd MMM yyyy')}
+              <DialogDescription className="flex flex-col gap-1">
+                <Link to="/admin/customers/$customerId" params={{ customerId: String(job.customer.id) }}>
+                  {job.customer.name}
+                </Link>
+                <>
+                  {format(new Date(job.startDate), 'd MMM yyyy')} –{' '}
+                  {format(new Date(job.endDate), 'd MMM yyyy')}
+                </>
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-2">

@@ -161,7 +161,6 @@ function RouteComponent2() {
         type="button"
         onClick={() => setSelectedJobId(job.id)}
         title={`Open ${job.name}`}
-        variant="outline"
         className="relative w-full h-full"
       >
         {job.name}
