@@ -14,6 +14,7 @@ function RouteComponent() {
   const { data: customer, isPending } = useQuery({
     queryKey: ['customers', customerId],
     queryFn: () => getCustomer(Number(customerId)),
+    staleTime: Infinity
   })
 
   return (
@@ -21,7 +22,7 @@ function RouteComponent() {
       <div className="mb-4 mt-2 flex shrink-0 justify-between items-center">
         {!isPending &&
           <>
-            <h1 className="font-bold text-xl">
+            <h1>
               {customer?.name}
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -31,7 +32,7 @@ function RouteComponent() {
         }
       </div>
       <div className="flex justify-between">
-        <h2>Locations</h2>
+        <h3 className="test">Locations</h3>
       </div>
       {!isPending &&
         <>
