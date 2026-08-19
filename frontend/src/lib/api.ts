@@ -73,6 +73,7 @@ type CreateJobInput = InferRequestType<typeof api.jobs.$post>['json'];
 
 type CreateCustomerInput = InferRequestType<typeof api.customers.$post>['json'];
 
+
 export async function createJob(job: CreateJobInput) {
   const headers = await getAuthHeaders();
   const res = await api.jobs.$post({ json: job }, { headers });
@@ -130,6 +131,17 @@ export async function deleteCustomer(id: number) {
           ? 'That customer has already been deleted'
           : 'There was an error here',
     );
+  }
+  return res.json();
+}
+
+type CreateLocationInput = InferRequestType<typeof api.locations.$post>['json'];
+
+export async function createLocation(locations: CreateLocationInput) {
+  const headers = await getAuthHeaders();
+  const res = await api.locations.$post({ json: locations }, { headers });
+  if (!res.ok) {
+    throw new Error("There was an error here");
   }
   return res.json();
 }

@@ -1,29 +1,32 @@
 import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import type { DateRange } from 'react-day-picker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Field, FieldGroup, FieldLabel, FieldDescription, FieldError, FieldSet, FieldLegend } from '@/components/ui/field';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
-import { CalendarIcon, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { createJob, getCustomers } from '@/lib/api';
+import { createLocation, getCustomers } from '@/lib/api';
 
-export function CreateLocationForm() {
+export function CreateLocationForm({ customer }: { customer?: string }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const { data: customers, isPending } = useQuery({ queryKey: ['customers'], queryFn: getCustomers, staleTime: Infinity });
+  const { data: customers, isPending } = useQuery({
+    queryKey: ['customers'],
+    queryFn: getCustomers,
+    staleTime: Infinity,
+    enabled: !customer,
+  });
 
   const mutation = useMutation({
-    mutationFn: createJob,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
-      toast.success('Job added');
+    mutationFn: createLocation,
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['customers', String(variables.customerId)],
+      });
+      toast.success('Location added');
     },
     onError: (error) => {
       toast.error(error.message);
@@ -33,16 +36,14 @@ export function CreateLocationForm() {
   const form = useForm({
     defaultValues: {
       name: '',
-      dateRange: undefined as DateRange | undefined,
-      customerId: '',
+      customerId: customer ?? '',
+      postCode: '',
     },
     onSubmit: async ({ value }) => {
-      const { from, to } = value.dateRange!;
       await mutation.mutateAsync({
         name: value.name.trim(),
         customerId: Number(value.customerId),
-        startDate: format(from!, 'yyyy-MM-dd'),
-        endDate: format(to!, 'yyyy-MM-dd'),
+        postCode: value.postCode.trim(),
       });
       form.reset();
       setOpen(false);
@@ -58,7 +59,7 @@ export function CreateLocationForm() {
       }}
     >
       <DialogTrigger asChild>
-        <Button title="Add job" aria-label="Add job" variant="outline" size="icon">
+        <Button title="Add location" aria-label="Add job" variant="outline" size="icon">
           <Plus />
         </Button>
       </DialogTrigger>
@@ -73,46 +74,48 @@ export function CreateLocationForm() {
           >
             <FieldGroup>
               <FieldSet>
-                <FieldLegend>Job</FieldLegend>
-                <FieldDescription>Create a job</FieldDescription>
+                <FieldLegend>Location</FieldLegend>
+                <FieldDescription>Add a location</FieldDescription>
                 <FieldGroup>
-                  <form.Field
-                    name="customerId"
-                    validators={{
-                      onSubmit: ({ value }) =>
-                        value ? undefined : { message: 'A Customer must be selected' }
-                    }}
-                    children={(field) => {
-                      const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
-                      return (
-                        <Field data-invalid={isInvalid}>
-                          <FieldLabel htmlFor={field.name}>Customer</FieldLabel>
-                          <Select
-                            value={field.state.value}
-                            onValueChange={(value) => field.handleChange(value)}
-                          >
-                            <SelectTrigger
-                              id={field.name}
-                              className="w-full"
-                              disabled={isPending}
-                              aria-invalid={isInvalid}
-                              onBlur={field.handleBlur}
+                  {customer &&
+                    <form.Field
+                      name="customerId"
+                      validators={{
+                        onSubmit: ({ value }) =>
+                          value ? undefined : { message: 'A Customer must be selected' }
+                      }}
+                      children={(field) => {
+                        const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
+                        return (
+                          <Field data-invalid={isInvalid}>
+                            <FieldLabel htmlFor={field.name}>Customer</FieldLabel>
+                            <Select
+                              value={field.state.value}
+                              onValueChange={(value) => field.handleChange(value)}
                             >
-                              <SelectValue placeholder={isPending ? 'Loading customers…' : 'Select customers'} />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-[400px]" side="bottom" position="popper">
-                              {customers?.map((customer) => (
-                                <SelectItem key={customer.id} value={String(customer.id)}>
-                                  {customer.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                        </Field>
-                      )
-                    }}
-                  />
+                              <SelectTrigger
+                                id={field.name}
+                                className="w-full"
+                                disabled={isPending}
+                                aria-invalid={isInvalid}
+                                onBlur={field.handleBlur}
+                              >
+                                <SelectValue placeholder={isPending ? 'Loading customers…' : 'Select customers'} />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-[400px]" side="bottom" position="popper">
+                                {customers?.map((option) => (
+                                  <SelectItem key={option.id} value={String(option.id)}>
+                                    {option.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                          </Field>
+                        )
+                      }}
+                    />
+                  }
                   <form.Field
                     name="name"
                     validators={{
@@ -128,7 +131,7 @@ export function CreateLocationForm() {
                           <Input
                             id={field.name}
                             name={field.name}
-                            placeholder="Job name"
+                            placeholder="Location"
                             value={field.state.value}
                             onBlur={field.handleBlur}
                             onChange={(e) => field.handleChange(e.target.value)}
@@ -141,54 +144,27 @@ export function CreateLocationForm() {
                     }}
                   />
                   <form.Field
-                    name="dateRange"
+                    name="postCode"
                     validators={{
                       onSubmit: ({ value }) =>
-                        value?.from && value?.to
-                          ? undefined
-                          : { message: 'A start and end date are required' },
+                        value.trim() ? undefined : { message: 'Post code is required' },
                     }}
                     children={(field) => {
                       const isInvalid =
                         field.state.meta.isTouched && !field.state.meta.isValid
-                      const range = field.state.value
                       return (
-                        <Field data-invalid={isInvalid} className="w-60">
-                          <FieldLabel htmlFor={field.name}>Date Range</FieldLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                id={field.name}
-                                className="justify-start px-2.5 font-normal"
-                                aria-invalid={isInvalid}
-                                onBlur={field.handleBlur}
-                              >
-                                <CalendarIcon />
-                                {range?.from ? (
-                                  range.to ? (
-                                    <>
-                                      {format(range.from, 'LLL dd, y')} -{' '}
-                                      {format(range.to, 'LLL dd, y')}
-                                    </>
-                                  ) : (
-                                    format(range.from, 'LLL dd, y')
-                                  )
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="range"
-                                defaultMonth={range?.from}
-                                selected={range}
-                                onSelect={(next) => field.handleChange(next)}
-                                numberOfMonths={2}
-                              />
-                            </PopoverContent>
-                          </Popover>
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor={field.name}>Post code</FieldLabel>
+                          <Input
+                            id={field.name}
+                            name={field.name}
+                            placeholder="XYZ 123"
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            aria-invalid={isInvalid}
+                            autoComplete="off"
+                          />
                           {isInvalid && <FieldError errors={field.state.meta.errors} />}
                         </Field>
                       )

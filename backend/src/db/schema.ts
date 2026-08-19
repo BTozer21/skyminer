@@ -232,6 +232,7 @@ export const jobAssignments = pgTable("job_assignments", {
 
 export const locations = pgTable("locations", {
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "locations_id_seq" }),
+  name: text().notNull(),
   customerId: bigint("customer_id", { mode: "number" }).notNull(),
   postCode: text("post_code").notNull(),
 }, (table) => [

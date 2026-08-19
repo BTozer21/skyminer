@@ -120,6 +120,13 @@
       "when": 1787133374553,
       "tag": "0016_workable_zodiak",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1787152108160,
+      "tag": "0017_goofy_captain_marvel",
+      "breakpoints": true
     }
   ]
 }

@@ -2,6 +2,8 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { getCustomer } from '@/lib/api';
 
+import { CreateLocationForm } from '@/components/forms/v1/create-location-form';
+
 export const Route = createFileRoute(
   '/_authenticated/admin/customers/$customerId',
 )({
@@ -33,6 +35,9 @@ function RouteComponent() {
       </div>
       <div className="flex justify-between">
         <h3 className="test">Locations</h3>
+        <CreateLocationForm
+          customer={customerId}
+        />
       </div>
       {!isPending &&
         <>

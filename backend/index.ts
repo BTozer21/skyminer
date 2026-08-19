@@ -2,7 +2,7 @@ import { serve } from '@hono/node-server';
 import { Hono, type Context, type Next } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { eq, desc } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import * as jose from 'jose';
 import 'dotenv/config';
 
@@ -10,6 +10,7 @@ import { db } from './src/db/index.ts';
 import { userInNeonAuth } from './src/db/schema.ts';
 import { jobsRoute } from './routes/jobs.ts';
 import { customersRoute } from './routes/customers.ts';
+import { locationsRoute } from './routes/locations.ts';
 import { leaveRequestsRoute } from './routes/leave-requests.ts';
 import { adminRoute } from './routes/admin.ts';
 import type { AppVariables } from './src/types.ts';
@@ -73,13 +74,13 @@ app.use(
   })
 );
 
-const apiRoutes = app.basePath('/api').use(authMiddleware).use('/admin/*', adminOnly).route("/admin", adminRoute).route("/jobs", jobsRoute).route("/customers", customersRoute).route("/leave-requests", leaveRequestsRoute)
+const apiRoutes = app.basePath('/api').use(authMiddleware).use('/admin/*', adminOnly).route("/admin", adminRoute).route("/jobs", jobsRoute).route("/customers", customersRoute).route("/locations", locationsRoute).route("/leave-requests", leaveRequestsRoute)
 
 serve(
   {
     fetch: app.fetch,
     port: 3000,
-  }, 
+  },
   (info) => {
     console.log(`Backend server running at http://localhost:${info.port}`)
   }
