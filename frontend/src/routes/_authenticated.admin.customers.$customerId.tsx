@@ -33,19 +33,19 @@ function RouteComponent() {
           </>
         }
       </div>
-      <div className="flex justify-between">
+      <div id="customer_locations" className="flex justify-between">
         <h3 className="test">Locations</h3>
         <CreateLocationForm
           customer={customerId}
         />
       </div>
-      {!isPending &&
-        <>
-          <p>
-            {customer?.locations.length ?? 0} locations
-          </p>
-        </>
-      }
+      <div className="flex flex-row gap-3">
+        {customer?.locations.map((x) => (
+          <div className="p-2 border rounded-sm w-full max-w-[400px]">
+            {x.name}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

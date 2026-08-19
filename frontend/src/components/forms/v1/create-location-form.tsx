@@ -77,7 +77,7 @@ export function CreateLocationForm({ customer }: { customer?: string }) {
                 <FieldLegend>Location</FieldLegend>
                 <FieldDescription>Add a location</FieldDescription>
                 <FieldGroup>
-                  {customer &&
+                  {!customer &&
                     <form.Field
                       name="customerId"
                       validators={{
