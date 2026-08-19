@@ -30,6 +30,16 @@ function RouteComponent() {
           </>
         }
       </div>
+      <div className="flex justify-between">
+        <h2>Locations</h2>
+      </div>
+      {!isPending &&
+        <>
+          <p>
+            {customer?.locations.length ?? 0} locations
+          </p>
+        </>
+      }
     </div>
   )
 }

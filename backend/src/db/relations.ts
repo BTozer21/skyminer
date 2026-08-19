@@ -77,6 +77,13 @@ export const jobAssignmentsRelations = relations(jobAssignments, ({ one }) => ({
   }),
 }));
 
+export const locationsRelations = relations(locations, ({ one }) => ({
+  customer: one(customers, {
+    fields: [locations.customerId],
+    references: [customers.id]
+  }),
+}));
+
 export const customersRelations = relations(customers, ({ many }) => ({
   jobs: many(jobs),
   locations: many(locations)

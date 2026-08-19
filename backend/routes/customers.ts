@@ -45,7 +45,7 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
   const customer = await getAuthenticatedDb(userId, async (tx) => {
     const result = await tx.query.customers.findFirst({
       where: (customers, { eq }) => eq(customers.id, id),
-      with: { jobs: true },
+      with: { jobs: true, locations: true },
     });
     return result;
   });
