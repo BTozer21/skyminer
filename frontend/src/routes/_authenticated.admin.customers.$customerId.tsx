@@ -96,11 +96,11 @@ function LocationRow({ location }: { location: CustomerLocation }) {
           ) : data.machines.length === 0 ? (
             <p className="text-sm text-muted-foreground">No machines yet</p>
           ) : (
-            <ul className="flex flex-col gap-1">
+            <ul className="flex flex-row gap-1">
               {data.machines.map((machine) => (
-                <li key={machine.id} className="text-sm">
-                  {machine.type}
-                </li>
+                <div key={machine.id} className="text-sm flex gap-2 rounded-sm border p-4 items-center w-[400px] justify-center">
+                  <span className="font-bold text-xl">{machine.name}</span> - {machine.type}
+                </div>
               ))}
             </ul>
           )}

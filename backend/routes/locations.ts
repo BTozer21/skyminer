@@ -13,6 +13,7 @@ const createLocationSchema = createInsertSchema(locations).pick({
 });
 
 const createMachineSchema = createInsertSchema(machines).pick({
+  name: true,
   type: true,
   locationId: true,
 });
