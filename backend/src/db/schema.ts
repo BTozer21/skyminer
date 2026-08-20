@@ -252,8 +252,11 @@ export const locations = pgTable("locations", {
 
 export const machines = pgTable("machines", {
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "machines_id_seq" }),
+  name: text().notNull(),
   type: text().notNull(),
   locationId: bigint("location_id", { mode: "number" }).notNull(),
+  createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().$onUpdate(() => new Date().toISOString()).notNull(),
 }, (table) => [
   foreignKey({
     columns: [table.locationId],

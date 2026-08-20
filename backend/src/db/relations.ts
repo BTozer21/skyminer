@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { organizationInNeonAuth, invitationInNeonAuth, userInNeonAuth, sessionInNeonAuth, accountInNeonAuth, memberInNeonAuth, leaveRequests, jobs, customers, locations, jobAssignments, machines } from "./schema";
+import { organizationInNeonAuth, invitationInNeonAuth, userInNeonAuth, sessionInNeonAuth, accountInNeonAuth, memberInNeonAuth, leaveRequests, jobs, customers, locations, jobAssignments, machines, jobMachines } from "./schema";
 
 export const invitationInNeonAuthRelations = relations(invitationInNeonAuth, ({ one }) => ({
   organizationInNeonAuth: one(organizationInNeonAuth, {
@@ -64,6 +64,7 @@ export const jobsRelations = relations(jobs, ({ one, many }) => ({
     references: [customers.id]
   }),
   jobAssignments: many(jobAssignments),
+  jobMachines: many(jobMachines),
 }));
 
 export const jobAssignmentsRelations = relations(jobAssignments, ({ one }) => ({
@@ -85,10 +86,22 @@ export const locationsRelations = relations(locations, ({ one, many }) => ({
   machines: many(machines),
 }));
 
-export const machinesRelations = relations(machines, ({ one }) => ({
+export const machinesRelations = relations(machines, ({ one, many }) => ({
   location: one(locations, {
     fields: [machines.locationId],
     references: [locations.id]
+  }),
+  jobMachines: many(jobMachines),
+}));
+
+export const jobMachinesRelations = relations(jobMachines, ({ one }) => ({
+  job: one(jobs, {
+    fields: [jobMachines.jobId],
+    references: [jobs.id]
+  }),
+  machine: one(machines, {
+    fields: [jobMachines.machineId],
+    references: [machines.id]
   }),
 }));
 
