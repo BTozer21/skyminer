@@ -4,6 +4,10 @@ import { getCustomer } from '@/lib/api';
 
 import { CreateLocationForm } from '@/components/forms/v1/create-location-form';
 
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
+import { ChevronDownIcon } from 'lucide-react';
+
 export const Route = createFileRoute(
   '/_authenticated/admin/customers/$customerId',
 )({
@@ -33,17 +37,25 @@ function RouteComponent() {
           </>
         }
       </div>
-      <div id="customer_locations" className="flex justify-between">
+      <div id="customer_locations" className="flex justify-between mb-2">
         <h3 className="test">Locations</h3>
         <CreateLocationForm
           customer={customerId}
         />
       </div>
-      <div className="flex flex-row gap-3">
+      <div className="flex flex-col gap-3">
         {customer?.locations.map((x) => (
-          <div className="p-2 border rounded-sm w-full max-w-[400px]">
-            {x.name}
-          </div>
+          <Collapsible key={x.id}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="group w-full">
+                {x.name}
+                <ChevronDownIcon className="ml-auto group-data-[state=open]:rotate-180" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="p-4">
+              Post Code: {x.postCode}
+            </CollapsibleContent>
+          </Collapsible>
         ))}
       </div>
     </div>
