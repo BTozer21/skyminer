@@ -138,9 +138,47 @@ export async function deleteCustomer(id: number) {
 
 type CreateLocationInput = InferRequestType<typeof api.locations.$post>['json'];
 
+export type LocationResponse = InferResponseType<typeof api.locations.$get>['data'][number]
+
+export async function getLocations() {
+  const headers = await getAuthHeaders();
+  const res = await api.locations.$get({}, { headers });
+  if (!res.ok) {
+    throw new Error("There was an error here");
+  }
+
+  const { data } = await res.json();
+  return data;
+};
+
+export async function getLocation(id: number) {
+  const headers = await getAuthHeaders();
+  const res = await api.locations[':id'].$get({ param: { id: String(id) } }, { headers });
+  if (!res.ok) {
+    throw new Error(
+      res.status === 404
+        ? 'That location no longer exists'
+        : 'There was an error here',
+    );
+  }
+  const { data } = await res.json();
+  return data;
+}
+
 export async function createLocation(locations: CreateLocationInput) {
   const headers = await getAuthHeaders();
   const res = await api.locations.$post({ json: locations }, { headers });
+  if (!res.ok) {
+    throw new Error("There was an error here");
+  }
+  return res.json();
+}
+
+type CreateMachineInput = InferRequestType<typeof api.locations.machine.$post>['json'];
+
+export async function createMachine(machines: CreateMachineInput) {
+  const headers = await getAuthHeaders();
+  const res = await api.locations.machine.$post({ json: machines }, { headers });
   if (!res.ok) {
     throw new Error("There was an error here");
   }

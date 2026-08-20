@@ -259,7 +259,14 @@ export const machines = pgTable("machines", {
     columns: [table.locationId],
     foreignColumns: [locations.id],
     name: "machines_location_id_fk"
-  })
+  }),
+  pgPolicy("admin-authenticated_backend-policy-all", {
+    as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
+           FROM neon_auth."user" u
+          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`, withCheck: sql`( SELECT (EXISTS ( SELECT 1
+           FROM neon_auth."user" u
+          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`  }),
+  pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"] })
 ]);
 
 export const jobMachines = pgTable("job_machines", {
@@ -276,7 +283,14 @@ export const jobMachines = pgTable("job_machines", {
     columns: [table.machineId],
     foreignColumns: [machines.id],
     name: "job_machines_machine_id_fk"
-  })
+  }),
+  pgPolicy("admin-authenticated_backend-policy-all", {
+    as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
+           FROM neon_auth."user" u
+          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`, withCheck: sql`( SELECT (EXISTS ( SELECT 1
+           FROM neon_auth."user" u
+          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`  }),
+  pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"] })
 ]);
 
 export const leaveRequests = pgTable("leave_requests", {

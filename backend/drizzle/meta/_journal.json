@@ -127,6 +127,13 @@
       "when": 1787152108160,
       "tag": "0017_goofy_captain_marvel",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1787219225149,
+      "tag": "0018_graceful_pandemic",
+      "breakpoints": true
     }
   ]
 }
