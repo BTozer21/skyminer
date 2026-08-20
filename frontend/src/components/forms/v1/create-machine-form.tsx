@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Field, FieldGroup, FieldLabel, FieldDescription, FieldError, FieldSet, FieldLegend } from '@/components/ui/field';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
@@ -36,11 +37,13 @@ export function CreateMachineForm({ location }: { location?: string }) {
   const form = useForm({
     defaultValues: {
       locationId: location ?? '',
+      name: '',
       type: '',
     },
     onSubmit: async ({ value }) => {
       await mutation.mutateAsync({
         locationId: Number(value.locationId),
+        name: value.name.trim(),
         type: value.type.trim(),
       });
       form.reset();
@@ -146,6 +149,33 @@ export function CreateMachineForm({ location }: { location?: string }) {
                               ))}
                             </SelectContent>
                           </Select>
+                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                        </Field>
+                      )
+                    }}
+                  />
+                  <form.Field
+                    name="name"
+                    validators={{
+                      onSubmit: ({ value }) =>
+                        value.trim() ? undefined : { message: 'Name is required' },
+                    }}
+                    children={(field) => {
+                      const isInvalid =
+                        field.state.meta.isTouched && !field.state.meta.isValid
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+                          <Input
+                            id={field.name}
+                            name={field.name}
+                            placeholder="Name"
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            aria-invalid={isInvalid}
+                            autoComplete="off"
+                          />
                           {isInvalid && <FieldError errors={field.state.meta.errors} />}
                         </Field>
                       )
