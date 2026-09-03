@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, FieldGroup, FieldLabel, FieldDescription, FieldError, FieldSet, FieldLegend } from '@/components/ui/field';
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { createCustomer } from '@/lib/api';
@@ -25,9 +26,9 @@ export function CreateCustomerForm() {
   });
 
   const form = useForm({
-    defaultValues: { name: '' },
+    defaultValues: { name: '', type: '' as 'school' | 'industrial' | '' },
     onSubmit: async ({ value }) => {
-      await mutation.mutateAsync({ name: value.name.trim() });
+      await mutation.mutateAsync({ name: value.name.trim(), type: value.type as 'school' | 'industrial' });
       form.reset();
       setOpen(false);
     },
@@ -82,6 +83,40 @@ export function CreateCustomerForm() {
                           aria-invalid={isInvalid}
                           autoComplete="off"
                         />
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                      </Field>
+                    )
+                  }}
+                />
+                <form.Field
+                  name="type"
+                  validators={{
+                    onSubmit: ({ value }) =>
+                      value ? undefined : { message: 'Type is required' },
+                  }}
+                  children={(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Type</FieldLabel>
+                        <Select
+                          value={field.state.value}
+                          onValueChange={(value) => field.handleChange(value as 'school' | 'industrial')}
+                        >
+                          <SelectTrigger
+                            id={field.name}
+                            className="w-full"
+                            aria-invalid={isInvalid}
+                            onBlur={field.handleBlur}
+                          >
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent side="bottom" position="popper">
+                            <SelectItem value="school">School</SelectItem>
+                            <SelectItem value="industrial">Industrial</SelectItem>
+                          </SelectContent>
+                        </Select>
                         {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
                     )

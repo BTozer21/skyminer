@@ -30,14 +30,9 @@ function RouteComponent() {
     <div className="flex h-full flex-col px-5 pb-5">
       <div className="mb-4 mt-2 flex shrink-0 justify-between items-center">
         {!isPending &&
-          <>
-            <h1>
-              {customer?.name}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {customer?.jobs.length ?? 0} job{customer?.jobs.length === 1 ? '' : 's'}
-            </p>
-          </>
+          <h1>
+            {customer?.name}
+          </h1>
         }
       </div>
       <div id="customer_locations" className="flex justify-between mb-2">
