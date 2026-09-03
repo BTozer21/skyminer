@@ -2,13 +2,14 @@ import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getAuthenticatedDb } from '../src/db/index.ts';
-import { customers, jobs } from '../src/db/schema.ts';
+import { customers, jobs, locations } from '../src/db/schema.ts';
 import { zValidator } from '@hono/zod-validator';
 import { createInsertSchema } from 'drizzle-zod';
 import type { AppVariables } from '../src/types.ts';
 
 const createCustomerSchema = createInsertSchema(customers).pick({
   name: true,
+  type: true,
 });
 
 export const customersRoute = new Hono<{ Variables: AppVariables }>()
@@ -45,7 +46,7 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
   const customer = await getAuthenticatedDb(userId, async (tx) => {
     const result = await tx.query.customers.findFirst({
       where: (customers, { eq }) => eq(customers.id, id),
-      with: { jobs: true, locations: true },
+      with: { locations: true },
     });
     return result;
   });
@@ -70,13 +71,15 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
   const { id } = c.req.valid('param');
 
   const result = await getAuthenticatedDb(userId, async (tx) => {
-    // jobs.customer_id doesn't cascade, and shouldn't: taking a customer out
-    // would silently take its jobs and everyone scheduled on them. Say so
-    // instead and let the admin clear the jobs first.
+    // jobs link to a location, not directly to a customer, and this doesn't
+    // cascade: taking a customer out would silently take its locations' jobs
+    // and everyone scheduled on them. Say so instead and let the admin clear
+    // the jobs first.
     const [job] = await tx
       .select({ id: jobs.id })
       .from(jobs)
-      .where(eq(jobs.customerId, id))
+      .innerJoin(locations, eq(jobs.locationId, locations.id))
+      .where(eq(locations.customerId, id))
       .limit(1);
     if (job) return { blocked: true as const };
 
