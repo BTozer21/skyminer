@@ -157,10 +157,13 @@ export const projectConfigInNeonAuth = neonAuth.table("project_config", {
   unique("project_config_endpoint_id_key").on(table.endpointId),
 ]);
 
+export const customerTypeEnum = pgEnum('customer_type', ['school', 'industrial']);
+
 export const customers = pgTable("customers", {
   // no maxValue here: as a JS number 9223372036854775807 rounds out of bigint range; drizzle's default is correct
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "customers_id_seq" }),
   name: text().notNull(),
+  type: customerTypeEnum().notNull(),
   createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
 }, (table) => [
@@ -175,6 +178,26 @@ export const customers = pgTable("customers", {
 
 export const statusEnum = pgEnum('status', ['complete', 'planned', 'planning']);
 
+export const locations = pgTable("locations", {
+  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "locations_id_seq" }),
+  name: text().notNull(),
+  customerId: bigint("customer_id", { mode: "number" }).notNull(),
+  postCode: text("post_code").notNull(),
+}, (table) => [
+  foreignKey({
+    columns: [table.customerId],
+    foreignColumns: [customers.id],
+    name: "locations_customer_id_fk"
+  }),
+  pgPolicy("admin-authenticated_backend-policy-all", {
+    as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
+           FROM neon_auth."user" u
+          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`, withCheck: sql`( SELECT (EXISTS ( SELECT 1
+           FROM neon_auth."user" u
+          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`  }),
+  pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"] })
+]);
+
 export const jobs = pgTable("jobs", {
   // You can use { mode: "bigint" } if numbers are exceeding js number limitations
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "jobs_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
@@ -187,14 +210,15 @@ export const jobs = pgTable("jobs", {
   po: boolean().default(false),
   report: boolean().default(false),
   invoice: boolean().default(false),
-  customerId: bigint("customer_id", { mode: "number" }).notNull(),
+  hotel: boolean().default(false),
+  locationId: bigint("location_id", { mode: "number" }).notNull(),
   createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
 }, (table) => [
   foreignKey({
-    columns: [table.customerId],
-    foreignColumns: [customers.id],
-    name: "jobs_customer_id_customers_id_fk"
+    columns: [table.locationId],
+    foreignColumns: [locations.id],
+    name: "jobs_location_id_locations_id_fk"
   }),
   pgPolicy("admin-authenticated_backend-policy-all", {
     as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
@@ -228,26 +252,6 @@ export const jobAssignments = pgTable("job_assignments", {
            FROM neon_auth."user" u
           WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`  }),
   pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"], using: sql`( SELECT ((auth.user_id())::uuid = job_assignments.user_id))` }),
-]);
-
-export const locations = pgTable("locations", {
-  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "locations_id_seq" }),
-  name: text().notNull(),
-  customerId: bigint("customer_id", { mode: "number" }).notNull(),
-  postCode: text("post_code").notNull(),
-}, (table) => [
-  foreignKey({
-    columns: [table.customerId],
-    foreignColumns: [customers.id],
-    name: "locations_customer_id_fk"
-  }),
-  pgPolicy("admin-authenticated_backend-policy-all", {
-    as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
-           FROM neon_auth."user" u
-          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`, withCheck: sql`( SELECT (EXISTS ( SELECT 1
-           FROM neon_auth."user" u
-          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`  }),
-  pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"] })
 ]);
 
 export const machines = pgTable("machines", {

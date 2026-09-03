@@ -3,6 +3,8 @@ CLAUDE.md
 .cursor/
 *.md
 
+.fizzy.yaml
+
 # dependencies (bun install)
 node_modules
 

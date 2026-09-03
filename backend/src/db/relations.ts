@@ -59,9 +59,9 @@ export const leaveRequestsRelations = relations(leaveRequests, ({ one }) => ({
 }));
 
 export const jobsRelations = relations(jobs, ({ one, many }) => ({
-  customer: one(customers, {
-    fields: [jobs.customerId],
-    references: [customers.id]
+  location: one(locations, {
+    fields: [jobs.locationId],
+    references: [locations.id]
   }),
   jobAssignments: many(jobAssignments),
   jobMachines: many(jobMachines),
@@ -84,6 +84,7 @@ export const locationsRelations = relations(locations, ({ one, many }) => ({
     references: [customers.id]
   }),
   machines: many(machines),
+  jobs: many(jobs),
 }));
 
 export const machinesRelations = relations(machines, ({ one, many }) => ({
@@ -106,6 +107,5 @@ export const jobMachinesRelations = relations(jobMachines, ({ one }) => ({
 }));
 
 export const customersRelations = relations(customers, ({ many }) => ({
-  jobs: many(jobs),
   locations: many(locations)
 }));
