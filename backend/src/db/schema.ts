@@ -211,14 +211,14 @@ export const jobs = pgTable("jobs", {
   report: boolean().default(false),
   invoice: boolean().default(false),
   hotel: boolean().default(false),
-  locationId: bigint("location_id", { mode: "number" }).notNull(),
+  customerId: bigint("customer_id", { mode: "number" }).notNull(),
   createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
 }, (table) => [
   foreignKey({
-    columns: [table.locationId],
-    foreignColumns: [locations.id],
-    name: "jobs_location_id_locations_id_fk"
+    columns: [table.customerId],
+    foreignColumns: [customers.id],
+    name: "jobs_customer_id_customers_id_fk"
   }),
   pgPolicy("admin-authenticated_backend-policy-all", {
     as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1

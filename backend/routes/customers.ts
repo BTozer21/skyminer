@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getAuthenticatedDb } from '../src/db/index.ts';
-import { customers, jobs, locations } from '../src/db/schema.ts';
+import { customers, jobs } from '../src/db/schema.ts';
 import { zValidator } from '@hono/zod-validator';
 import { createInsertSchema } from 'drizzle-zod';
 import type { AppVariables } from '../src/types.ts';
@@ -71,15 +71,13 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
   const { id } = c.req.valid('param');
 
   const result = await getAuthenticatedDb(userId, async (tx) => {
-    // jobs link to a location, not directly to a customer, and this doesn't
-    // cascade: taking a customer out would silently take its locations' jobs
-    // and everyone scheduled on them. Say so instead and let the admin clear
-    // the jobs first.
+    // Deleting a customer doesn't cascade to its jobs, which would silently
+    // take everyone scheduled on them with it. Say so instead and let the
+    // admin clear the jobs first.
     const [job] = await tx
       .select({ id: jobs.id })
       .from(jobs)
-      .innerJoin(locations, eq(jobs.locationId, locations.id))
-      .where(eq(locations.customerId, id))
+      .where(eq(jobs.customerId, id))
       .limit(1);
     if (job) return { blocked: true as const };
 
