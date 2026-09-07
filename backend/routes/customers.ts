@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getAuthenticatedDb } from '../src/db/index.ts';
-import { customers, jobs } from '../src/db/schema.ts';
+import { customers, jobs, machines } from '../src/db/schema.ts';
 import { zValidator } from '@hono/zod-validator';
 import { createInsertSchema } from 'drizzle-zod';
 import type { AppVariables } from '../src/types.ts';
@@ -10,6 +10,12 @@ import type { AppVariables } from '../src/types.ts';
 const createCustomerSchema = createInsertSchema(customers).pick({
   name: true,
   type: true,
+});
+
+const createMachineSchema = createInsertSchema(machines).pick({
+  name: true,
+  type: true,
+  customerId: true,
 });
 
 export const customersRoute = new Hono<{ Variables: AppVariables }>()
@@ -46,7 +52,7 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
   const customer = await getAuthenticatedDb(userId, async (tx) => {
     const result = await tx.query.customers.findFirst({
       where: (customers, { eq }) => eq(customers.id, id),
-      with: { locations: true },
+      with: { machines: true },
     });
     return result;
   });
@@ -99,3 +105,18 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
   return c.json({ data: result.deleted }, 200);
 })
 
+.post('/machine', zValidator('json', createMachineSchema), async (c) => {
+  const userId = c.get('userId');
+  const userRoles = c.get('userRoles');
+  if (!userRoles?.includes('admin')) {
+    return c.json({ message: "Not Allowed" }, 403);
+  }
+
+  const body = c.req.valid('json');
+
+  await getAuthenticatedDb(userId, async (tx) => {
+    await tx.insert(machines).values(body);
+  });
+
+  return c.json({ message: "Uploaded" }, 201);
+})

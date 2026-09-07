@@ -178,26 +178,6 @@ export const customers = pgTable("customers", {
 
 export const statusEnum = pgEnum('status', ['complete', 'planned', 'planning']);
 
-export const locations = pgTable("locations", {
-  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "locations_id_seq" }),
-  name: text().notNull(),
-  customerId: bigint("customer_id", { mode: "number" }).notNull(),
-  postCode: text("post_code").notNull(),
-}, (table) => [
-  foreignKey({
-    columns: [table.customerId],
-    foreignColumns: [customers.id],
-    name: "locations_customer_id_fk"
-  }),
-  pgPolicy("admin-authenticated_backend-policy-all", {
-    as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
-           FROM neon_auth."user" u
-          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`, withCheck: sql`( SELECT (EXISTS ( SELECT 1
-           FROM neon_auth."user" u
-          WHERE ((u.id = (auth.user_id())::uuid) AND ('admin'::text = ANY (string_to_array(COALESCE(u.role, ''::text), ','::text)))))) AS "exists")`  }),
-  pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"] })
-]);
-
 export const jobs = pgTable("jobs", {
   // You can use { mode: "bigint" } if numbers are exceeding js number limitations
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "jobs_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
@@ -258,14 +238,14 @@ export const machines = pgTable("machines", {
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "machines_id_seq" }),
   name: text().notNull(),
   type: text().notNull(),
-  locationId: bigint("location_id", { mode: "number" }).notNull(),
+  customerId: bigint("customer_id", { mode: "number" }).notNull(),
   createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().$onUpdate(() => new Date().toISOString()).notNull(),
 }, (table) => [
   foreignKey({
-    columns: [table.locationId],
-    foreignColumns: [locations.id],
-    name: "machines_location_id_fk"
+    columns: [table.customerId],
+    foreignColumns: [customers.id],
+    name: "machines_customer_id_fk"
   }),
   pgPolicy("admin-authenticated_backend-policy-all", {
     as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1

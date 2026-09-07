@@ -8,24 +8,24 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { createMachine, getLocations } from '@/lib/api';
+import { createMachine, getCustomers } from '@/lib/api';
 import { machines } from '@/lib/machines.ts';
 
-export function CreateMachineForm({ location }: { location?: string }) {
+export function CreateMachineForm({ customer }: { customer?: string }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const { data: locations, isPending } = useQuery({
-    queryKey: ['locations'],
-    queryFn: getLocations,
+  const { data: customers, isPending } = useQuery({
+    queryKey: ['customers'],
+    queryFn: getCustomers,
     staleTime: Infinity,
-    enabled: !location,
+    enabled: !customer,
   });
 
   const mutation = useMutation({
     mutationFn: createMachine,
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['locations', String(variables.locationId)],
+        queryKey: ['customers', String(variables.customerId)],
       });
       toast.success('Machine added');
     },
@@ -36,13 +36,13 @@ export function CreateMachineForm({ location }: { location?: string }) {
 
   const form = useForm({
     defaultValues: {
-      locationId: location ?? '',
+      customerId: customer ?? '',
       name: '',
       type: '',
     },
     onSubmit: async ({ value }) => {
       await mutation.mutateAsync({
-        locationId: Number(value.locationId),
+        customerId: Number(value.customerId),
         name: value.name.trim(),
         type: value.type.trim(),
       });
@@ -78,18 +78,18 @@ export function CreateMachineForm({ location }: { location?: string }) {
                 <FieldLegend>Machines</FieldLegend>
                 <FieldDescription>Add a Machine</FieldDescription>
                 <FieldGroup>
-                  {!location &&
+                  {!customer &&
                     <form.Field
-                      name="locationId"
+                      name="customerId"
                       validators={{
                         onSubmit: ({ value }) =>
-                          value ? undefined : { message: 'A Location must be selected' }
+                          value ? undefined : { message: 'A Customer must be selected' }
                       }}
                       children={(field) => {
                         const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
                         return (
                           <Field data-invalid={isInvalid}>
-                            <FieldLabel htmlFor={field.name}>Location</FieldLabel>
+                            <FieldLabel htmlFor={field.name}>Customer</FieldLabel>
                             <Select
                               value={field.state.value}
                               onValueChange={(value) => field.handleChange(value)}
@@ -101,10 +101,10 @@ export function CreateMachineForm({ location }: { location?: string }) {
                                 aria-invalid={isInvalid}
                                 onBlur={field.handleBlur}
                               >
-                                <SelectValue placeholder={isPending ? 'Loading locations…' : 'Select locations'} />
+                                <SelectValue placeholder={isPending ? 'Loading customers…' : 'Select customers'} />
                               </SelectTrigger>
                               <SelectContent className="max-h-[400px]" side="bottom" position="popper">
-                                {locations?.map((option) => (
+                                {customers?.map((option) => (
                                   <SelectItem key={option.id} value={String(option.id)}>
                                     {option.name}
                                   </SelectItem>
