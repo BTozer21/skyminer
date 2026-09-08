@@ -37,6 +37,7 @@ export function JobAssignmentDialog({ job, onOpenChange }: JobAssignmentDialogPr
     mutationFn: createJobAssignment,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['schedule'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -50,6 +51,7 @@ export function JobAssignmentDialog({ job, onOpenChange }: JobAssignmentDialogPr
       // The demote of the previous lead happens server-side, so the refetch is
       // what moves the crown — nothing here is held in local state.
       queryClient.invalidateQueries({ queryKey: ['schedule'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -62,6 +64,7 @@ export function JobAssignmentDialog({ job, onOpenChange }: JobAssignmentDialogPr
       // The dialog reads its job out of the schedule query, so this refetch is
       // what removes the row — nothing here is held in local state.
       queryClient.invalidateQueries({ queryKey: ['schedule'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
       toast.success('Removed from job');
     },
     onError: (error) => {

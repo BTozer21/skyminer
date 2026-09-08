@@ -26,6 +26,25 @@ export async function getJobs() {
   return data;
 }
 
+export async function getMyJobs() {
+  const headers = await getAuthHeaders();
+  const res = await api.jobs.mine.$get({}, { headers });
+  if (!res.ok) {
+    throw new Error("There was an error here");
+  }
+  const { data } = await res.json();
+  return data;
+}
+
+// Query options live with the fetcher so a route's loader and its component
+// can share one cache entry. The key sits under ['jobs', …] so the
+// invalidations the job mutations already fire reach it too.
+export const myJobsQuery = {
+  queryKey: ['jobs', 'mine'],
+  queryFn: getMyJobs,
+  staleTime: Infinity,
+}
+
 export async function getJob(id: number) {
   const headers = await getAuthHeaders();
   const res = await api.jobs[':id'].$get({ param: { id: String(id) } }, { headers });

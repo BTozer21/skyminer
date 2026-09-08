@@ -74,6 +74,7 @@ function AssignForm({
     mutationFn: createJobAssignment,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['schedule'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
       toast.success('Assigned to job');
       onOpenChange(false);
     },

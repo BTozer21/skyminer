@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, getAuthenticatedDb } from '../src/db/index.ts';
-import { jobs } from '../src/db/schema.ts';
+import { jobAssignments, jobs } from '../src/db/schema.ts';
 import { zValidator } from '@hono/zod-validator';
 import { createInsertSchema } from 'drizzle-zod';
 import type { AppVariables } from '../src/types.ts';
@@ -41,6 +41,30 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
     return c.json({ data: allJobs, user: userId }, 200)
   })
 
+  .get('/mine', async (c) => {
+    const userId = c.get('userId');
+    const myJobs = await getAuthenticatedDb(userId, async (tx) => {
+      const result = await tx.query.jobs.findMany({
+        where: (jobs, { and, ne, inArray }) =>
+          and(
+            ne(jobs.status, 'planning'),
+            inArray(
+              jobs.id,
+              tx
+                .select({ jobId: jobAssignments.jobId })
+                .from(jobAssignments)
+                .where(eq(jobAssignments.userId, userId)),
+            ),
+          ),
+        with: { customer: true },
+        orderBy: (jobs, { asc }) => [asc(jobs.startDate)],
+      });
+      return result;
+    });
+
+    return c.json({ data: myJobs }, 200);
+  })
+
   .get('/:id', zValidator('param', z.object({ id: z.coerce.number().int().positive() })), async (c) => {
     const userId = c.get('userId');
     const userRoles = c.get('userRoles');
@@ -69,7 +93,7 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
 
     const isAdmin = userRoles?.includes('admin');
     const isOnJob = team.some((member) => member.userId === userId);
-    if (!isAdmin && !(isOnJob && job.status === 'planned')) {
+    if (!isAdmin && !(isOnJob && job.status !== 'planning')) {
       return c.json({ message: "Job not found" }, 404);
     }
 

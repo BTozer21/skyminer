@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const jobQuery = (jobId: string) => ({
   queryKey: ['jobs', jobId],
   queryFn: () => getJob(Number(jobId)),
+  staleTime: Infinity,
   // A 404 is an answer, not a failure — retrying it just delays the not-found
   // screen by a few seconds.
   retry: (count: number, error: Error) =>
