@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { getAuthenticatedDb } from '../src/db/index.ts';
+import { db, getAuthenticatedDb } from '../src/db/index.ts';
 import { jobs } from '../src/db/schema.ts';
 import { zValidator } from '@hono/zod-validator';
 import { createInsertSchema } from 'drizzle-zod';
@@ -43,6 +43,7 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
 
   .get('/:id', zValidator('param', z.object({ id: z.coerce.number().int().positive() })), async (c) => {
     const userId = c.get('userId');
+    const userRoles = c.get('userRoles');
     const { id } = c.req.valid('param');
 
     const job = await getAuthenticatedDb(userId, async (tx) => {
@@ -53,13 +54,26 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
       return result;
     });
 
-    // RLS makes a job someone can't touch look identical to one that isn't
     // there; both are a 404 as far as the caller is concerned.
     if (!job) {
       return c.json({ message: "Job not found" }, 404);
     }
 
-    return c.json({ data: job }, 200);
+    const team = await db.query.jobAssignments.findMany({
+      where: (assignment, { eq }) => eq(assignment.jobId, id),
+      orderBy: (assignment, { asc }) => [asc(assignment.role), asc(assignment.id)],
+      with: {
+        userInNeonAuth: { columns: { id: true, name: true, email: true } },
+      },
+    });
+
+    const isAdmin = userRoles?.includes('admin');
+    const isOnJob = team.some((member) => member.userId === userId);
+    if (!isAdmin && !(isOnJob && job.status === 'planned')) {
+      return c.json({ message: "Job not found" }, 404);
+    }
+
+    return c.json({ data: { ...job, jobAssignments: team } }, 200);
   })
 
   .post('/', zValidator('json', createJobSchema), async (c) => {

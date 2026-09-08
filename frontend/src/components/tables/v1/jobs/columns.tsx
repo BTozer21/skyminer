@@ -66,7 +66,7 @@ export const columns = columnHelper.columns([
 
       return (
         <Link
-          to="/admin/jobs/$jobId"
+          to="/jobs/$jobId"
           params={{ jobId: String(job.id) }}
           className="font-medium hover:underline"
         >

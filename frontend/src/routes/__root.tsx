@@ -1,4 +1,5 @@
-import { Outlet, createRootRoute, useNavigate, Link as RouterLink } from '@tanstack/react-router'
+import { Outlet, createRootRouteWithContext, useNavigate, Link as RouterLink } from '@tanstack/react-router'
+import type { QueryClient } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from '@/components/theme-provider';
 
@@ -10,7 +11,7 @@ import { authClient } from '../auth';
 
 import '../styles.css'
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: RootComponent,
 })
 

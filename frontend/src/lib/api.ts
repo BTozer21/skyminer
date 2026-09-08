@@ -30,10 +30,15 @@ export async function getJob(id: number) {
   const headers = await getAuthHeaders();
   const res = await api.jobs[':id'].$get({ param: { id: String(id) } }, { headers });
   if (!res.ok) {
-    throw new Error(
-      res.status === 404
-        ? 'That job no longer exists'
-        : 'There was an error here',
+    // The status rides along so the page can tell "no such job / not yours yet"
+    // apart from a request that simply failed.
+    throw Object.assign(
+      new Error(
+        res.status === 404
+          ? 'That job no longer exists'
+          : 'There was an error here',
+      ),
+      { status: res.status },
     );
   }
   const { data } = await res.json();
