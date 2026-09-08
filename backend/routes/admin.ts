@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { createInsertSchema } from 'drizzle-zod';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../src/db/index.ts';
 import { jobAssignments, userInNeonAuth } from '../src/db/schema.ts';
 import type { AppVariables } from '../src/types.ts';
@@ -10,7 +10,10 @@ import type { AppVariables } from '../src/types.ts';
 const createJobAssignmentSchema = createInsertSchema(jobAssignments).pick({
   jobId: true,
   userId: true,
+  role: true,
 });
+
+const updateJobAssignmentSchema = z.object({ role: z.enum(['member', 'lead']) });
 
 export const adminRoute = new Hono<{ Variables: AppVariables }>()
   .get('/users', async (c) => {
@@ -50,7 +53,7 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
     '/job-assignments',
     zValidator('json', createJobAssignmentSchema),
     async (c) => {
-      const { jobId, userId } = c.req.valid('json');
+      const { jobId, userId, role } = c.req.valid('json');
 
       // The table has no unique constraint on (job_id, user_id), so the same
       // person could be added to a job twice and show up twice in the grid.
@@ -62,12 +65,67 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
         return c.json({ message: 'Already assigned to this job' }, 409);
       }
 
-      const [created] = await db
-        .insert(jobAssignments)
-        .values({ jobId, userId })
-        .returning();
+      const created = await db.transaction(async (tx) => {
+        // One lead per job is a unique index, so the sitting lead has to step
+        // down before the new one is inserted.
+        if (role === 'lead') {
+          await tx
+            .update(jobAssignments)
+            .set({ role: 'member' })
+            .where(and(eq(jobAssignments.jobId, jobId), eq(jobAssignments.role, 'lead')));
+        }
+
+        const [result] = await tx
+          .insert(jobAssignments)
+          .values({ jobId, userId, role })
+          .returning();
+
+        return result;
+      });
 
       return c.json({ data: created }, 201);
+    }
+  )
+
+  .patch(
+    '/job-assignments/:id',
+    zValidator('param', z.object({ id: z.coerce.number().int().positive() })),
+    zValidator('json', updateJobAssignmentSchema),
+    async (c) => {
+      const { id } = c.req.valid('param');
+      const { role } = c.req.valid('json');
+
+      const updated = await db.transaction(async (tx) => {
+        const assignment = await tx.query.jobAssignments.findFirst({
+          where: (assignment, { eq }) => eq(assignment.id, id),
+        });
+        if (!assignment) return undefined;
+
+        // Demote before promote, in one transaction: the partial unique index
+        // is never transiently violated and the job never has two leads.
+        if (role === 'lead') {
+          await tx
+            .update(jobAssignments)
+            .set({ role: 'member' })
+            .where(
+              and(eq(jobAssignments.jobId, assignment.jobId), eq(jobAssignments.role, 'lead')),
+            );
+        }
+
+        const [result] = await tx
+          .update(jobAssignments)
+          .set({ role })
+          .where(eq(jobAssignments.id, id))
+          .returning();
+
+        return result;
+      });
+
+      if (!updated) {
+        return c.json({ message: 'Assignment not found' }, 404);
+      }
+
+      return c.json({ data: updated }, 200);
     }
   )
 

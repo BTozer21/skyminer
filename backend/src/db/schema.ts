@@ -213,6 +213,7 @@ export const jobAssignments = pgTable("job_assignments", {
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "job_assignments_id_seq" }),
   userId: uuid("user_id").notNull(),
   jobId: bigint({ mode: "number" }).notNull(),
+  role: text().notNull().default('member'),
 }, (table) => [
   foreignKey({
     columns: [table.userId],
@@ -225,6 +226,7 @@ export const jobAssignments = pgTable("job_assignments", {
     name: "job_assignments_job_id_job_id_fk"
   }).onDelete("cascade"),
   unique("job_assignments_user_id_job_id_unique").on(table.userId, table.jobId),
+  uniqueIndex("job_assignments_one_lead_per_job").on(table.jobId).where(sql`role = 'lead'`),
   pgPolicy("admin-authenticated_backend-policy-all", {
     as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
            FROM neon_auth."user" u

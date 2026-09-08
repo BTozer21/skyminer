@@ -1,0 +1,2 @@
+ALTER TABLE "job_assignments" ADD COLUMN "role" text DEFAULT 'member' NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "job_assignments_one_lead_per_job" ON "job_assignments" USING btree ("jobId") WHERE role = 'lead';
