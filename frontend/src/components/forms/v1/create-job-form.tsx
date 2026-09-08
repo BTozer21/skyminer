@@ -10,9 +10,18 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Field, FieldGroup, FieldLabel, FieldDescription, FieldError, FieldSet, FieldLegend } from '@/components/ui/field';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
-import { CalendarIcon, Plus } from 'lucide-react';
+import { CalendarIcon, Crown, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { createJob, getCustomers } from '@/lib/api';
+import { createJob, createJobAssignment, getCustomers, listUsers } from '@/lib/api';
+import type { JobRole } from '@/lib/api';
+
+// Held in form state until the job exists: assignments need a job id, and the
+// job isn't created until submit.
+interface DraftAssignee {
+  userId: string
+  name: string
+  role: JobRole
+}
 
 interface CreateJobFormProps {
   defaultDate?: Date
@@ -24,6 +33,11 @@ export function CreateJobForm({ defaultDate, trigger, onCreated }: CreateJobForm
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const { data: customers, isPending } = useQuery({ queryKey: ['customers'], queryFn: getCustomers, staleTime: Infinity });
+  // Same key the team page uses, so this is usually served from cache.
+  const { data: users, isPending: usersPending } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: () => listUsers(),
+  });
 
   const mutation = useMutation({
     mutationFn: createJob,
@@ -44,6 +58,7 @@ export function CreateJobForm({ defaultDate, trigger, onCreated }: CreateJobForm
         ? { from: defaultDate, to: defaultDate }
         : undefined) as DateRange | undefined,
       customerId: '',
+      assignees: [] as DraftAssignee[],
     },
     onSubmit: async ({ value }) => {
       const { from, to } = value.dateRange!;
@@ -53,6 +68,28 @@ export function CreateJobForm({ defaultDate, trigger, onCreated }: CreateJobForm
         startDate: format(from!, 'yyyy-MM-dd'),
         endDate: format(to!, 'yyyy-MM-dd'),
       });
+
+      // The job is already created, so a failure here can't roll it back —
+      // name who didn't stick rather than swallowing it, and keep going.
+      const failed: string[] = [];
+      await Promise.all(
+        value.assignees.map(async (assignee) => {
+          try {
+            await createJobAssignment({
+              jobId: job.id,
+              userId: assignee.userId,
+              role: assignee.role,
+            });
+          } catch {
+            failed.push(assignee.name);
+          }
+        }),
+      );
+      if (failed.length) {
+        toast.error(`Could not assign ${failed.join(', ')} — add them from the job`);
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ['schedule'] });
       form.reset();
       setOpen(false);
       onCreated?.(job.id);
@@ -202,6 +239,86 @@ export function CreateJobForm({ defaultDate, trigger, onCreated }: CreateJobForm
                             </PopoverContent>
                           </Popover>
                           {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                        </Field>
+                      )
+                    }}
+                  />
+                  <form.Field
+                    name="assignees"
+                    children={(field) => {
+                      const assignees = field.state.value;
+                      const isPicked = (id: string) =>
+                        assignees.some((assignee) => assignee.userId === id);
+
+                      const toggleUser = (id: string, name: string) =>
+                        field.handleChange(
+                          isPicked(id)
+                            ? assignees.filter((assignee) => assignee.userId !== id)
+                            : [...assignees, { userId: id, name, role: 'member' as JobRole }],
+                        );
+
+                      // One lead per job: promoting demotes everyone else here,
+                      // before submit, so the insert can't trip the unique index.
+                      const toggleLead = (id: string) =>
+                        field.handleChange(
+                          assignees.map((assignee) => ({
+                            ...assignee,
+                            role:
+                              assignee.userId === id && assignee.role !== 'lead'
+                                ? 'lead'
+                                : 'member',
+                          })),
+                        );
+
+                      return (
+                        <Field>
+                          <FieldLabel>Team</FieldLabel>
+                          {usersPending ? (
+                            <p className="text-muted-foreground text-sm">Loading team…</p>
+                          ) : (
+                            <ul className="flex max-h-56 flex-col gap-1 overflow-y-auto">
+                              {users?.users.map((user) => {
+                                const picked = assignees.find(
+                                  (assignee) => assignee.userId === user.id,
+                                );
+                                const isLead = picked?.role === 'lead';
+
+                                return (
+                                  <li
+                                    key={user.id}
+                                    data-selected={Boolean(picked)}
+                                    className="bg-muted/40 data-[selected=true]:!border-blue-500 data-[selected=true]:bg-blue-500/10 flex items-center gap-1 rounded-sm border border-transparent pr-1"
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleUser(user.id, user.name)}
+                                      aria-pressed={Boolean(picked)}
+                                      className="flex-1 px-2 py-1 text-left text-sm"
+                                    >
+                                      {user.name}
+                                    </button>
+                                    {/* Only someone on the job can lead it. */}
+                                    {picked && (
+                                      <Button
+                                        type="button"
+                                        onClick={() => toggleLead(user.id)}
+                                        title={isLead ? 'Team lead' : `Make ${user.name} team lead`}
+                                        aria-label={isLead ? 'Team lead' : `Make ${user.name} team lead`}
+                                        aria-pressed={isLead}
+                                        variant="ghost"
+                                        size="icon"
+                                        className={`size-6 ${isLead ? '!border-amber-500' : ''} hover:!border-amber-500 transition-all duration-200`}
+                                      >
+                                         <Crown
+                                          className={isLead ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground'}
+                                        />
+                                      </Button>
+                                    )}
+                                  </li>
+                                )
+                              })}
+                            </ul>
+                          )}
                         </Field>
                       )
                     }}
