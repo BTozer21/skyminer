@@ -111,7 +111,8 @@ function AssignForm({
           <p className="text-muted-foreground text-sm">No jobs run on this day.</p>
           <CreateJobForm
             defaultDate={target.date}
-            onCreated={(id) => setJobId(String(id))}
+            initialAssignee={{ userId: target.userId, name: target.userName }}
+            onCreated={() => onOpenChange(false)}
             trigger={
               <Button variant="outline">
                 <Plus />

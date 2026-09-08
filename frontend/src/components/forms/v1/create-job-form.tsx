@@ -25,11 +25,12 @@ interface DraftAssignee {
 
 interface CreateJobFormProps {
   defaultDate?: Date
+  initialAssignee?: { userId: string; name: string }
   trigger?: React.ReactNode
   onCreated?: (jobId: number) => void
 }
 
-export function CreateJobForm({ defaultDate, trigger, onCreated }: CreateJobFormProps) {
+export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated }: CreateJobFormProps) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const { data: customers, isPending } = useQuery({ queryKey: ['customers'], queryFn: getCustomers, staleTime: Infinity });
@@ -41,8 +42,8 @@ export function CreateJobForm({ defaultDate, trigger, onCreated }: CreateJobForm
 
   const mutation = useMutation({
     mutationFn: createJob,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
       toast.success('Job added');
     },
     onError: (error) => {
@@ -58,7 +59,9 @@ export function CreateJobForm({ defaultDate, trigger, onCreated }: CreateJobForm
         ? { from: defaultDate, to: defaultDate }
         : undefined) as DateRange | undefined,
       customerId: '',
-      assignees: [] as DraftAssignee[],
+      assignees: (initialAssignee
+        ? [{ ...initialAssignee, role: 'member' }]
+        : []) as DraftAssignee[],
     },
     onSubmit: async ({ value }) => {
       const { from, to } = value.dateRange!;
@@ -68,6 +71,10 @@ export function CreateJobForm({ defaultDate, trigger, onCreated }: CreateJobForm
         startDate: format(from!, 'yyyy-MM-dd'),
         endDate: format(to!, 'yyyy-MM-dd'),
       });
+
+      form.reset();
+      setOpen(false);
+      onCreated?.(job.id);
 
       // The job is already created, so a failure here can't roll it back —
       // name who didn't stick rather than swallowing it, and keep going.
@@ -89,10 +96,7 @@ export function CreateJobForm({ defaultDate, trigger, onCreated }: CreateJobForm
         toast.error(`Could not assign ${failed.join(', ')} — add them from the job`);
       }
 
-      await queryClient.invalidateQueries({ queryKey: ['schedule'] });
-      form.reset();
-      setOpen(false);
-      onCreated?.(job.id);
+      queryClient.invalidateQueries({ queryKey: ['schedule'] });
     },
   });
 
