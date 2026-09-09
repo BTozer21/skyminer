@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
-import { CheckCircle2, CircleDashed } from 'lucide-react'
 
 import { myLeaveQuery } from '@/lib/api'
+import { LEAVE_STATUS_CONFIG } from '@/lib/v1/leave'
 import { CreateLeaveRequestForm } from '@/components/forms/v1/create-leave-request-form'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -28,7 +28,8 @@ function RouteComponent() {
         ) : leave?.length ? (
           <ul className="flex max-w-md flex-col gap-2">
             {leave.map((request) => {
-              const StatusIcon = request.approved ? CheckCircle2 : CircleDashed;
+              const status = LEAVE_STATUS_CONFIG[request.status];
+              const StatusIcon = status.icon;
 
               return (
                 <li
@@ -47,12 +48,8 @@ function RouteComponent() {
                     ) : null}
                   </span>
                   <span className="flex shrink-0 items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">
-                      {request.approved ? 'Approved' : 'Pending'}
-                    </span>
-                    <StatusIcon
-                      className={`size-4 shrink-0 ${request.approved ? 'text-green-500' : 'text-amber-500'}`}
-                    />
+                    <span className="text-muted-foreground">{status.label}</span>
+                    <StatusIcon className={`size-4 shrink-0 ${status.className}`} />
                   </span>
                 </li>
               );

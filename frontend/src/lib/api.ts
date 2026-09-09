@@ -265,6 +265,11 @@ export async function getLeaveRequests() {
 }
 
 // Same pattern as myJobsQuery: the loader and the component share one entry.
+export type LeaveRequestResponse = InferResponseType<
+  typeof api["leave-requests"]["$get"],
+  200
+>['data'][number]
+
 export const myLeaveQuery = {
   queryKey: ['leave-requests', 'mine'],
   queryFn: getLeaveRequests,

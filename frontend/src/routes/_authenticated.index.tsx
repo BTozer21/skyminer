@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { authClient, useIsAdmin } from '../auth';
 import { myJobsQuery, myLeaveQuery } from '@/lib/api'
 import { STATUS_CONFIG } from '@/lib/v1/jobs'
+import { LEAVE_STATUS_CONFIG } from '@/lib/v1/leave'
 import { MemberCalendar, parseDay } from '@/components/calendars/v1/member-calendar'
 import type { CalendarEvent } from '@/components/calendars/v1/member-calendar'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -28,13 +29,6 @@ export const Route = createFileRoute('/_authenticated/')({
   component: RouteComponent,
 })
 
-// Leave is only ever one of two states, so it gets a flat map rather than the
-// config object the job statuses need.
-const LEAVE_BAR = {
-  approved: 'bg-violet-500/25 text-violet-900 dark:text-violet-100',
-  pending: 'border border-dashed !border-violet-500/60 bg-violet-500/10 text-violet-900 dark:text-violet-100',
-} as const
-
 function RouteComponent() {
   const navigate = useNavigate();
   const { isAdmin, isPending } = useIsAdmin();
@@ -52,14 +46,17 @@ function RouteComponent() {
       onClick: () => navigate({ to: '/jobs/$jobId', params: { jobId: String(job.id) } }),
     }));
 
-    const leaveEvents = (leave ?? []).map((request) => ({
-      id: `leave-${request.id}`,
-      title: 'Leave',
-      subtitle: request.approved ? undefined : 'pending',
-      start: parseDay(request.startDate),
-      end: parseDay(request.endDate),
-      className: request.approved ? LEAVE_BAR.approved : LEAVE_BAR.pending,
-    }));
+    // Denied leave is not time off, so it never reaches the calendar.
+    const leaveEvents = (leave ?? [])
+      .filter((request) => request.status !== 'denied')
+      .map((request) => ({
+        id: `leave-${request.id}`,
+        title: 'Leave',
+        subtitle: request.status === 'submitted' ? 'pending' : undefined,
+        start: parseDay(request.startDate),
+        end: parseDay(request.endDate),
+        className: LEAVE_STATUS_CONFIG[request.status].bar,
+      }));
 
     return [...jobEvents, ...leaveEvents];
   }, [jobs, leave, navigate]);
@@ -80,11 +77,11 @@ function RouteComponent() {
                     Jobs
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className={`size-3 rounded-sm ${LEAVE_BAR.approved}`} />
+                    <span className={`size-3 rounded-sm ${LEAVE_STATUS_CONFIG.approved.bar}`} />
                     Leave
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className={`size-3 rounded-sm ${LEAVE_BAR.pending}`} />
+                    <span className={`size-3 rounded-sm ${LEAVE_STATUS_CONFIG.submitted.bar}`} />
                     Leave (pending)
                   </span>
                 </div>

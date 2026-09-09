@@ -282,6 +282,8 @@ export const jobMachines = pgTable("job_machines", {
   pgPolicy("crud-authenticated_backend-policy-select", { as: "permissive", for: "select", to: ["authenticated_backend"] })
 ]);
 
+export const leaveStatusEnum = pgEnum('leave_status', ['submitted', 'approved', 'denied']);
+
 export const leaveRequests = pgTable("leave_requests", {
   // You can use { mode: "bigint" } if numbers are exceeding js number limitations
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "leave_requests_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
@@ -289,7 +291,7 @@ export const leaveRequests = pgTable("leave_requests", {
   startDate: date("start_date").notNull(),
   endDate: date("end_date").notNull(),
   comment: text(),
-  approved: boolean().notNull().default(false),
+  status: leaveStatusEnum().notNull().default('submitted'),
   createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
 }, (table) => [
   foreignKey({
