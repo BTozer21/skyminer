@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { createInsertSchema } from 'drizzle-zod';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../src/db/index.ts';
-import { jobAssignments, userInNeonAuth } from '../src/db/schema.ts';
+import { jobAssignments, leaveRequests, leaveStatusEnum, userInNeonAuth } from '../src/db/schema.ts';
 import type { AppVariables } from '../src/types.ts';
 
 const createJobAssignmentSchema = createInsertSchema(jobAssignments).pick({
@@ -14,6 +14,10 @@ const createJobAssignmentSchema = createInsertSchema(jobAssignments).pick({
 });
 
 const updateJobAssignmentSchema = z.object({ role: z.enum(['member', 'lead']) });
+
+const updateLeaveRequestSchema = z.object({
+  status: z.enum(leaveStatusEnum.enumValues),
+});
 
 export const adminRoute = new Hono<{ Variables: AppVariables }>()
   .get('/users', async (c) => {
@@ -43,6 +47,28 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
       }
 
       return c.json({ data: user }, 200);
+    }
+  )
+
+  .patch(
+    '/leave-requests/:id',
+    zValidator('param', z.object({ id: z.coerce.number().int().positive() })),
+    zValidator('json', updateLeaveRequestSchema),
+    async (c) => {
+      const { id } = c.req.valid('param');
+      const { status } = c.req.valid('json');
+
+      const [updated] = await db
+        .update(leaveRequests)
+        .set({ status })
+        .where(eq(leaveRequests.id, id))
+        .returning();
+
+      if (!updated) {
+        return c.json({ message: 'Leave request not found' }, 404);
+      }
+
+      return c.json({ data: updated }, 200);
     }
   )
 

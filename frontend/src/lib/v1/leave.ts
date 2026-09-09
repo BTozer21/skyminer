@@ -10,3 +10,6 @@ export const LEAVE_STATUS_CONFIG = {
   approved: { icon: CheckCircle2, label: 'Approved', className: 'text-green-500', bar: 'bg-violet-500/25 text-violet-900 dark:text-violet-100' },
   denied: { icon: XCircle, label: 'Denied', className: 'text-red-500', bar: 'bg-muted text-muted-foreground line-through' },
 } satisfies Record<LeaveRequestResponse['status'], { icon: LucideIcon; label: string; className: string; bar: string }>
+
+// Dropdown order, mirroring STATUSES for jobs.
+export const LEAVE_STATUSES = ['submitted', 'approved', 'denied'] as const satisfies readonly LeaveRequestResponse['status'][]

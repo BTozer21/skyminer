@@ -293,6 +293,25 @@ export async function getTeamMember(id: string) {
   return data;
 }
 
+export async function updateLeaveRequestStatus(
+  id: number,
+  status: LeaveRequestResponse['status'],
+) {
+  const headers = await getAuthHeaders();
+  const res = await api.admin['leave-requests'][':id'].$patch(
+    { param: { id: String(id) }, json: { status } },
+    { headers },
+  );
+  if (!res.ok) {
+    throw new Error(
+      res.status === 404
+        ? 'That leave request no longer exists'
+        : 'There was an error here',
+    );
+  }
+  return res.json();
+}
+
 export async function getLeaveRequests() {
   const headers = await getAuthHeaders();
   const res = await api["leave-requests"].$get({}, { headers });

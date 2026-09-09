@@ -1,11 +1,19 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { ChevronLeft } from 'lucide-react';
+import { toast } from 'sonner';
 
-import { getTeamMember } from '@/lib/api';
-import { LEAVE_STATUS_CONFIG } from '@/lib/v1/leave';
+import { getTeamMember, updateLeaveRequestStatus } from '@/lib/api';
+import { LEAVE_STATUSES, LEAVE_STATUS_CONFIG } from '@/lib/v1/leave';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+
+import type { LeaveRequestResponse } from '@/lib/api';
 
 export const Route = createFileRoute('/_authenticated/admin/team/$userId')({
   component: RouteComponent,
@@ -41,33 +49,25 @@ function RouteComponent() {
           <p className="text-muted-foreground text-sm">{error.message}</p>
         ) : member?.leaveRequests.length ? (
           <ul className="flex max-w-md flex-col gap-2">
-            {member.leaveRequests.map((request) => {
-              const status = LEAVE_STATUS_CONFIG[request.status];
-              const StatusIcon = status.icon;
-
-              return (
-                <li
-                  key={request.id}
-                  className="bg-muted/40 flex items-start justify-between gap-3 rounded-sm px-3 py-2"
-                >
-                  <span className="flex min-w-0 flex-col">
-                    <span className="font-medium">
-                      {/* A single day reads as one date, not "5 Mar – 5 Mar". */}
-                      {request.startDate === request.endDate
-                        ? format(new Date(request.startDate), 'dd/MM/yyyy')
-                        : `${format(new Date(request.startDate), 'dd/MM/yyyy')} – ${format(new Date(request.endDate), 'dd/MM/yyyy')}`}
-                    </span>
-                    {request.comment ? (
-                      <span className="text-muted-foreground text-xs">{request.comment}</span>
-                    ) : null}
+            {member.leaveRequests.map((request) => (
+              <li
+                key={request.id}
+                className="bg-muted/40 flex items-start justify-between gap-3 rounded-sm px-3 py-2"
+              >
+                <span className="flex min-w-0 flex-col">
+                  <span className="font-medium">
+                    {/* A single day reads as one date, not "5 Mar – 5 Mar". */}
+                    {request.startDate === request.endDate
+                      ? format(new Date(request.startDate), 'dd/MM/yyyy')
+                      : `${format(new Date(request.startDate), 'dd/MM/yyyy')} – ${format(new Date(request.endDate), 'dd/MM/yyyy')}`}
                   </span>
-                  <span className="flex shrink-0 items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">{status.label}</span>
-                    <StatusIcon className={`size-4 shrink-0 ${status.className}`} />
-                  </span>
-                </li>
-              );
-            })}
+                  {request.comment ? (
+                    <span className="text-muted-foreground text-xs">{request.comment}</span>
+                  ) : null}
+                </span>
+                <StatusPicker request={request} userId={userId} />
+              </li>
+            ))}
           </ul>
         ) : (
           <p className="text-muted-foreground text-sm">
@@ -76,5 +76,63 @@ function RouteComponent() {
         )}
       </div>
     </div>
+  );
+}
+
+// Admins set the outcome from the same chip that displays it, so the list
+// doubles as the approval queue for one person.
+function StatusPicker({
+  request,
+  userId,
+}: {
+  request: LeaveRequestResponse;
+  userId: string;
+}) {
+  const status = LEAVE_STATUS_CONFIG[request.status];
+  const StatusIcon = status.icon;
+
+  const queryClient = useQueryClient();
+  const update = useMutation({
+    mutationFn: (next: LeaveRequestResponse['status']) =>
+      updateLeaveRequestStatus(request.id, next),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users', userId] });
+      // The person's own list is cached separately, so refresh that too.
+      queryClient.invalidateQueries({ queryKey: ['leave-requests'] });
+      toast.success('Status updated');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          disabled={update.isPending}
+          className="hover:bg-muted -m-1 flex shrink-0 items-center gap-2 rounded-sm p-1 text-sm disabled:opacity-50"
+        >
+          <span className="text-muted-foreground">{status.label}</span>
+          <StatusIcon className={`size-4 shrink-0 ${status.className}`} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {LEAVE_STATUSES.map((option) => {
+          const { icon: Icon, className, label } = LEAVE_STATUS_CONFIG[option];
+
+          return (
+            <DropdownMenuItem
+              key={option}
+              className="gap-2 hover:cursor-pointer"
+              onClick={() => update.mutate(option)}
+            >
+              <Icon className={`size-4 shrink-0 ${className}`} />
+              {label}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
