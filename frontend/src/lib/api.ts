@@ -89,6 +89,24 @@ export async function getCustomer(id: number) {
   return data;
 }
 
+export async function getCustomerMachines(customerId: number) {
+  const headers = await getAuthHeaders();
+  const res = await api.customers[':id'].machines.$get(
+    { param: { id: String(customerId) } },
+    { headers },
+  );
+  if (!res.ok) {
+    throw new Error("There was an error here");
+  }
+  const { data } = await res.json();
+  return data;
+}
+
+export type MachineResponse = InferResponseType<
+  typeof api.customers[':id']['machines']['$get'],
+  200
+>['data'][number]
+
 export type CustomerResponse = InferResponseType<typeof api.customers.$get>['data'][number]
 
 export type JobResponse = InferResponseType<typeof api.jobs.$get>['data'][number]

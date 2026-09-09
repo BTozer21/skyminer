@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm } from '@tanstack/react-form';
+import { useForm, useStore } from '@tanstack/react-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, isSameDay } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
@@ -12,7 +12,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 import { CalendarIcon, Crown, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { createJob, createJobAssignment, getCustomers, listUsers } from '@/lib/api';
+import { createJob, createJobAssignment, getCustomerMachines, getCustomers, listUsers } from '@/lib/api';
 import type { JobRole } from '@/lib/api';
 
 // Held in form state until the job exists: assignments need a job id, and the
@@ -59,6 +59,7 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
         ? { from: defaultDate, to: defaultDate }
         : undefined) as DateRange | undefined,
       customerId: '',
+      machineIds: [] as number[],
       assignees: (initialAssignee
         ? [{ ...initialAssignee, role: 'member' }]
         : []) as DraftAssignee[],
@@ -70,6 +71,7 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
         customerId: Number(value.customerId),
         startDate: format(from!, 'yyyy-MM-dd'),
         endDate: format(to!, 'yyyy-MM-dd'),
+        machineIds: value.machineIds,
       });
 
       form.reset();
@@ -98,6 +100,15 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
 
       queryClient.invalidateQueries({ queryKey: ['schedule'] });
     },
+  });
+
+  // A machine belongs to a customer, so the list only exists once one is
+  // picked — and it refetches when the pick changes.
+  const customerId = useStore(form.store, (state) => state.values.customerId);
+  const { data: customerMachines, isPending: machinesPending } = useQuery({
+    queryKey: ['customers', Number(customerId), 'machines'],
+    queryFn: () => getCustomerMachines(Number(customerId)),
+    enabled: Boolean(customerId),
   });
 
   return (
@@ -142,7 +153,12 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                           <FieldLabel htmlFor={field.name}>Customer</FieldLabel>
                           <Select
                             value={field.state.value}
-                            onValueChange={(value) => field.handleChange(value)}
+                            onValueChange={(value) => {
+                              field.handleChange(value);
+                              // Machines belong to one customer, so a change
+                              // invalidates whatever was already picked.
+                              form.setFieldValue('machineIds', []);
+                            }}
                           >
                             <SelectTrigger
                               id={field.name}
@@ -162,6 +178,55 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                             </SelectContent>
                           </Select>
                           {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                        </Field>
+                      )
+                    }}
+                  />
+                  <form.Field
+                    name="machineIds"
+                    children={(field) => {
+                      const picked = field.state.value;
+                      const toggleMachine = (id: number) =>
+                        field.handleChange(
+                          picked.includes(id)
+                            ? picked.filter((machineId) => machineId !== id)
+                            : [...picked, id],
+                        );
+
+                      return (
+                        <Field>
+                          <FieldLabel>Machines</FieldLabel>
+                          {!customerId ? (
+                            <p className="text-muted-foreground text-sm">
+                              Select a customer first
+                            </p>
+                          ) : machinesPending ? (
+                            <p className="text-muted-foreground text-sm">Loading machines…</p>
+                          ) : !customerMachines?.length ? (
+                            <p className="text-muted-foreground text-sm">
+                              This customer has no machines
+                            </p>
+                          ) : (
+                            <ul className="flex max-h-56 flex-col gap-1 overflow-y-auto">
+                              {customerMachines.map((machine) => (
+                                <li
+                                  key={machine.id}
+                                  data-selected={picked.includes(machine.id)}
+                                  className="bg-muted/40 data-[selected=true]:!border-blue-500 data-[selected=true]:bg-blue-500/10 flex items-center gap-1 rounded-sm border border-transparent pr-1"
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleMachine(machine.id)}
+                                    aria-pressed={picked.includes(machine.id)}
+                                    className="flex-1 px-2 py-1 text-left text-sm"
+                                  >
+                                    {machine.name}
+                                    <span className="text-muted-foreground ml-2">{machine.type}</span>
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </Field>
                       )
                     }}
