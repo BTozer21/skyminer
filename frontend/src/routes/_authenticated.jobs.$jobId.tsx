@@ -1,13 +1,14 @@
 import { useState } from 'react'
-import { createFileRoute, Link, notFound } from '@tanstack/react-router'
+import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { differenceInCalendarDays, format } from 'date-fns'
-import { CalendarIcon, CheckCircle2, Circle, Crown, Users } from 'lucide-react'
+import { CalendarIcon, CheckCircle2, Circle, Crown, Trash2, Users } from 'lucide-react'
 import type { DateRange } from 'react-day-picker'
 import { toast } from 'sonner'
 
 import {
   createJobAssignment,
+  deleteJob,
   deleteJobAssignment,
   getJob,
   listUsers,
@@ -17,6 +18,17 @@ import {
 import type { JobResponse, JobRole } from '@/lib/api'
 import { STATUS_CONFIG, STATUSES, jobTitle } from '@/lib/v1/jobs'
 import { useIsAdmin } from '@/auth'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -163,6 +175,21 @@ function RouteComponent() {
     ...onTeamChange,
   })
   const removal = useMutation({ mutationFn: deleteJobAssignment, ...onTeamChange })
+
+  const navigate = useNavigate()
+  const jobRemoval = useMutation({
+    mutationFn: () => deleteJob(Number(jobId)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      // Assignments cascade away with the job, so the schedule is stale too.
+      queryClient.invalidateQueries({ queryKey: ['schedule'] })
+      toast.success('Job deleted')
+      navigate({ to: '/admin/jobs' })
+    },
+    onError: (error) => {
+      toast.error(error.message)
+    },
+  })
   const teamBusy = assign.isPending || roleChange.isPending || removal.isPending
 
   // Editing lists everyone so people can be added; otherwise just the team,
@@ -462,6 +489,40 @@ function RouteComponent() {
         </ul>
       ) : (
         <p className="text-muted-foreground text-sm">No one is assigned to this job.</p>
+      )}
+
+      {isAdmin && !isError && (
+        <div className="mt-10 max-w-md border-t pt-4">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                type="button"
+                disabled={jobRemoval.isPending}
+                className="text-destructive mx-auto flex items-center gap-2 text-sm font-medium hover:underline disabled:opacity-50"
+              >
+                <Trash2 className="size-4 shrink-0" />
+                Delete this job
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Delete “{job ? jobTitle(job) : 'this job'}”?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This permanently deletes the job and everything scheduled
+                  against it. This cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="border-t-0 bg-transparent">
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction variant="destructive" onClick={() => jobRemoval.mutate()}>
+                  Delete Job
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       )}
     </div>
   )
