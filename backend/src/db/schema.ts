@@ -286,7 +286,9 @@ export const leaveRequests = pgTable("leave_requests", {
   // You can use { mode: "bigint" } if numbers are exceeding js number limitations
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "leave_requests_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
   userId: uuid("user_id").notNull(),
-  approved: boolean().notNull(),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date").notNull(),
+  approved: boolean().notNull().default(false),
   createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
 }, (table) => [
   foreignKey({
