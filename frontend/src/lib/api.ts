@@ -271,11 +271,6 @@ export const myLeaveQuery = {
   staleTime: Infinity,
 }
 
-export type LeaveRequest = InferResponseType<
-  typeof api["leave-requests"]["$get"],
-  200
->['data'][number]
-
 type CreateLeaveRequestInput = InferRequestType<
   typeof api["leave-requests"]["$post"]
 >['json'];
@@ -289,5 +284,3 @@ export async function createLeaveRequest(leave: CreateLeaveRequestInput) {
   const { data } = await res.json();
   return data;
 }
-
-export type MyJob = InferResponseType<typeof api.jobs.mine.$get, 200>['data'][number]

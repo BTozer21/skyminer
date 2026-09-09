@@ -37,7 +37,6 @@ const LEAVE_BAR = {
 
 function RouteComponent() {
   const navigate = useNavigate();
-  const { data: session } = authClient.useSession();
   const { isAdmin, isPending } = useIsAdmin();
   const { data: jobs, isPending: jobsPending } = useQuery(myJobsQuery);
   const { data: leave, isPending: leavePending } = useQuery(myLeaveQuery);
