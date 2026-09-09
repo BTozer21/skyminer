@@ -16,11 +16,12 @@ import { Route as AuthenticatedLeaveRequestsRouteImport } from './routes/_authen
 import { Route as AuthPathnameRouteImport } from './routes/auth.$pathname'
 import { Route as AuthenticatedAccountPathnameRouteImport } from './routes/_authenticated.account.$pathname'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
-import { Route as AuthenticatedAdminTeamRouteImport } from './routes/_authenticated.admin.team'
 import { Route as AuthenticatedJobsJobIdRouteImport } from './routes/_authenticated.jobs.$jobId'
 import { Route as AuthenticatedAdminCustomersIndexRouteImport } from './routes/_authenticated.admin.customers.index'
 import { Route as AuthenticatedAdminCustomersCustomerIdRouteImport } from './routes/_authenticated.admin.customers.$customerId'
 import { Route as AuthenticatedAdminJobsIndexRouteImport } from './routes/_authenticated.admin.jobs.index'
+import { Route as AuthenticatedAdminTeamIndexRouteImport } from './routes/_authenticated.admin.team.index'
+import { Route as AuthenticatedAdminTeamUserIdRouteImport } from './routes/_authenticated.admin.team.$userId'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -58,11 +59,6 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedAdminTeamRoute = AuthenticatedAdminTeamRouteImport.update({
-  id: '/team',
-  path: '/team',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
 const AuthenticatedJobsJobIdRoute = AuthenticatedJobsJobIdRouteImport.update({
   id: '/jobs/$jobId',
   path: '/jobs/$jobId',
@@ -86,6 +82,18 @@ const AuthenticatedAdminJobsIndexRoute =
     path: '/jobs/',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminTeamIndexRoute =
+  AuthenticatedAdminTeamIndexRouteImport.update({
+    id: '/team/',
+    path: '/team/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminTeamUserIdRoute =
+  AuthenticatedAdminTeamUserIdRouteImport.update({
+    id: '/team/$userId',
+    path: '/team/$userId',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -93,24 +101,26 @@ export interface FileRoutesByFullPath {
   '/leave-requests': typeof AuthenticatedLeaveRequestsRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/account/$pathname': typeof AuthenticatedAccountPathnameRoute
-  '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
+  '/admin/team/$userId': typeof AuthenticatedAdminTeamUserIdRoute
   '/admin/customers/': typeof AuthenticatedAdminCustomersIndexRoute
   '/admin/jobs/': typeof AuthenticatedAdminJobsIndexRoute
+  '/admin/team/': typeof AuthenticatedAdminTeamIndexRoute
 }
 export interface FileRoutesByTo {
   '/leave-requests': typeof AuthenticatedLeaveRequestsRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/': typeof AuthenticatedIndexRoute
   '/account/$pathname': typeof AuthenticatedAccountPathnameRoute
-  '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
+  '/admin/team/$userId': typeof AuthenticatedAdminTeamUserIdRoute
   '/admin/customers': typeof AuthenticatedAdminCustomersIndexRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsIndexRoute
+  '/admin/team': typeof AuthenticatedAdminTeamIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -120,12 +130,13 @@ export interface FileRoutesById {
   '/auth/$pathname': typeof AuthPathnameRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/account/$pathname': typeof AuthenticatedAccountPathnameRoute
-  '/_authenticated/admin/team': typeof AuthenticatedAdminTeamRoute
   '/_authenticated/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
+  '/_authenticated/admin/team/$userId': typeof AuthenticatedAdminTeamUserIdRoute
   '/_authenticated/admin/customers/': typeof AuthenticatedAdminCustomersIndexRoute
   '/_authenticated/admin/jobs/': typeof AuthenticatedAdminJobsIndexRoute
+  '/_authenticated/admin/team/': typeof AuthenticatedAdminTeamIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -135,24 +146,26 @@ export interface FileRouteTypes {
     | '/leave-requests'
     | '/auth/$pathname'
     | '/account/$pathname'
-    | '/admin/team'
     | '/jobs/$jobId'
     | '/admin/'
     | '/admin/customers/$customerId'
+    | '/admin/team/$userId'
     | '/admin/customers/'
     | '/admin/jobs/'
+    | '/admin/team/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/leave-requests'
     | '/auth/$pathname'
     | '/'
     | '/account/$pathname'
-    | '/admin/team'
     | '/jobs/$jobId'
     | '/admin'
     | '/admin/customers/$customerId'
+    | '/admin/team/$userId'
     | '/admin/customers'
     | '/admin/jobs'
+    | '/admin/team'
   id:
     | '__root__'
     | '/_authenticated'
@@ -161,12 +174,13 @@ export interface FileRouteTypes {
     | '/auth/$pathname'
     | '/_authenticated/'
     | '/_authenticated/account/$pathname'
-    | '/_authenticated/admin/team'
     | '/_authenticated/jobs/$jobId'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/customers/$customerId'
+    | '/_authenticated/admin/team/$userId'
     | '/_authenticated/admin/customers/'
     | '/_authenticated/admin/jobs/'
+    | '/_authenticated/admin/team/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -225,13 +239,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/admin/team': {
-      id: '/_authenticated/admin/team'
-      path: '/team'
-      fullPath: '/admin/team'
-      preLoaderRoute: typeof AuthenticatedAdminTeamRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
     '/_authenticated/jobs/$jobId': {
       id: '/_authenticated/jobs/$jobId'
       path: '/jobs/$jobId'
@@ -260,24 +267,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminJobsIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/team/': {
+      id: '/_authenticated/admin/team/'
+      path: '/team'
+      fullPath: '/admin/team/'
+      preLoaderRoute: typeof AuthenticatedAdminTeamIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/team/$userId': {
+      id: '/_authenticated/admin/team/$userId'
+      path: '/team/$userId'
+      fullPath: '/admin/team/$userId'
+      preLoaderRoute: typeof AuthenticatedAdminTeamUserIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
 interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminTeamRoute: typeof AuthenticatedAdminTeamRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminCustomersCustomerIdRoute: typeof AuthenticatedAdminCustomersCustomerIdRoute
+  AuthenticatedAdminTeamUserIdRoute: typeof AuthenticatedAdminTeamUserIdRoute
   AuthenticatedAdminCustomersIndexRoute: typeof AuthenticatedAdminCustomersIndexRoute
   AuthenticatedAdminJobsIndexRoute: typeof AuthenticatedAdminJobsIndexRoute
+  AuthenticatedAdminTeamIndexRoute: typeof AuthenticatedAdminTeamIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminTeamRoute: AuthenticatedAdminTeamRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminCustomersCustomerIdRoute:
     AuthenticatedAdminCustomersCustomerIdRoute,
+  AuthenticatedAdminTeamUserIdRoute: AuthenticatedAdminTeamUserIdRoute,
   AuthenticatedAdminCustomersIndexRoute: AuthenticatedAdminCustomersIndexRoute,
   AuthenticatedAdminJobsIndexRoute: AuthenticatedAdminJobsIndexRoute,
+  AuthenticatedAdminTeamIndexRoute: AuthenticatedAdminTeamIndexRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =

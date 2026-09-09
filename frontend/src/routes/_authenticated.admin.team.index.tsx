@@ -5,7 +5,7 @@ import { authClient } from '../auth';
 import { columns } from '@/components/tables/v1/users/columns';
 import { DataTable } from '@/components/tables/v1/data-table';
 
-export const Route = createFileRoute('/_authenticated/admin/team')({
+export const Route = createFileRoute('/_authenticated/admin/team/')({
   component: RouteComponent,
 })
 

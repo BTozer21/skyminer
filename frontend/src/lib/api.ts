@@ -272,6 +272,27 @@ export type AdminUser = NonNullable<
   Awaited<ReturnType<typeof listUsers>>
 >['users'][number];
 
+// A team member with their leave requests nested inside. Pinned to 200: the
+// 404 branch has no `data`, which would otherwise widen this.
+export type TeamMember = InferResponseType<
+  typeof api.admin.users[':id']['$get'],
+  200
+>['data']
+
+export async function getTeamMember(id: string) {
+  const headers = await getAuthHeaders();
+  const res = await api.admin.users[':id'].$get({ param: { id } }, { headers });
+  if (!res.ok) {
+    throw new Error(
+      res.status === 404
+        ? 'That user no longer exists'
+        : 'There was an error here',
+    );
+  }
+  const { data } = await res.json();
+  return data;
+}
+
 export async function getLeaveRequests() {
   const headers = await getAuthHeaders();
   const res = await api["leave-requests"].$get({}, { headers });

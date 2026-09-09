@@ -23,6 +23,30 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
   })
 
   .get(
+    '/users/:id',
+    zValidator('param', z.object({ id: z.uuid() })),
+    async (c) => {
+      const { id } = c.req.valid('param');
+
+      const user = await db.query.userInNeonAuth.findFirst({
+        where: (user, { eq }) => eq(user.id, id),
+        columns: { id: true, name: true, email: true, role: true },
+        with: {
+          leaveRequests: {
+            orderBy: (leave, { desc }) => [desc(leave.startDate)],
+          },
+        },
+      });
+
+      if (!user) {
+        return c.json({ message: 'User not found' }, 404);
+      }
+
+      return c.json({ data: user }, 200);
+    }
+  )
+
+  .get(
     '/job-assignments',
     zValidator('query', z.object({ from: z.string(), to: z.string() })),
     async (c) => {

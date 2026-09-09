@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { format } from 'date-fns'
+import { differenceInCalendarDays, format } from 'date-fns'
 import { CalendarIcon, CheckCircle2, Circle, Crown, Users } from 'lucide-react'
 import type { DateRange } from 'react-day-picker'
 import { toast } from 'sonner'
@@ -36,6 +36,15 @@ const CHECKS = [
   { field: 'report', label: 'Report' },
   { field: 'invoice', label: 'Invoice' },
 ] as const satisfies readonly { field: keyof JobResponse; label: string }[]
+
+// Day rate per person, by customer type.
+const DAY_RATE = { industrial: 175, school: 110 } as const
+
+const GBP = new Intl.NumberFormat('en-GB', {
+  style: 'currency',
+  currency: 'GBP',
+  maximumFractionDigits: 0,
+})
 
 type Job = Awaited<ReturnType<typeof getJob>>
 
@@ -174,6 +183,13 @@ function RouteComponent() {
           assignment: member,
         }))
 
+  // Both ends of the range are worked, so a single-day job is one day.
+  const days = job?.startDate
+    ? differenceInCalendarDays(new Date(job.endDate), new Date(job.startDate)) + 1
+    : 0
+  const rate = job ? DAY_RATE[job.customer.type] : 0
+  const cost = rate * team.length * days
+
   const status = job ? STATUS_CONFIG[job.status] : null
   const StatusIcon = status?.icon
 
@@ -307,6 +323,29 @@ function RouteComponent() {
               (dateLabel ?? '-')
             )}
           </dd>
+
+          {/* Internal pricing — day rate per person, so it moves with the team
+              and the dates above. Admin-only, like the status. */}
+          {isAdmin && (
+            <>
+              <dt className="text-muted-foreground">Cost</dt>
+              <dd>
+                {isPending ? (
+                  <Skeleton className="h-5 w-32" />
+                ) : !cost ? (
+                  '-'
+                ) : (
+                  <>
+                    {GBP.format(cost)}
+                    <span className="text-muted-foreground ml-2 text-xs">
+                      {team.length} × {days} {days === 1 ? 'day' : 'days'} ×{' '}
+                      {GBP.format(rate)}
+                    </span>
+                  </>
+                )}
+              </dd>
+            </>
+          )}
         </dl>
       )}
 

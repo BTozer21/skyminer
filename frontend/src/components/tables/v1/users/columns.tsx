@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { Link } from '@tanstack/react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
@@ -22,6 +23,15 @@ const columnHelper = createColumnHelper<DataTableFeatures, AdminUser>()
 export const columns = columnHelper.columns([
   columnHelper.accessor("name", {
     header: "Name",
+    cell: ({ row, getValue }) => (
+      <Link
+        to="/admin/team/$userId"
+        params={{ userId: row.original.id }}
+        className="hover:underline"
+      >
+        {getValue()}
+      </Link>
+    ),
   }),
   columnHelper.accessor("email", {
     header: "Email",
