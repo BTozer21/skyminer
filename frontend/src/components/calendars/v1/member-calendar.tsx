@@ -249,7 +249,7 @@ export function MemberCalendar({ events, legend }: MemberCalendarProps) {
                       disabled={!event.onClick}
                       title={[event.title, event.subtitle].filter(Boolean).join(' — ')}
                       className={cn(
-                        'pointer-events-auto truncate px-2 py-0.5 text-left text-xs leading-4 transition-opacity',
+                        'pointer-events-auto truncate px-2 py-2 text-left text-xs leading-4 transition-opacity',
                         event.onClick && 'cursor-pointer hover:opacity-80',
                         event.className,
                         // A band that runs off the end of the week is left
