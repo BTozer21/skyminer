@@ -450,7 +450,7 @@ export const columns = columnHelper.columns([
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem variant="destructive" onSelect={(event) => event.preventDefault()}>
-                    Delete Job
+                    Delete
                   </DropdownMenuItem>
                 </AlertDialogTrigger>
               </DropdownMenuContent>

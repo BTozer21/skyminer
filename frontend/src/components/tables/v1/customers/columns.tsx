@@ -41,6 +41,11 @@ export const columns = columnHelper.columns([
     }
 
   }),
+  columnHelper.accessor("type", {
+    header: "Type", 
+    size: 200,
+    cell: ({ getValue }) => <div className="first-letter:uppercase">{getValue()}</div>
+  }),
   columnHelper.accessor("createdAt", {
     header: "Added on",
     cell: ({ getValue }) => {
@@ -87,7 +92,7 @@ export const columns = columnHelper.columns([
                 disabled={removal.isPending}
                 onClick={() => removal.mutate(data.id)}
               >
-                {removal.isPending ? 'Deleting…' : 'Delete Customer'}
+                {removal.isPending ? 'Deleting…' : 'Delete'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
