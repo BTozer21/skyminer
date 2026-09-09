@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { authClient, useIsAdmin } from '../auth';
 import { myJobsQuery, myLeaveQuery } from '@/lib/api'
-import { STATUS_CONFIG, STATUSES } from '@/lib/v1/jobs'
+import { STATUS_CONFIG } from '@/lib/v1/jobs'
 import { MemberCalendar, parseDay } from '@/components/calendars/v1/member-calendar'
 import type { CalendarEvent } from '@/components/calendars/v1/member-calendar'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -32,7 +32,7 @@ export const Route = createFileRoute('/_authenticated/')({
 // config object the job statuses need.
 const LEAVE_BAR = {
   approved: 'bg-violet-500/25 text-violet-900 dark:text-violet-100',
-  pending: 'border border-dashed border-violet-500/60 bg-violet-500/10 text-violet-900 dark:text-violet-100',
+  pending: 'border border-dashed !border-violet-500/60 bg-violet-500/10 text-violet-900 dark:text-violet-100',
 } as const
 
 function RouteComponent() {
@@ -75,12 +75,10 @@ function RouteComponent() {
               events={events}
               legend={
                 <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-                  {STATUSES.map((status) => (
-                    <span key={status} className="flex items-center gap-1.5">
-                      <span className={`size-3 rounded-sm ${STATUS_CONFIG[status].bar}`} />
-                      {STATUS_CONFIG[status].label}
-                    </span>
-                  ))}
+                  <span className="flex items-center gap-1.5">
+                    <span className={`size-3 rounded-sm ${STATUS_CONFIG.planned.bar}`} />
+                    Jobs
+                  </span>
                   <span className="flex items-center gap-1.5">
                     <span className={`size-3 rounded-sm ${LEAVE_BAR.approved}`} />
                     Leave

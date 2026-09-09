@@ -231,7 +231,7 @@ export function MemberCalendar({ events, legend }: MemberCalendarProps) {
                               'font-semibold text-blue-600 dark:text-blue-400',
                           )}
                         >
-                          {format(day, 'd')}
+                          {isToday && 'Today, '}{format(day, 'd')}
                         </span>
                       </div>
                     )
