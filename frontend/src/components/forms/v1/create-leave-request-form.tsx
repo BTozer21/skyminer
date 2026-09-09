@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -45,8 +45,6 @@ export function CreateLeaveRequestForm({ trigger }: CreateLeaveRequestFormProps)
       await mutation.mutateAsync({
         startDate: format(from!, 'yyyy-MM-dd'),
         endDate: format(to!, 'yyyy-MM-dd'),
-        // The column is nullable, so an untouched box stays empty rather than
-        // storing a blank string.
         comment: value.comment.trim() || null,
       });
 
@@ -110,7 +108,7 @@ export function CreateLeaveRequestForm({ trigger }: CreateLeaveRequestFormProps)
                               >
                                 <CalendarIcon />
                                 {range?.from ? (
-                                  range.to ? (
+                                  range.to && !isSameDay(range.from, range.to) ? (
                                     <>
                                       {format(range.from, 'LLL dd, y')} -{' '}
                                       {format(range.to, 'LLL dd, y')}

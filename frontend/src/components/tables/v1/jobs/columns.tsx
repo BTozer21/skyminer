@@ -3,7 +3,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { CalendarIcon, MoreHorizontal, CheckCircle2, Circle } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { toast } from 'sonner';
 
@@ -169,7 +169,7 @@ export const columns = columnHelper.columns([
             >
               <CalendarIcon className="size-4 shrink-0 text-muted-foreground" />
               {current?.from ? (
-                current.to ? (
+                current.to && !isSameDay(current.from, current.to) ? (
                   <>{format(current.from, 'd MMM yy')} – {format(current.to, 'd MMM yy')}</>
                 ) : (
                   format(current.from, 'd MMM yy')

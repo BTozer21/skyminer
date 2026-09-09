@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -219,7 +219,7 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                               >
                                 <CalendarIcon />
                                 {range?.from ? (
-                                  range.to ? (
+                                  range.to && !isSameDay(range.from, range.to) ? (
                                     <>
                                       {format(range.from, 'LLL dd, y')} -{' '}
                                       {format(range.to, 'LLL dd, y')}
