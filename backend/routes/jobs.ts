@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, getAuthenticatedDb } from '../src/db/index.ts';
-import { jobAssignments, jobs } from '../src/db/schema.ts';
+import { jobAssignments, jobMachines, jobs, machines } from '../src/db/schema.ts';
 import { zValidator } from '@hono/zod-validator';
 import { createInsertSchema } from 'drizzle-zod';
 import type { AppVariables } from '../src/types.ts';
@@ -12,6 +12,8 @@ const createJobSchema = createInsertSchema(jobs).pick({
   startDate: true,
   endDate: true,
   customerId: true,
+}).extend({
+  machineIds: z.array(z.coerce.number().int().positive()).optional(),
 });
 
 const updateJobSchema = createInsertSchema(jobs).pick({
@@ -73,7 +75,7 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
     const job = await getAuthenticatedDb(userId, async (tx) => {
       const result = await tx.query.jobs.findFirst({
         where: (jobs, { eq }) => eq(jobs.id, id),
-        with: { customer: true },
+        with: { customer: true, jobMachines: { with: { machine: true } } },
       });
       return result;
     });
@@ -107,15 +109,35 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
       return c.json({ message: "Not Allowed" }, 403);
     }
 
-    const body = c.req.valid('json');
+    const { machineIds, ...body } = c.req.valid('json');
 
-    const newJob = await getAuthenticatedDb(userId, async (tx) => {
-      const [result] = await tx.insert(jobs).values(body).returning();
+    const created = await getAuthenticatedDb(userId, async (tx) => {
+      if (machineIds?.length) {
+        const owned = await tx
+          .select({ id: machines.id })
+          .from(machines)
+          .where(and(eq(machines.customerId, body.customerId), inArray(machines.id, machineIds)));
+        if (owned.length !== new Set(machineIds).size) {
+          return { mismatch: true as const };
+        }
+      }
 
-      return result;
+      const [job] = await tx.insert(jobs).values(body).returning();
+
+      if (job && machineIds?.length) {
+        await tx
+          .insert(jobMachines)
+          .values(machineIds.map((machineId) => ({ jobId: job.id, machineId })));
+      }
+
+      return { mismatch: false as const, job };
     });
 
-    return c.json({ data: newJob }, 201);
+    if (created.mismatch) {
+      return c.json({ message: "Those machines don't belong to this customer" }, 400);
+    }
+
+    return c.json({ data: created.job }, 201);
   })
 
   .patch('/:id',
@@ -155,7 +177,6 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
 
     const { id } = c.req.valid('param');
 
-    // job_assignments cascades, so the job's team goes with it.
     const deleted = await getAuthenticatedDb(userId, async (tx) => {
       const [result] = await tx.delete(jobs).where(eq(jobs.id, id)).returning();
 

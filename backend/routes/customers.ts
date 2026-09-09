@@ -67,6 +67,22 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
 })
 
 
+.get('/:id/machines', zValidator('param', z.object({ id: z.coerce.number().int().positive() })), async(c) => {
+  const userId = c.get('userId');
+  const { id } = c.req.valid('param');
+
+  const customerMachines = await getAuthenticatedDb(userId, async (tx) => {
+    const result = await tx
+      .select()
+      .from(machines)
+      .where(eq(machines.customerId, id))
+      .orderBy(machines.name);
+    return result;
+  });
+
+  return c.json({ data: customerMachines }, 200);
+})
+
 .delete('/:id', zValidator('param', z.object({ id: z.coerce.number().int().positive() })), async(c) => {
   const userId = c.get('userId');
   const userRoles = c.get('userRoles');

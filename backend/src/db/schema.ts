@@ -238,8 +238,8 @@ export const jobAssignments = pgTable("job_assignments", {
 
 export const machines = pgTable("machines", {
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "machines_id_seq" }),
-  name: text().notNull(),
   type: text().notNull(),
+  location: text(),
   customerId: bigint("customer_id", { mode: "number" }).notNull(),
   createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().$onUpdate(() => new Date().toISOString()).notNull(),
@@ -267,12 +267,13 @@ export const jobMachines = pgTable("job_machines", {
     columns: [table.jobId],
     foreignColumns: [jobs.id],
     name: "job_machines_job_id_fk"
-  }),
+  }).onDelete("cascade"),
   foreignKey({
     columns: [table.machineId],
     foreignColumns: [machines.id],
     name: "job_machines_machine_id_fk"
-  }),
+  }).onDelete("cascade"),
+  unique("job_machines_job_id_machine_id_unique").on(table.jobId, table.machineId),
   pgPolicy("admin-authenticated_backend-policy-all", {
     as: "permissive", for: "all", to: ["authenticated_backend"], using: sql`( SELECT (EXISTS ( SELECT 1
            FROM neon_auth."user" u
