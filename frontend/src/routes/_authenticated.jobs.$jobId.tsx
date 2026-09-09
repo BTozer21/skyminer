@@ -88,18 +88,17 @@ function RouteComponent() {
             )}
           </dd>
 
-          <dt className="text-muted-foreground">Start Date</dt>
+          <dt className="text-muted-foreground">Date</dt>
           <dd>
-            {isPending
-              ? <Skeleton className="h-5 w-32" />
-              : job?.startDate ? format(new Date(job.startDate), 'EEE d MMM yy') : '-'}
-          </dd>
-
-          <dt className="text-muted-foreground">End Date</dt>
-          <dd>
-            {isPending
-              ? <Skeleton className="h-5 w-32" />
-              : job?.endDate ? format(new Date(job.endDate), 'EEE d MMM yy') : '-'}
+            {isPending ? (
+              <Skeleton className="h-5 w-56" />
+            ) : !job?.startDate ? (
+              '-'
+            ) : !job.endDate || job.startDate === job.endDate ? (
+              format(new Date(job.startDate), 'EEE d MMM yy')
+            ) : (
+              `${format(new Date(job.startDate), 'EEE d MMM yy')} – ${format(new Date(job.endDate), 'EEE d MMM yy')}`
+            )}
           </dd>
         </dl>
       )}
