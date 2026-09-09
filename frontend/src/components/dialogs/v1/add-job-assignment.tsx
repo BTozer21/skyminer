@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { CreateJobForm } from '@/components/forms/v1/create-job-form';
 import { createJobAssignment, getJobs } from '@/lib/api';
+import { jobTitle } from '@/lib/v1/jobs';
 
 export interface AssignmentTarget {
   userId: string
@@ -102,7 +103,7 @@ function AssignForm({
           <SelectContent>
             {candidates.map((job) => (
               <SelectItem key={job.id} value={String(job.id)}>
-                {job.name} — {job.customer?.name}
+                {jobTitle(job)}
               </SelectItem>
             ))}
           </SelectContent>

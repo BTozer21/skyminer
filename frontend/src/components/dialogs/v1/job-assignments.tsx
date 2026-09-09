@@ -14,6 +14,7 @@ import {
   updateJobAssignmentRole,
 } from '@/lib/api';
 import type { ScheduleJob } from '@/lib/api';
+import { jobTitle } from '@/lib/v1/jobs';
 
 interface JobAssignmentDialogProps {
   // null closes the dialog. The whole job is passed so adding fields here
@@ -111,7 +112,7 @@ export function JobAssignmentDialog({ job, onOpenChange }: JobAssignmentDialogPr
           <>
             <DialogHeader>
               <DialogTitle className="flex justify-between">
-                {job.name}
+                {jobTitle(job)}
                 <Link to="/jobs/$jobId" params={{ jobId: String(job.id) }}>
                   <SquareArrowOutUpRight className="w-4 h-fit"/>
                 </Link>

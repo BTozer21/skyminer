@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 import { Crown } from 'lucide-react'
 
 import { getJob } from '@/lib/api'
-import { STATUS_CONFIG } from '@/lib/v1/jobs'
+import { STATUS_CONFIG, jobTitle } from '@/lib/v1/jobs'
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -65,7 +65,7 @@ function RouteComponent() {
     <div className="flex h-full flex-col px-5 pb-5">
       <div className="mb-4 mt-2 flex shrink-0 justify-between items-center">
         <h1 className="font-bold text-xl">
-          {isPending ? <Skeleton className="h-7 w-48" /> : job?.name}
+          {isPending ? <Skeleton className="h-7 w-48" /> : job && jobTitle(job)}
         </h1>
       </div>
 

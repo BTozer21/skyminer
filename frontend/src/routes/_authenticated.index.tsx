@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { authClient, useIsAdmin } from '../auth';
 import { myJobsQuery, myLeaveQuery } from '@/lib/api'
-import { STATUS_CONFIG } from '@/lib/v1/jobs'
+import { STATUS_CONFIG, jobTitle } from '@/lib/v1/jobs'
 import { LEAVE_STATUS_CONFIG } from '@/lib/v1/leave'
 import { MemberCalendar, parseDay } from '@/components/calendars/v1/member-calendar'
 import type { CalendarEvent } from '@/components/calendars/v1/member-calendar'
@@ -38,7 +38,7 @@ function RouteComponent() {
   const events = useMemo<Array<CalendarEvent>>(() => {
     const jobEvents = (jobs ?? []).map((job) => ({
       id: `job-${job.id}`,
-      title: job.name,
+      title: jobTitle(job),
       subtitle: job.customer.name,
       start: parseDay(job.startDate),
       end: parseDay(job.endDate),

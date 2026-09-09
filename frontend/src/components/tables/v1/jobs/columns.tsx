@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { deleteJob, updateJob } from '@/lib/api';
-import { STATUS_CONFIG, STATUSES } from '@/lib/v1/jobs';
+import { STATUS_CONFIG, STATUSES, jobTitle } from '@/lib/v1/jobs';
 
 import type { DataTableFeatures } from '../data-table-features.ts';
 import type { JobResponse } from '@/lib/api';
@@ -58,8 +58,11 @@ export const columns = columnHelper.columns([
       )
     }
   }),
-  columnHelper.accessor("name", {
-    header: "Name",
+  // An accessor function rather than a key: the title is derived, but sorting
+  // and filtering still need a string to work against.
+  columnHelper.accessor((job) => jobTitle(job), {
+    id: "title",
+    header: "Job",
     size: 240,
     cell: ({ row }) => {
       const job = row.original
@@ -70,7 +73,7 @@ export const columns = columnHelper.columns([
           params={{ jobId: String(job.id) }}
           className="font-medium hover:underline"
         >
-          {job.name}
+          {jobTitle(job)}
         </Link>
       )
     }
@@ -458,7 +461,7 @@ export const columns = columnHelper.columns([
 
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Delete “{data.name}”?</AlertDialogTitle>
+                <AlertDialogTitle>Delete “{jobTitle(data)}”?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This permanently deletes the job and everything scheduled
                   against it. This cannot be undone.

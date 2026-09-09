@@ -18,6 +18,7 @@ import { CreateJobForm } from '@/components/forms/v1/create-job-form';
 import { authClient } from '../auth';
 import { getJobAssignments } from '@/lib/api.ts';
 import type { AdminUser, ScheduleJob } from '@/lib/api.ts';
+import { jobTitle } from '@/lib/v1/jobs';
 
 import { JobAssignmentDialog } from '@/components/dialogs/v1/job-assignments';
 import { AddJobAssignmentDialog } from '@/components/dialogs/v1/add-job-assignment';
@@ -160,10 +161,10 @@ function RouteComponent2() {
       <button
         type="button"
         onClick={() => setSelectedJobId(job.id)}
-        title={`Open ${job.name}`}
+        title={`Open ${jobTitle(job)}`}
         className="relative w-full h-full"
       >
-        {job.name}
+        {jobTitle(job)}
         {job.quote && job.rams ? (
           <CheckCheck className="w-4 h-4 absolute bottom-1 right-1 text-green-600" />
         ) : job.quote || job.rams ? (

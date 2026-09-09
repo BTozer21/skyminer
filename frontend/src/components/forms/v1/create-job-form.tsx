@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, isSameDay } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Field, FieldGroup, FieldLabel, FieldDescription, FieldError, FieldSet, FieldLegend } from '@/components/ui/field';
@@ -53,7 +52,6 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
 
   const form = useForm({
     defaultValues: {
-      name: '',
       // A single day is a valid range: from and to are the same date.
       dateRange: (defaultDate
         ? { from: defaultDate, to: defaultDate }
@@ -67,7 +65,6 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
     onSubmit: async ({ value }) => {
       const { from, to } = value.dateRange!;
       const job = await mutation.mutateAsync({
-        name: value.name.trim(),
         customerId: Number(value.customerId),
         startDate: format(from!, 'yyyy-MM-dd'),
         endDate: format(to!, 'yyyy-MM-dd'),
@@ -184,7 +181,13 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                   />
                   <form.Field
                     name="machineIds"
+                    validators={{
+                      onSubmit: ({ value }) =>
+                        value.length ? undefined : { message: 'There needs to be a machine' },
+                    }}
                     children={(field) => {
+                      const isInvalid =
+                        field.state.meta.isTouched && !field.state.meta.isValid;
                       const picked = field.state.value;
                       const toggleMachine = (id: number) =>
                         field.handleChange(
@@ -194,7 +197,7 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                         );
 
                       return (
-                        <Field>
+                        <Field data-invalid={isInvalid}>
                           <FieldLabel>Machines</FieldLabel>
                           {!customerId ? (
                             <p className="text-muted-foreground text-sm">
@@ -231,32 +234,6 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                               ))}
                             </ul>
                           )}
-                        </Field>
-                      )
-                    }}
-                  />
-                  <form.Field
-                    name="name"
-                    validators={{
-                      onSubmit: ({ value }) =>
-                        value.trim() ? undefined : { message: 'Name is required' },
-                    }}
-                    children={(field) => {
-                      const isInvalid =
-                        field.state.meta.isTouched && !field.state.meta.isValid
-                      return (
-                        <Field data-invalid={isInvalid}>
-                          <FieldLabel htmlFor={field.name}>Name</FieldLabel>
-                          <Input
-                            id={field.name}
-                            name={field.name}
-                            placeholder="Job name"
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            aria-invalid={isInvalid}
-                            autoComplete="off"
-                          />
                           {isInvalid && <FieldError errors={field.state.meta.errors} />}
                         </Field>
                       )

@@ -8,16 +8,16 @@ import { createInsertSchema } from 'drizzle-zod';
 import type { AppVariables } from '../src/types.ts';
 
 const createJobSchema = createInsertSchema(jobs).pick({
-  name: true,
   startDate: true,
   endDate: true,
   customerId: true,
 }).extend({
-  machineIds: z.array(z.coerce.number().int().positive()).optional(),
+  // A job is the servicing of a machine, so there's no such thing as one
+  // without at least one.
+  machineIds: z.array(z.coerce.number().int().positive()).min(1),
 });
 
 const updateJobSchema = createInsertSchema(jobs).pick({
-  name: true,
   startDate: true,
   endDate: true,
   customerId: true,
@@ -34,7 +34,7 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
     const userId = c.get('userId');
     const allJobs = await getAuthenticatedDb(userId, async (tx) => {
       const result = await tx.query.jobs.findMany({
-        with: { customer: true },
+        with: { customer: true, jobMachines: { with: { machine: true } } },
         orderBy: (jobs, { desc }) => [desc(jobs.createdAt)],
       });
       return result;
@@ -58,7 +58,7 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
                 .where(eq(jobAssignments.userId, userId)),
             ),
           ),
-        with: { customer: true },
+        with: { customer: true, jobMachines: { with: { machine: true } } },
         orderBy: (jobs, { asc }) => [asc(jobs.startDate)],
       });
       return result;
@@ -112,19 +112,17 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
     const { machineIds, ...body } = c.req.valid('json');
 
     const created = await getAuthenticatedDb(userId, async (tx) => {
-      if (machineIds?.length) {
-        const owned = await tx
-          .select({ id: machines.id })
-          .from(machines)
-          .where(and(eq(machines.customerId, body.customerId), inArray(machines.id, machineIds)));
-        if (owned.length !== new Set(machineIds).size) {
-          return { mismatch: true as const };
-        }
+      const owned = await tx
+        .select({ id: machines.id })
+        .from(machines)
+        .where(and(eq(machines.customerId, body.customerId), inArray(machines.id, machineIds)));
+      if (owned.length !== new Set(machineIds).size) {
+        return { mismatch: true as const };
       }
 
       const [job] = await tx.insert(jobs).values(body).returning();
 
-      if (job && machineIds?.length) {
+      if (job) {
         await tx
           .insert(jobMachines)
           .values(machineIds.map((machineId) => ({ jobId: job.id, machineId })));

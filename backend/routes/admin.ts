@@ -28,15 +28,12 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
     async (c) => {
       const { from, to } = c.req.valid('query');
 
-      // Jobs on top so the date window filters the top-level table; assigned users
-      // come nested via job_assignments. Overlap semantics: a job appears if any
-      // part of its span falls inside [from, to] (date columns are 'yyyy-MM-dd'
-      // strings, so lexical comparison is correct).
       const data = await db.query.jobs.findMany({
         where: (jobs, { and, lte, gte }) =>
           and(lte(jobs.startDate, to), gte(jobs.endDate, from)),
         with: {
           customer: { columns: { id: true, name: true } },
+          jobMachines: { with: { machine: { columns: { id: true, type: true, location: true } } } },
           jobAssignments: {
             with: {
               userInNeonAuth: { columns: { id: true, name: true, email: true } },
