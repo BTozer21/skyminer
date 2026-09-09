@@ -112,7 +112,7 @@ export function JobAssignmentDialog({ job, onOpenChange }: JobAssignmentDialogPr
           <>
             <DialogHeader>
               <DialogTitle className="flex justify-between">
-                {jobTitle(job)}
+                {jobTitle(job, { withCustomer: false })}
                 <Link to="/jobs/$jobId" params={{ jobId: String(job.id) }}>
                   <SquareArrowOutUpRight className="w-4 h-fit"/>
                 </Link>

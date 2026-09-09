@@ -15,21 +15,21 @@ export const STATUS_CONFIG = {
 
 export const STATUSES = Object.keys(STATUS_CONFIG) as JobResponse['status'][]
 
-// Jobs have no name of their own: they're identified by who the work is for
-// and which machines are being serviced. Takes any job shape carrying a
-// customer and its machine links, so the list, detail and schedule responses
-// all satisfy it.
-export function jobTitle(job: {
-  customer?: { name: string } | null
-  jobMachines?: { machine: { type: string; location?: string | null } }[]
-}): string {
-  const customer = job.customer?.name ?? 'Unknown customer'
-  // "RTO (Roof)" — a customer can have two machines of the same type, so the
-  // location is what tells them apart.
+export function jobTitle(
+  job: {
+    customer?: { name: string } | null
+    jobMachines?: { machine: { type: string; location?: string | null } }[]
+  },
+  { withCustomer = true }: { withCustomer?: boolean } = {},
+): string {
   const machines = job.jobMachines
     ?.map(({ machine }) =>
       machine.location ? `${machine.type} (${machine.location})` : machine.type,
     )
     .join(', ')
+
+  if (!withCustomer) return machines ?? ''
+
+  const customer = job.customer?.name ?? 'Unknown customer'
   return machines ? `${customer} — ${machines}` : customer
 }

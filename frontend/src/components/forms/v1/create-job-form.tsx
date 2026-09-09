@@ -99,8 +99,6 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
     },
   });
 
-  // A machine belongs to a customer, so the list only exists once one is
-  // picked — and it refetches when the pick changes.
   const customerId = useStore(form.store, (state) => state.values.customerId);
   const { data: customerMachines, isPending: machinesPending } = useQuery({
     queryKey: ['customers', Number(customerId), 'machines'],
@@ -152,8 +150,6 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                             value={field.state.value}
                             onValueChange={(value) => {
                               field.handleChange(value);
-                              // Machines belong to one customer, so a change
-                              // invalidates whatever was already picked.
                               form.setFieldValue('machineIds', []);
                             }}
                           >

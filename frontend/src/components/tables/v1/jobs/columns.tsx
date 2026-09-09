@@ -58,10 +58,8 @@ export const columns = columnHelper.columns([
       )
     }
   }),
-  // An accessor function rather than a key: the title is derived, but sorting
-  // and filtering still need a string to work against.
-  columnHelper.accessor((job) => jobTitle(job), {
-    id: "title",
+  columnHelper.accessor((job) => jobTitle(job, { withCustomer: false }), {
+    id: "machines",
     header: "Job",
     size: 240,
     cell: ({ row }) => {
@@ -73,7 +71,7 @@ export const columns = columnHelper.columns([
           params={{ jobId: String(job.id) }}
           className="font-medium hover:underline"
         >
-          {jobTitle(job)}
+          {jobTitle(job, { withCustomer: false })}
         </Link>
       )
     }

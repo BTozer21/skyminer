@@ -12,8 +12,6 @@ const createJobSchema = createInsertSchema(jobs).pick({
   endDate: true,
   customerId: true,
 }).extend({
-  // A job is the servicing of a machine, so there's no such thing as one
-  // without at least one.
   machineIds: z.array(z.coerce.number().int().positive()).min(1),
 });
 
