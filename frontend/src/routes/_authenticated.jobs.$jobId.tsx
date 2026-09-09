@@ -65,7 +65,7 @@ function RouteComponent() {
     <div className="flex h-full flex-col px-5 pb-5">
       <div className="mb-4 mt-2 flex shrink-0 justify-between items-center">
         <h1 className="font-bold text-xl">
-          {isPending ? <Skeleton className="h-7 w-48" /> : job && jobTitle(job)}
+          {isPending ? <Skeleton className="h-7 w-48" /> : job && jobTitle(job, { withCustomer: false })}
         </h1>
       </div>
 
