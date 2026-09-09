@@ -13,8 +13,8 @@ const createCustomerSchema = createInsertSchema(customers).pick({
 });
 
 const createMachineSchema = createInsertSchema(machines).pick({
-  name: true,
   type: true,
+  location: true,
   customerId: true,
 });
 
@@ -76,7 +76,7 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
       .select()
       .from(machines)
       .where(eq(machines.customerId, id))
-      .orderBy(machines.name);
+      .orderBy(machines.type, machines.location);
     return result;
   });
 

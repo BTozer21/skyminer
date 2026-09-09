@@ -37,14 +37,14 @@ export function CreateMachineForm({ customer }: { customer?: string }) {
   const form = useForm({
     defaultValues: {
       customerId: customer ?? '',
-      name: '',
       type: '',
+      location: '',
     },
     onSubmit: async ({ value }) => {
       await mutation.mutateAsync({
         customerId: Number(value.customerId),
-        name: value.name.trim(),
         type: value.type.trim(),
+        location: value.location.trim(),
       });
       form.reset();
       setOpen(false);
@@ -155,21 +155,21 @@ export function CreateMachineForm({ customer }: { customer?: string }) {
                     }}
                   />
                   <form.Field
-                    name="name"
+                    name="location"
                     validators={{
                       onSubmit: ({ value }) =>
-                        value.trim() ? undefined : { message: 'Name is required' },
+                        value.trim() ? undefined : { message: 'Location is required' },
                     }}
                     children={(field) => {
                       const isInvalid =
                         field.state.meta.isTouched && !field.state.meta.isValid
                       return (
                         <Field data-invalid={isInvalid}>
-                          <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+                          <FieldLabel htmlFor={field.name}>Location</FieldLabel>
                           <Input
                             id={field.name}
                             name={field.name}
-                            placeholder="Name"
+                            placeholder="Location"
                             value={field.state.value}
                             onBlur={field.handleBlur}
                             onChange={(e) => field.handleChange(e.target.value)}

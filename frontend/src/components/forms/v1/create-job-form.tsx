@@ -220,8 +220,12 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                                     aria-pressed={picked.includes(machine.id)}
                                     className="flex-1 px-2 py-1 text-left text-sm"
                                   >
-                                    {machine.name}
-                                    <span className="text-muted-foreground ml-2">{machine.type}</span>
+                                    {machine.type}
+                                    {machine.location && (
+                                      <span className="text-muted-foreground ml-2">
+                                        {machine.location}
+                                      </span>
+                                    )}
                                   </button>
                                 </li>
                               ))}

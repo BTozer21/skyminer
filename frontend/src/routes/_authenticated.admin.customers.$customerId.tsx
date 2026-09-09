@@ -38,7 +38,8 @@ function RouteComponent() {
         ) : (
           customer?.machines.map((machine) => (
             <div key={machine.id} className="text-sm flex gap-2 rounded-sm border p-4 items-center w-[400px] justify-center">
-              <span className="font-bold text-xl">{machine.name}</span> - {machine.type}
+              <span className="font-bold text-xl">{machine.type}</span>
+              {machine.location && <> - {machine.location}</>}
             </div>
           ))
         )}
