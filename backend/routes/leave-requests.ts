@@ -6,7 +6,7 @@ import { createInsertSchema } from 'drizzle-zod';
 import type { AppVariables } from '../src/types.ts';
 
 const createLeaveRequestSchema = createInsertSchema(leaveRequests)
-  .pick({ startDate: true, endDate: true })
+  .pick({ startDate: true, endDate: true, comment: true })
   .refine((v) => v.startDate <= v.endDate, {
     message: 'End date must be on or after the start date',
     path: ['endDate'],

@@ -288,6 +288,7 @@ export const leaveRequests = pgTable("leave_requests", {
   userId: uuid("user_id").notNull(),
   startDate: date("start_date").notNull(),
   endDate: date("end_date").notNull(),
+  comment: text(),
   approved: boolean().notNull().default(false),
   createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
 }, (table) => [
