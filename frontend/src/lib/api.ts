@@ -263,3 +263,31 @@ export async function getLeaveRequests() {
   const { data } = await res.json();
   return data;
 }
+
+// Same pattern as myJobsQuery: the loader and the component share one entry.
+export const myLeaveQuery = {
+  queryKey: ['leave-requests', 'mine'],
+  queryFn: getLeaveRequests,
+  staleTime: Infinity,
+}
+
+export type LeaveRequest = InferResponseType<
+  typeof api["leave-requests"]["$get"],
+  200
+>['data'][number]
+
+type CreateLeaveRequestInput = InferRequestType<
+  typeof api["leave-requests"]["$post"]
+>['json'];
+
+export async function createLeaveRequest(leave: CreateLeaveRequestInput) {
+  const headers = await getAuthHeaders();
+  const res = await api["leave-requests"].$post({ json: leave }, { headers });
+  if (!res.ok) {
+    throw new Error("There was an error here");
+  }
+  const { data } = await res.json();
+  return data;
+}
+
+export type MyJob = InferResponseType<typeof api.jobs.mine.$get, 200>['data'][number]

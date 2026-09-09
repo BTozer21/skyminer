@@ -1,10 +1,12 @@
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { useMemo } from 'react'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { format } from 'date-fns'
 
 import { authClient, useIsAdmin } from '../auth';
-import { myJobsQuery } from '@/lib/api'
-import { STATUS_CONFIG } from '@/lib/v1/jobs'
+import { myJobsQuery, myLeaveQuery } from '@/lib/api'
+import { STATUS_CONFIG, STATUSES } from '@/lib/v1/jobs'
+import { MemberCalendar, parseDay } from '@/components/calendars/v1/member-calendar'
+import type { CalendarEvent } from '@/components/calendars/v1/member-calendar'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export const Route = createFileRoute('/_authenticated/')({
@@ -18,67 +20,85 @@ export const Route = createFileRoute('/_authenticated/')({
       throw redirect({ to: '/admin' });
     }
   },
-  loader: ({ context }) => context.queryClient.ensureQueryData(myJobsQuery),
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(myJobsQuery),
+      context.queryClient.ensureQueryData(myLeaveQuery),
+    ]),
   component: RouteComponent,
 })
 
+// Leave is only ever one of two states, so it gets a flat map rather than the
+// config object the job statuses need.
+const LEAVE_BAR = {
+  approved: 'bg-violet-500/25 text-violet-900 dark:text-violet-100',
+  pending: 'border border-dashed border-violet-500/60 bg-violet-500/10 text-violet-900 dark:text-violet-100',
+} as const
+
 function RouteComponent() {
+  const navigate = useNavigate();
   const { data: session } = authClient.useSession();
   const { isAdmin, isPending } = useIsAdmin();
   const { data: jobs, isPending: jobsPending } = useQuery(myJobsQuery);
+  const { data: leave, isPending: leavePending } = useQuery(myLeaveQuery);
+
+  const events = useMemo<Array<CalendarEvent>>(() => {
+    const jobEvents = (jobs ?? []).map((job) => ({
+      id: `job-${job.id}`,
+      title: job.name,
+      subtitle: job.customer.name,
+      start: parseDay(job.startDate),
+      end: parseDay(job.endDate),
+      className: STATUS_CONFIG[job.status].bar,
+      onClick: () => navigate({ to: '/jobs/$jobId', params: { jobId: String(job.id) } }),
+    }));
+
+    const leaveEvents = (leave ?? []).map((request) => ({
+      id: `leave-${request.id}`,
+      title: 'Leave',
+      subtitle: request.approved ? undefined : 'pending',
+      start: parseDay(request.startDate),
+      end: parseDay(request.endDate),
+      className: request.approved ? LEAVE_BAR.approved : LEAVE_BAR.pending,
+    }));
+
+    return [...jobEvents, ...leaveEvents];
+  }, [jobs, leave, navigate]);
 
   return (
-    <div className="flex flex-col px-5">
-      <div className="flex gap-2">
-        <p className="font-bold text-xl">Hello there, {session?.user.name}</p>
-      </div>
+    <div className="flex h-full flex-col px-5 pb-5">
       {!isAdmin && !isPending &&
-        <div className="flex flex-col gap-2">
-          <h2 className="mt-4 font-medium">Your jobs</h2>
-          {jobsPending ? (
-            <Skeleton className="h-14 w-full max-w-md" />
-          ) : jobs?.length ? (
-            <ul className="flex max-w-md flex-col gap-2">
-              {jobs.map((job) => {
-                const status = STATUS_CONFIG[job.status];
-                const StatusIcon = status.icon;
-
-                return (
-                  <li key={job.id}>
-                    <Link
-                      to="/jobs/$jobId"
-                      params={{ jobId: String(job.id) }}
-                      className="bg-muted/40 flex items-center justify-between gap-3 rounded-sm border border-transparent px-3 py-2 transition-all duration-200 hover:!border-blue-500"
-                    >
-                      <span className="flex flex-col">
-                        <span className="font-medium">{job.name}</span>
-                        <span className="text-muted-foreground text-xs">{job.customer.name}</span>
-                      </span>
-                      <span className="flex items-center gap-3 text-sm">
-                        <span className="text-muted-foreground">
-                          {/* Single-day jobs read as one date, not "5 Mar – 5 Mar". */}
-                          {job.startDate === job.endDate
-                            ? format(new Date(job.endDate), 'dd/MM/yyyy')
-                            : `${format(new Date(job.startDate), 'dd/MM/yyyy')} – ${format(new Date(job.endDate), 'dd/MM/yyyy')}`}
-                        </span>
-                        <StatusIcon className={`size-4 shrink-0 ${status.className}`} />
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+        <div className="mt-4 flex min-h-0 flex-1 flex-col gap-2">
+          {jobsPending || leavePending ? (
+            <Skeleton className="min-h-0 w-full flex-1" />
           ) : (
+            <MemberCalendar
+              events={events}
+              legend={
+                <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+                  {STATUSES.map((status) => (
+                    <span key={status} className="flex items-center gap-1.5">
+                      <span className={`size-3 rounded-sm ${STATUS_CONFIG[status].bar}`} />
+                      {STATUS_CONFIG[status].label}
+                    </span>
+                  ))}
+                  <span className="flex items-center gap-1.5">
+                    <span className={`size-3 rounded-sm ${LEAVE_BAR.approved}`} />
+                    Leave
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className={`size-3 rounded-sm ${LEAVE_BAR.pending}`} />
+                    Leave (pending)
+                  </span>
+                </div>
+              }
+            />
+          )}
+          {!events.length && !jobsPending && !leavePending && (
             <p className="text-muted-foreground text-sm">You have no jobs scheduled.</p>
           )}
-        </div>
-      }
-      {isAdmin && !isPending &&
-        <div>
-          <p>You are seeing this as an admin user.</p>
         </div>
       }
     </div>
   )
 }
-
