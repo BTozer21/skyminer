@@ -102,20 +102,22 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
     async (c) => {
       const { jobId, userId, role } = c.req.valid('json');
 
-      // The table has no unique constraint on (job_id, user_id), so the same
-      // person could be added to a job twice and show up twice in the grid.
-      const existing = await db.query.jobAssignments.findFirst({
-        where: (assignment, { and, eq }) =>
-          and(eq(assignment.jobId, jobId), eq(assignment.userId, userId)),
-      });
-      if (existing) {
-        return c.json({ message: 'Already assigned to this job' }, 409);
-      }
-
       const created = await db.transaction(async (tx) => {
+        const team = await tx.query.jobAssignments.findMany({
+          where: (assignment, { eq }) => eq(assignment.jobId, jobId),
+        });
+
+        if (team.some((member) => member.userId === userId)) {
+          return { conflict: true as const };
+        }
+
+        const leading = team.some((member) => member.role === 'lead')
+          ? role === 'lead'
+          : true;
+
         // One lead per job is a unique index, so the sitting lead has to step
         // down before the new one is inserted.
-        if (role === 'lead') {
+        if (leading) {
           await tx
             .update(jobAssignments)
             .set({ role: 'member' })
@@ -124,13 +126,17 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
 
         const [result] = await tx
           .insert(jobAssignments)
-          .values({ jobId, userId, role })
+          .values({ jobId, userId, role: leading ? 'lead' : 'member' })
           .returning();
 
-        return result;
+        return { conflict: false as const, assignment: result };
       });
 
-      return c.json({ data: created }, 201);
+      if (created.conflict) {
+        return c.json({ message: 'Already assigned to this job' }, 409);
+      }
+
+      return c.json({ data: created.assignment }, 201);
     }
   )
 
@@ -146,7 +152,11 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
         const assignment = await tx.query.jobAssignments.findFirst({
           where: (assignment, { eq }) => eq(assignment.id, id),
         });
-        if (!assignment) return undefined;
+        if (!assignment) return { missing: true as const };
+
+        if (role === 'member' && assignment.role === 'lead') {
+          return { needsLead: true as const };
+        }
 
         // Demote before promote, in one transaction: the partial unique index
         // is never transiently violated and the job never has two leads.
@@ -165,14 +175,18 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
           .where(eq(jobAssignments.id, id))
           .returning();
 
-        return result;
+        return { assignment: result };
       });
 
-      if (!updated) {
+      if ('missing' in updated) {
         return c.json({ message: 'Assignment not found' }, 404);
       }
 
-      return c.json({ data: updated }, 200);
+      if ('needsLead' in updated) {
+        return c.json({ message: 'Crown someone else instead — a job needs a team leader' }, 400);
+      }
+
+      return c.json({ data: updated.assignment }, 200);
     }
   )
 
@@ -182,17 +196,40 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
     async (c) => {
       const { id } = c.req.valid('param');
 
-      const [deleted] = await db
-        .delete(jobAssignments)
-        .where(eq(jobAssignments.id, id))
-        .returning();
+      const deleted = await db.transaction(async (tx) => {
+        const assignment = await tx.query.jobAssignments.findFirst({
+          where: (member, { eq }) => eq(member.id, id),
+        });
 
-      // Distinguishes "already gone" from a successful removal, so a stale grid
-      // clicking remove twice doesn't look like it worked the second time.
-      if (!deleted) {
+        // Distinguishes "already gone" from a successful removal, so a stale grid
+        // clicking remove twice doesn't look like it worked the second time.
+        if (!assignment) return { missing: true as const };
+
+        if (assignment.role === 'lead') {
+          const rest = await tx.query.jobAssignments.findMany({
+            where: (member, { and, eq, ne }) =>
+              and(eq(member.jobId, assignment.jobId), ne(member.id, id)),
+            columns: { id: true },
+          });
+          if (rest.length) return { needsLead: true as const };
+        }
+
+        const [result] = await tx
+          .delete(jobAssignments)
+          .where(eq(jobAssignments.id, id))
+          .returning();
+
+        return { assignment: result };
+      });
+
+      if ('missing' in deleted) {
         return c.json({ message: 'Assignment not found' }, 404);
       }
 
-      return c.json({ data: deleted }, 200);
+      if ('needsLead' in deleted) {
+        return c.json({ message: 'Crown someone else before taking the team leader off this job' }, 400);
+      }
+
+      return c.json({ data: deleted.assignment }, 200);
     }
   )

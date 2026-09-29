@@ -154,6 +154,17 @@ export function JobAssignmentDialog({ job, onOpenChange }: JobAssignmentDialogPr
                 <ul className="flex max-h-56 flex-col gap-1 overflow-y-auto">
                   {rows.map(({ id, name, email, assignment }) => {
                     const isLead = assignment?.role === 'lead';
+                    const onRowClick = () => {
+                      if (!assignment) {
+                        assign.mutate({ jobId: job.id, userId: id });
+                        return;
+                      }
+                      if (isLead && assignments.length > 1) {
+                        toast.error('Crown someone else before taking the team leader off this job');
+                        return;
+                      }
+                      removal.mutate(assignment.id);
+                    };
 
                     return (
                       <li
@@ -165,11 +176,7 @@ export function JobAssignmentDialog({ job, onOpenChange }: JobAssignmentDialogPr
                             is already on the job, so there's nothing to toggle. */}
                         <button
                           type="button"
-                          onClick={() =>
-                            assignment
-                              ? removal.mutate(assignment.id)
-                              : assign.mutate({ jobId: job.id, userId: id })
-                          }
+                          onClick={onRowClick}
                           disabled={!editing || busy}
                           aria-pressed={Boolean(assignment)}
                           className="flex flex-1 items-center justify-between gap-3 px-2 py-1 text-left disabled:pointer-events-none"
@@ -182,12 +189,10 @@ export function JobAssignmentDialog({ job, onOpenChange }: JobAssignmentDialogPr
                           <Button
                             type="button"
                             onClick={() =>
-                              roleChange.mutate({
-                                id: assignment.id,
-                                role: isLead ? 'member' : 'lead',
-                              })
+                              !isLead && roleChange.mutate({ id: assignment.id, role: 'lead' })
                             }
                             disabled={busy}
+                            aria-disabled={isLead}
                             title={isLead ? 'Team lead' : `Make ${name} team lead`}
                             aria-label={isLead ? 'Team lead' : `Make ${name} team lead`}
                             aria-pressed={isLead}

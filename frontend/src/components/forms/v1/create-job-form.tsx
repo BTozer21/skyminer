@@ -11,11 +11,9 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 import { CalendarIcon, Crown, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { createJob, createJobAssignment, getCustomerMachines, getCustomers, listUsers } from '@/lib/api';
+import { createJob, getCustomerMachines, getCustomers, listUsers } from '@/lib/api';
 import type { JobRole } from '@/lib/api';
 
-// Held in form state until the job exists: assignments need a job id, and the
-// job isn't created until submit.
 interface DraftAssignee {
   userId: string
   name: string
@@ -59,7 +57,7 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
       customerId: '',
       machineIds: [] as number[],
       assignees: (initialAssignee
-        ? [{ ...initialAssignee, role: 'member' }]
+        ? [{ ...initialAssignee, role: 'lead' }]
         : []) as DraftAssignee[],
     },
     onSubmit: async ({ value }) => {
@@ -69,32 +67,15 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
         startDate: format(from!, 'yyyy-MM-dd'),
         endDate: format(to!, 'yyyy-MM-dd'),
         machineIds: value.machineIds,
+        assignees: value.assignees.map((assignee) => ({
+          userId: assignee.userId,
+          role: assignee.role,
+        })),
       });
 
       form.reset();
       setOpen(false);
       onCreated?.(job.id);
-
-      // The job is already created, so a failure here can't roll it back —
-      // name who didn't stick rather than swallowing it, and keep going.
-      const failed: string[] = [];
-      await Promise.all(
-        value.assignees.map(async (assignee) => {
-          try {
-            await createJobAssignment({
-              jobId: job.id,
-              userId: assignee.userId,
-              role: assignee.role,
-            });
-          } catch {
-            failed.push(assignee.name);
-          }
-        }),
-      );
-      if (failed.length) {
-        toast.error(`Could not assign ${failed.join(', ')} — add them from the job`);
-      }
-
       queryClient.invalidateQueries({ queryKey: ['schedule'] });
     },
   });
@@ -291,34 +272,47 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                   />
                   <form.Field
                     name="assignees"
+                    validators={{
+                      onSubmit: ({ value }) =>
+                        !value.length || value.some((assignee) => assignee.role === 'lead')
+                          ? undefined
+                          : { message: 'Pick a team leader' },
+                    }}
                     children={(field) => {
+                      const isInvalid =
+                        field.state.meta.isTouched && !field.state.meta.isValid;
                       const assignees = field.state.value;
                       const isPicked = (id: string) =>
                         assignees.some((assignee) => assignee.userId === id);
 
-                      const toggleUser = (id: string, name: string) =>
-                        field.handleChange(
-                          isPicked(id)
-                            ? assignees.filter((assignee) => assignee.userId !== id)
-                            : [...assignees, { userId: id, name, role: 'member' as JobRole }],
-                        );
+                      const toggleUser = (id: string, name: string) => {
+                        const next = isPicked(id)
+                          ? assignees.filter((assignee) => assignee.userId !== id)
+                          : [...assignees, { userId: id, name, role: 'member' as JobRole }];
+
+                        if (next.length && !next.some((assignee) => assignee.role === 'lead')) {
+                          next[0] = { ...next[0]!, role: 'lead' };
+                        }
+
+                        field.handleChange(next);
+                      };
 
                       // One lead per job: promoting demotes everyone else here,
                       // before submit, so the insert can't trip the unique index.
-                      const toggleLead = (id: string) =>
+                      const promoteLead = (id: string) =>
                         field.handleChange(
                           assignees.map((assignee) => ({
                             ...assignee,
-                            role:
-                              assignee.userId === id && assignee.role !== 'lead'
-                                ? 'lead'
-                                : 'member',
+                            role: assignee.userId === id ? 'lead' : 'member',
                           })),
                         );
 
                       return (
-                        <Field>
+                        <Field data-invalid={isInvalid}>
                           <FieldLabel>Team</FieldLabel>
+                          <FieldDescription>
+                            Optional for now — the crown marks who leads the job.
+                          </FieldDescription>
                           {usersPending ? (
                             <p className="text-muted-foreground text-sm">Loading team…</p>
                           ) : (
@@ -347,7 +341,8 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                                     {picked && (
                                       <Button
                                         type="button"
-                                        onClick={() => toggleLead(user.id)}
+                                        onClick={() => !isLead && promoteLead(user.id)}
+                                        aria-disabled={isLead}
                                         title={isLead ? 'Team lead' : `Make ${user.name} team lead`}
                                         aria-label={isLead ? 'Team lead' : `Make ${user.name} team lead`}
                                         aria-pressed={isLead}
@@ -365,6 +360,7 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                               })}
                             </ul>
                           )}
+                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
                         </Field>
                       )
                     }}

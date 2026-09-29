@@ -13,6 +13,19 @@ const createJobSchema = createInsertSchema(jobs).pick({
   customerId: true,
 }).extend({
   machineIds: z.array(z.coerce.number().int().positive()).min(1),
+  assignees: z
+    .array(z.object({ userId: z.uuid(), role: z.enum(['member', 'lead']) }))
+    .default([])
+    .refine(
+      (assignees) => new Set(assignees.map((assignee) => assignee.userId)).size === assignees.length,
+      'Someone is on this job twice',
+    )
+    .refine(
+      (assignees) =>
+        assignees.length === 0 ||
+        assignees.filter((assignee) => assignee.role === 'lead').length === 1,
+      'A job with a team needs exactly one team leader',
+    ),
 });
 
 const updateJobSchema = createInsertSchema(jobs).pick({
@@ -107,7 +120,7 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
       return c.json({ message: "Not Allowed" }, 403);
     }
 
-    const { machineIds, ...body } = c.req.valid('json');
+    const { machineIds, assignees, ...body } = c.req.valid('json');
 
     const created = await getAuthenticatedDb(userId, async (tx) => {
       const owned = await tx
@@ -124,6 +137,17 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
         await tx
           .insert(jobMachines)
           .values(machineIds.map((machineId) => ({ jobId: job.id, machineId })));
+        if (assignees.length) {
+          await tx
+            .insert(jobAssignments)
+            .values(
+              assignees.map((assignee) => ({
+                jobId: job.id,
+                userId: assignee.userId,
+                role: assignee.role,
+              })),
+            );
+        }
       }
 
       return { mismatch: false as const, job };

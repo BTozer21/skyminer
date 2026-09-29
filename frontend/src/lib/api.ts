@@ -233,6 +233,10 @@ export async function deleteJobAssignment(id: number) {
     { headers },
   );
   if (!res.ok) {
+    if (res.status === 400) {
+      const { message } = (await res.json()) as { message: string };
+      throw new Error(message);
+    }
     throw new Error(
       res.status === 404
         ? 'That assignment has already been removed'

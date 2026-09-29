@@ -430,6 +430,22 @@ function RouteComponent() {
         <ul className="flex max-h-72 max-w-md flex-col gap-1 overflow-y-auto text-sm">
           {rows.map(({ id, name, email, assignment }) => {
             const isLead = assignment?.role === 'lead'
+            const onRowClick = () => {
+              if (!assignment) {
+                assign.mutate(
+                  { jobId: Number(jobId), userId: id },
+                  { onSuccess: () => toast.success(`${name} added to this job`) },
+                )
+                return
+              }
+              if (isLead && team.length > 1) {
+                toast.error('Crown someone else before taking the team leader off this job')
+                return
+              }
+              removal.mutate(assignment.id, {
+                onSuccess: () => toast.success(`${name} removed from this job`),
+              })
+            }
 
             return (
               <li
@@ -441,16 +457,7 @@ function RouteComponent() {
                     already on the job, so there's nothing to toggle. */}
                 <button
                   type="button"
-                  onClick={() =>
-                    assignment
-                      ? removal.mutate(assignment.id, {
-                          onSuccess: () => toast.success(`${name} removed from this job`),
-                        })
-                      : assign.mutate(
-                          { jobId: Number(jobId), userId: id },
-                          { onSuccess: () => toast.success(`${name} added to this job`) },
-                        )
-                  }
+                  onClick={onRowClick}
                   disabled={!editingTeam || teamBusy}
                   aria-pressed={Boolean(assignment)}
                   className="flex flex-1 items-center justify-between gap-3 px-2 py-1 text-left disabled:pointer-events-none"
@@ -464,9 +471,10 @@ function RouteComponent() {
                     <Button
                       type="button"
                       onClick={() =>
-                        roleChange.mutate({ id: assignment.id, role: isLead ? 'member' : 'lead' })
+                        !isLead && roleChange.mutate({ id: assignment.id, role: 'lead' })
                       }
                       disabled={teamBusy}
+                      aria-disabled={isLead}
                       title={isLead ? 'Team lead' : `Make ${name} team lead`}
                       aria-label={isLead ? 'Team lead' : `Make ${name} team lead`}
                       aria-pressed={isLead}
