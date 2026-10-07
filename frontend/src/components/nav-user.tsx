@@ -23,7 +23,7 @@ import {
 import { ChevronsUpDownIcon, SparklesIcon, BadgeCheckIcon, CreditCardIcon, BellIcon, LogOutIcon } from "lucide-react"
 
 // Matches the session user rather than a bespoke shape, so the caller can hand
-// it straight through. `image` is what neon_auth calls the avatar.
+// it straight through. `image` is what Better Auth calls the avatar.
 export function NavUser({
   user,
 }: {
@@ -49,7 +49,7 @@ export function NavUser({
 
   const handleSignOut = async () => {
     const result = await authClient.signOut()
-    navigate({ to: '/auth/sign-in' })
+    navigate({ to: '/login' })
   }
 
   return (

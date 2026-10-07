@@ -31,6 +31,7 @@ export const Route = createFileRoute('/_authenticated')({
     if (!data) {
       throw redirect({ to: '/login' });
     }
+    return { user: data.user };
   },
   component: AuthenticatedLayout,
 })

@@ -17,6 +17,7 @@ import { Route as AuthSignupRouteImport } from './routes/_auth.signup'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as AuthenticatedLeaveRequestsRouteImport } from './routes/_authenticated.leave-requests'
+import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated.account.settings'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
 import { Route as AuthenticatedJobsJobIdRouteImport } from './routes/_authenticated.jobs.$jobId'
 import { Route as AuthenticatedAdminCustomersIndexRouteImport } from './routes/_authenticated.admin.customers.index'
@@ -62,6 +63,12 @@ const AuthenticatedLeaveRequestsRoute =
   AuthenticatedLeaveRequestsRouteImport.update({
     id: '/leave-requests',
     path: '/leave-requests',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAccountSettingsRoute =
+  AuthenticatedAccountSettingsRouteImport.update({
+    id: '/account/settings',
+    path: '/account/settings',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
@@ -112,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof AuthSignupRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/leave-requests': typeof AuthenticatedLeaveRequestsRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
@@ -126,6 +134,7 @@ export interface FileRoutesByTo {
   '/login': typeof AuthLoginRoute
   '/signup': typeof AuthSignupRoute
   '/leave-requests': typeof AuthenticatedLeaveRequestsRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
@@ -144,6 +153,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/leave-requests': typeof AuthenticatedLeaveRequestsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/_authenticated/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
@@ -161,6 +171,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/admin'
     | '/leave-requests'
+    | '/account/settings'
     | '/jobs/$jobId'
     | '/admin/'
     | '/admin/customers/$customerId'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/leave-requests'
+    | '/account/settings'
     | '/jobs/$jobId'
     | '/admin'
     | '/admin/customers/$customerId'
@@ -192,6 +204,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/leave-requests'
     | '/_authenticated/'
+    | '/_authenticated/account/settings'
     | '/_authenticated/jobs/$jobId'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/customers/$customerId'
@@ -262,6 +275,13 @@ declare module '@tanstack/react-router' {
       path: '/leave-requests'
       fullPath: '/leave-requests'
       preLoaderRoute: typeof AuthenticatedLeaveRequestsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/account/settings': {
+      id: '/_authenticated/account/settings'
+      path: '/account/settings'
+      fullPath: '/account/settings'
+      preLoaderRoute: typeof AuthenticatedAccountSettingsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin/': {
@@ -356,6 +376,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedLeaveRequestsRoute: typeof AuthenticatedLeaveRequestsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedAccountSettingsRoute: typeof AuthenticatedAccountSettingsRoute
   AuthenticatedJobsJobIdRoute: typeof AuthenticatedJobsJobIdRoute
 }
 
@@ -363,6 +384,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedLeaveRequestsRoute: AuthenticatedLeaveRequestsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedAccountSettingsRoute: AuthenticatedAccountSettingsRoute,
   AuthenticatedJobsJobIdRoute: AuthenticatedJobsJobIdRoute,
 }
 

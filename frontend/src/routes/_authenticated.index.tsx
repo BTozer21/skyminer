@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 
-import { authClient, useIsAdmin } from '../auth';
+import { useIsAdmin } from '../auth';
 import { myJobsQuery, myLeaveQuery } from '@/lib/api'
 import { STATUS_CONFIG, jobTitle } from '@/lib/v1/jobs'
 import { LEAVE_STATUS_CONFIG } from '@/lib/v1/leave'
@@ -14,10 +14,10 @@ export const Route = createFileRoute('/_authenticated/')({
   // Admins land on the schedule instead of the personal home page. The mirror
   // of the /admin guard, which sends non-admins here — the two conditions are
   // opposites, so they can't bounce off each other. beforeLoad runs outside
-  // React, so we read the session directly instead of using useIsAdmin.
-  beforeLoad: async () => {
-    const { data } = await authClient.getSession();
-    if (data?.user.role?.split(',').includes('admin')) {
+  // React, so we read the user from the _authenticated context instead of
+  // using useIsAdmin.
+  beforeLoad: ({ context }) => {
+    if (context.user.role?.split(',').includes('admin')) {
       throw redirect({ to: '/admin' });
     }
   },
