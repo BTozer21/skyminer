@@ -347,3 +347,48 @@ export const openLeaveRequestsQuery = {
   queryKey: ['leave-requests', 'open'],
   queryFn: getOpenLeaveRequests,
 }
+
+export async function getCustomerContacts(customerId: number) {
+  const res = await api.customers[':id'].contacts.$get({ param: { id: String(customerId) } });
+  if (!res.ok) {
+    throw new Error("There was an error here");
+  }
+  const { data } = await res.json();
+  return data;
+}
+
+export type CustomerContact = Awaited<ReturnType<typeof getCustomerContacts>>[number]
+
+type CreateCustomerContactInput = InferRequestType<
+  typeof api.customers[':id']['contacts']['$post']
+>['json'];
+
+export async function createCustomerContact(customerId: number, contact: CreateCustomerContactInput) {
+  const res = await api.customers[':id'].contacts.$post({
+    param: { id: String(customerId) },
+    json: contact,
+  });
+  if (!res.ok) {
+    throw new Error(
+      res.status === 404
+        ? 'That customer no longer exists'
+        : 'There was an error here',
+    );
+  }
+  const { data } = await res.json();
+  return data;
+}
+
+export async function deleteCustomerContact(contactId: number) {
+  const res = await api.customers.contacts[':contactId'].$delete({
+    param: { contactId: String(contactId) },
+  });
+  if (!res.ok) {
+    throw new Error(
+      res.status === 404
+        ? 'That contact has already been deleted'
+        : 'There was an error here',
+    );
+  }
+  return res.json();
+}

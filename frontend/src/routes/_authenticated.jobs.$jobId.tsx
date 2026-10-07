@@ -596,6 +596,25 @@ function RouteComponent() {
         <p className="text-muted-foreground text-sm">No one is assigned to this job.</p>
       )}
 
+      {job?.contacts.length ? (
+        <>
+          <h2 className="mt-6 mb-2 font-medium">Contacts</h2>
+          <ul className="flex max-w-md flex-col gap-1 text-sm">
+            {job.contacts.map((contact) => (
+              <li key={contact.id} className="bg-muted/40 flex flex-col gap-0.5 rounded-sm px-2 py-1">
+                <span>{contact.name}</span>
+                <span className="flex flex-wrap gap-x-3 text-xs">
+                  <a href={`tel:${contact.phoneNo}`} className="hover:underline">{contact.phoneNo}</a>
+                  {contact.email && (
+                    <a href={`mailto:${contact.email}`} className="text-muted-foreground hover:underline">{contact.email}</a>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+
       {isAdmin && !isError && (
         <div className="mt-10 max-w-md border-t pt-4">
           <AlertDialog>
