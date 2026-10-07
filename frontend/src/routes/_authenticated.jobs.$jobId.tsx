@@ -509,6 +509,21 @@ function RouteComponent() {
             </>
           )}
 
+          {!isAdmin && (
+            <>
+              <dt className="text-muted-foreground">Hotel</dt>
+              <dd>
+                {isPending ? (
+                  <Skeleton className="h-5 w-12" />
+                ) : job.hotel ? (
+                  'Yes'
+                ) : (
+                  'No'
+                )}
+              </dd>
+            </>
+          )}
+
           {/* Internal pricing — day rate per person, so it moves with the team
               and the dates above. Admin-only, like the status. */}
           {isAdmin && (
