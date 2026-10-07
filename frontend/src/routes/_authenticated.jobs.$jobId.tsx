@@ -18,7 +18,7 @@ import {
   updateJobAssignmentRole,
 } from '@/lib/api'
 import type { JobResponse, JobRole } from '@/lib/api'
-import { JOB_TYPES, JOB_TYPE_LABELS, JOB_COLOUR_CONFIG, STATUS_CONFIG, STATUSES, jobTitle, suggestJobColour } from '@/lib/v1/jobs'
+import { JOB_TYPES, JOB_TYPE_LABELS, JOB_COLOUR_CONFIG, STATUS_CONFIG, STATUSES, isInNotificationWindow, jobTitle, suggestJobColour } from '@/lib/v1/jobs'
 import { JobColourSwatches } from '@/components/job-colour-swatches'
 import { useIsAdmin } from '@/auth'
 import {
@@ -127,9 +127,15 @@ function RouteComponent() {
       queryClient.setQueryData(['jobs', jobId], context?.previous)
       toast.error(error.message)
     },
-    onSettled: () => {
+    onSettled: (_data, _error, patch, context) => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
       queryClient.invalidateQueries({ queryKey: ['schedule'] })
+      if (
+        (context?.previous && isInNotificationWindow(context.previous.startDate)) ||
+        (patch.startDate && isInNotificationWindow(patch.startDate))
+      ) {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      }
     },
   })
 
@@ -214,6 +220,9 @@ function RouteComponent() {
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
       // Assignments cascade away with the job, so the schedule is stale too.
       queryClient.invalidateQueries({ queryKey: ['schedule'] })
+      if (job && isInNotificationWindow(job.startDate)) {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      }
       toast.success('Job deleted')
       navigate({ to: '/admin/jobs' })
     },

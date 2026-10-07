@@ -13,7 +13,7 @@ import { CalendarIcon, CheckCircle2, Circle, Crown, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { createJob, getCustomerMachines, getCustomers, getJobAssignments, getTravelTime, listUsers } from '@/lib/api';
 import type { JobResponse, JobRole } from '@/lib/api';
-import { JOB_TYPES, JOB_TYPE_LABELS, suggestJobColour } from '@/lib/v1/jobs';
+import { JOB_TYPES, JOB_TYPE_LABELS, isInNotificationWindow, suggestJobColour } from '@/lib/v1/jobs';
 import { JobColourSwatches } from '@/components/job-colour-swatches';
 
 interface DraftAssignee {
@@ -41,8 +41,11 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
 
   const mutation = useMutation({
     mutationFn: createJob,
-    onSuccess: () => {
+    onSuccess: (job) => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      if (isInNotificationWindow(job.startDate)) {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      }
       toast.success('Job added');
     },
     onError: (error) => {

@@ -1,4 +1,4 @@
-import { differenceInCalendarDays } from 'date-fns'
+import { addDays, differenceInCalendarDays, format } from 'date-fns'
 import { CheckCircle2, Circle, CircleDashed } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -63,6 +63,10 @@ export const JOB_TYPE_LABELS = {
 } satisfies Record<NonNullable<JobResponse['type']>, string>
 
 export const JOB_TYPES = Object.keys(JOB_TYPE_LABELS) as NonNullable<JobResponse['type']>[]
+
+export function isInNotificationWindow(startDate: string) {
+  return startDate <= format(addDays(new Date(), 3), 'yyyy-MM-dd')
+}
 
 export function jobTitle(
   job: {
