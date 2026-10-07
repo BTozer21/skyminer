@@ -113,7 +113,7 @@ function RouteComponent2() {
       for (const job of page.jobs) {
         byId.set(job.id, job);
         for (const assignment of job.jobAssignments) {
-          const user = assignment.userInNeonAuth;
+          const user = assignment.user;
           if (!user) continue;
           const list = byUser.get(user.id) ?? [];
           list.push(job);

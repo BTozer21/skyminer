@@ -3,22 +3,14 @@ import type { InferRequestType, InferResponseType } from 'hono/client';
 import type { ApiRoutes } from '@server/index';
 import { authClient } from '../auth';
 
-async function getAuthHeaders(): Promise<Record<string, string>> {
-  const { data } = await authClient.getSession();
-  const token = data?.session?.token;
-  if (!token) {
-    throw new Error('No active session');
-  }
-  return { Authorization: `Bearer ${token}` };
-}
-
-const client = hc<ApiRoutes>(import.meta.env.VITE_API_URL || 'http://localhost:3000/');
+const client = hc<ApiRoutes>(import.meta.env.VITE_API_URL || 'http://localhost:3000/', {
+  init: { credentials: 'include' },
+});
 
 export const api = client.api;
 
 export async function getJobs() {
-  const headers = await getAuthHeaders();
-  const res = await api.jobs.$get({}, { headers });
+  const res = await api.jobs.$get();
   if (!res.ok) {
     throw new Error("There was an error here");
   }
@@ -27,8 +19,7 @@ export async function getJobs() {
 }
 
 export async function getMyJobs() {
-  const headers = await getAuthHeaders();
-  const res = await api.jobs.mine.$get({}, { headers });
+  const res = await api.jobs.mine.$get();
   if (!res.ok) {
     throw new Error("There was an error here");
   }
@@ -46,8 +37,7 @@ export const myJobsQuery = {
 }
 
 export async function getJob(id: number) {
-  const headers = await getAuthHeaders();
-  const res = await api.jobs[':id'].$get({ param: { id: String(id) } }, { headers });
+  const res = await api.jobs[':id'].$get({ param: { id: String(id) } });
   if (!res.ok) {
     // The status rides along so the page can tell "no such job / not yours yet"
     // apart from a request that simply failed.
@@ -65,8 +55,7 @@ export async function getJob(id: number) {
 }
 
 export async function getCustomers() {
-  const headers = await getAuthHeaders();
-  const res = await api.customers.$get({}, { headers });
+  const res = await api.customers.$get();
   if (!res.ok) {
     throw new Error("There was an error here");
   }
@@ -76,8 +65,7 @@ export async function getCustomers() {
 };
 
 export async function getCustomer(id: number) {
-  const headers = await getAuthHeaders();
-  const res = await api.customers[':id'].$get({ param: { id: String(id) } }, { headers });
+  const res = await api.customers[':id'].$get({ param: { id: String(id) } });
   if (!res.ok) {
     throw new Error(
       res.status === 404
@@ -90,10 +78,8 @@ export async function getCustomer(id: number) {
 }
 
 export async function getCustomerMachines(customerId: number) {
-  const headers = await getAuthHeaders();
   const res = await api.customers[':id'].machines.$get(
     { param: { id: String(customerId) } },
-    { headers },
   );
   if (!res.ok) {
     throw new Error("There was an error here");
@@ -109,7 +95,7 @@ export type MachineResponse = InferResponseType<
 
 export type CustomerResponse = InferResponseType<typeof api.customers.$get>['data'][number]
 
-export type JobResponse = InferResponseType<typeof api.jobs.$get>['data'][number]
+export type JobResponse = InferResponseType<typeof api.jobs.$get, 200>['data'][number]
 
 type CreateJobInput = InferRequestType<typeof api.jobs.$post>['json'];
 
@@ -117,8 +103,7 @@ type CreateCustomerInput = InferRequestType<typeof api.customers.$post>['json'];
 
 
 export async function createJob(job: CreateJobInput) {
-  const headers = await getAuthHeaders();
-  const res = await api.jobs.$post({ json: job }, { headers });
+  const res = await api.jobs.$post({ json: job });
   if (!res.ok) {
     throw new Error("There was an error here");
   }
@@ -129,8 +114,7 @@ export async function createJob(job: CreateJobInput) {
 type UpdateJobInput = InferRequestType<typeof api.jobs[':id']['$patch']>['json'];
 
 export async function updateJob(id: number, job: UpdateJobInput) {
-  const headers = await getAuthHeaders();
-  const res = await api.jobs[':id'].$patch({ param: { id: String(id) }, json: job }, { headers });
+  const res = await api.jobs[':id'].$patch({ param: { id: String(id) }, json: job });
   if (!res.ok) {
     throw new Error(
       res.status === 404
@@ -142,8 +126,7 @@ export async function updateJob(id: number, job: UpdateJobInput) {
 }
 
 export async function deleteJob(id: number) {
-  const headers = await getAuthHeaders();
-  const res = await api.jobs[':id'].$delete({ param: { id: String(id) } }, { headers });
+  const res = await api.jobs[':id'].$delete({ param: { id: String(id) } });
   if (!res.ok) {
     throw new Error(
       res.status === 404
@@ -155,8 +138,7 @@ export async function deleteJob(id: number) {
 }
 
 export async function createCustomer(customers: CreateCustomerInput) {
-  const headers = await getAuthHeaders();
-  const res = await api.customers.$post({ json: customers }, { headers });
+  const res = await api.customers.$post({ json: customers });
   if (!res.ok) {
     throw new Error("There was an error here");
   }
@@ -164,8 +146,7 @@ export async function createCustomer(customers: CreateCustomerInput) {
 }
 
 export async function deleteCustomer(id: number) {
-  const headers = await getAuthHeaders();
-  const res = await api.customers[':id'].$delete({ param: { id: String(id) } }, { headers });
+  const res = await api.customers[':id'].$delete({ param: { id: String(id) } });
   if (!res.ok) {
     throw new Error(
       res.status === 409
@@ -181,8 +162,7 @@ export async function deleteCustomer(id: number) {
 type CreateMachineInput = InferRequestType<typeof api.customers.machine.$post>['json'];
 
 export async function createMachine(machines: CreateMachineInput) {
-  const headers = await getAuthHeaders();
-  const res = await api.customers.machine.$post({ json: machines }, { headers });
+  const res = await api.customers.machine.$post({ json: machines });
   if (!res.ok) {
     throw new Error("There was an error here");
   }
@@ -198,8 +178,7 @@ export type ScheduleJob = InferResponseType<
 >['data'][number]
 
 export async function getJobAssignments(from: string, to: string) {
-  const headers = await getAuthHeaders();
-  const res = await api.admin['job-assignments'].$get({ query: { from, to } }, { headers });
+  const res = await api.admin['job-assignments'].$get({ query: { from, to } });
   if (!res.ok) {
     throw new Error("There was an error here");
   }
@@ -212,8 +191,7 @@ type CreateJobAssignmentInput = InferRequestType<
 >['json'];
 
 export async function createJobAssignment(assignment: CreateJobAssignmentInput) {
-  const headers = await getAuthHeaders();
-  const res = await api.admin['job-assignments'].$post({ json: assignment }, { headers });
+  const res = await api.admin['job-assignments'].$post({ json: assignment });
   if (!res.ok) {
     // 409 is the only failure worth spelling out: the person is already on
     // the job, which the grid can't always show (a cell renders one job).
@@ -227,10 +205,8 @@ export async function createJobAssignment(assignment: CreateJobAssignmentInput) 
 }
 
 export async function deleteJobAssignment(id: number) {
-  const headers = await getAuthHeaders();
   const res = await api.admin['job-assignments'][':id'].$delete(
     { param: { id: String(id) } },
-    { headers },
   );
   if (!res.ok) {
     if (res.status === 400) {
@@ -249,10 +225,8 @@ export async function deleteJobAssignment(id: number) {
 export type JobRole = 'member' | 'lead';
 
 export async function updateJobAssignmentRole(id: number, role: JobRole) {
-  const headers = await getAuthHeaders();
   const res = await api.admin['job-assignments'][':id'].$patch(
     { param: { id: String(id) }, json: { role } },
-    { headers },
   );
   if (!res.ok) {
     throw new Error(
@@ -270,8 +244,6 @@ export async function listUsers(limit = 100) {
   return data;
 }
 
-// Derived from the call rather than imported from better-auth, which is only a
-// transitive dep of @neondatabase/neon-js.
 export type AdminUser = NonNullable<
   Awaited<ReturnType<typeof listUsers>>
 >['users'][number];
@@ -284,8 +256,7 @@ export type TeamMember = InferResponseType<
 >['data']
 
 export async function getTeamMember(id: string) {
-  const headers = await getAuthHeaders();
-  const res = await api.admin.users[':id'].$get({ param: { id } }, { headers });
+  const res = await api.admin.users[':id'].$get({ param: { id } });
   if (!res.ok) {
     throw new Error(
       res.status === 404
@@ -301,10 +272,8 @@ export async function updateLeaveRequestStatus(
   id: number,
   status: LeaveRequestResponse['status'],
 ) {
-  const headers = await getAuthHeaders();
   const res = await api.admin['leave-requests'][':id'].$patch(
     { param: { id: String(id) }, json: { status } },
-    { headers },
   );
   if (!res.ok) {
     throw new Error(
@@ -317,8 +286,7 @@ export async function updateLeaveRequestStatus(
 }
 
 export async function getLeaveRequests() {
-  const headers = await getAuthHeaders();
-  const res = await api["leave-requests"].$get({}, { headers });
+  const res = await api["leave-requests"].$get();
   if (!res.ok) {
     throw new Error("There was an error here");
   }
@@ -343,8 +311,7 @@ type CreateLeaveRequestInput = InferRequestType<
 >['json'];
 
 export async function createLeaveRequest(leave: CreateLeaveRequestInput) {
-  const headers = await getAuthHeaders();
-  const res = await api["leave-requests"].$post({ json: leave }, { headers });
+  const res = await api["leave-requests"].$post({ json: leave });
   if (!res.ok) {
     throw new Error("There was an error here");
   }

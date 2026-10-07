@@ -199,14 +199,14 @@ function RouteComponent() {
         id: user.id,
         name: user.name,
         email: user.email,
-        assignment: team.find((member) => member.userInNeonAuth.id === user.id),
+        assignment: team.find((member) => member.user.id === user.id),
       }))
     : [...team]
         .sort((a, b) => Number(b.role === 'lead') - Number(a.role === 'lead'))
         .map((member) => ({
-          id: member.userInNeonAuth.id,
-          name: member.userInNeonAuth.name,
-          email: member.userInNeonAuth.email,
+          id: member.user.id,
+          name: member.user.name,
+          email: member.user.email,
           assignment: member,
         }))
 

@@ -84,15 +84,15 @@ export function JobAssignmentDialog({ job, onOpenChange }: JobAssignmentDialogPr
         name: user.name,
         email: user.email,
         assignment: assignments.find(
-          (assignment) => assignment.userInNeonAuth?.id === user.id,
+          (assignment) => assignment.user?.id === user.id,
         ),
       }))
     : [...assignments]
         .sort((a, b) => Number(b.role === 'lead') - Number(a.role === 'lead'))
         .map((assignment) => ({
-          id: assignment.userInNeonAuth?.id ?? String(assignment.id),
-          name: assignment.userInNeonAuth?.name ?? 'Unknown user',
-          email: assignment.userInNeonAuth?.email,
+          id: assignment.user?.id ?? String(assignment.id),
+          name: assignment.user?.name ?? 'Unknown user',
+          email: assignment.user?.email,
           assignment,
         }));
 
