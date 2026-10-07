@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
@@ -16,30 +17,62 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer'
+import { Kbd } from '@/components/ui/kbd'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 import type { LeaveRequestResponse } from '@/lib/api'
 
 export function NotificationsDrawer() {
   const { data, isPending, error } = useQuery(notificationsQuery)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement
+      if (
+        event.key !== 'n' ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        target.isContentEditable ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
+      ) {
+        return
+      }
+      event.preventDefault()
+      setOpen((open) => !open)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   const count = data
     ? data.leaveRequests.length + data.upcomingJobs.length + data.finishedJobs.length
     : 0
 
   return (
-    <Drawer direction="right">
-      <DrawerTrigger asChild>
-        <Button variant="outline" size="icon" className="relative">
-          <Bell className="h-[1.2rem] w-[1.2rem]" />
-          {count > 0 ? (
-            <span className="bg-destructive absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-medium text-white">
-              {count}
-            </span>
-          ) : null}
-          <span className="sr-only">Notifications</span>
-        </Button>
-      </DrawerTrigger>
-      <DrawerContent>
+    <Drawer direction="right" open={open} onOpenChange={setOpen}>
+      <Tooltip delayDuration={500}>
+        <TooltipTrigger asChild>
+          <DrawerTrigger asChild>
+            <Button variant="outline" size="icon" className="relative">
+              <Bell className="h-[1.2rem] w-[1.2rem]" />
+              {count > 0 ? (
+                <span className="bg-destructive absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-medium text-white">
+                  {count}
+                </span>
+              ) : null}
+              <span className="sr-only">Notifications</span>
+            </Button>
+          </DrawerTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          Notifications <Kbd>N</Kbd>
+        </TooltipContent>
+      </Tooltip>
+      <DrawerContent onCloseAutoFocus={(event) => event.preventDefault()}>
         <DrawerHeader>
           <DrawerTitle>Notifications</DrawerTitle>
           <DrawerDescription>
