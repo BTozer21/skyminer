@@ -9,6 +9,7 @@ export const customers = pgTable("customers", {
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "customers_id_seq" }),
   name: text().notNull(),
   type: customerTypeEnum().notNull(),
+  postcode: text(),
   createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
 });

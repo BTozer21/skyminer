@@ -10,6 +10,12 @@ import type { AppVariables } from '../src/types.ts';
 const createCustomerSchema = createInsertSchema(customers).pick({
   name: true,
   type: true,
+}).extend({
+  postcode: z
+    .string()
+    .transform((value) => value.replace(/\s+/g, '').toUpperCase())
+    .refine((value) => /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(value), 'Enter a valid UK postcode')
+    .transform((value) => `${value.slice(0, -3)} ${value.slice(-3)}`),
 });
 
 const createMachineSchema = createInsertSchema(machines).pick({
