@@ -1,1 +1,0 @@
-ALTER TABLE "leave_requests" ADD COLUMN "comment" text;

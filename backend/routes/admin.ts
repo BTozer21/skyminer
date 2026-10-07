@@ -1,10 +1,11 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { createInsertSchema } from 'drizzle-zod';
+import { createInsertSchema } from 'drizzle-orm/zod';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../src/db/index.ts';
-import { jobAssignments, leaveRequests, leaveStatusEnum, userInNeonAuth } from '../src/db/schema.ts';
+import { jobAssignments, leaveRequests, leaveStatusEnum } from '../src/db/schema/public.ts';
+import { user } from '../src/db/schema/auth.ts';
 import type { AppVariables } from '../src/types.ts';
 
 const createJobAssignmentSchema = createInsertSchema(jobAssignments).pick({
@@ -19,36 +20,137 @@ const updateLeaveRequestSchema = z.object({
   status: z.enum(leaveStatusEnum.enumValues),
 });
 
+const REMINDER_DAYS = 3;
+
+const TRAVEL_ORIGIN = process.env.TRAVEL_ORIGIN ?? 'NG11 8AA';
+
 export const adminRoute = new Hono<{ Variables: AppVariables }>()
+  .get(
+    '/travel-time',
+    zValidator('query', z.object({ postcode: z.string().trim().min(1) })),
+    async (c) => {
+      const apiKey = process.env.GOOGLE_API_KEY;
+      if (!apiKey) {
+        return c.json({ message: 'Travel times are not set up' }, 503);
+      }
+
+      const { postcode } = c.req.valid('query');
+
+      const res = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters',
+        },
+        body: JSON.stringify({
+          origin: { address: `${TRAVEL_ORIGIN}, UK` },
+          destination: { address: `${postcode}, UK` },
+          travelMode: 'DRIVE',
+          routingPreference: 'TRAFFIC_UNAWARE',
+        }),
+      });
+
+      if (!res.ok) {
+        return c.json({ message: 'Could not get a travel time' }, 502);
+      }
+
+      const { routes } = (await res.json()) as {
+        routes?: { duration: string; distanceMeters: number }[];
+      };
+      const route = routes?.[0];
+      if (!route) {
+        return c.json({ message: 'No driving route found' }, 404);
+      }
+
+      return c.json(
+        {
+          data: {
+            minutes: Math.round(parseInt(route.duration, 10) / 60),
+            miles: Math.round(route.distanceMeters / 1609.344),
+          },
+        },
+        200,
+      );
+    }
+  )
+
+  .get('/notifications', async (c) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const soon = new Date(Date.now() + REMINDER_DAYS * 86_400_000).toISOString().slice(0, 10);
+    const jobDetails = {
+      customer: { columns: { id: true, name: true } },
+      jobMachines: { with: { machine: { columns: { id: true, type: true, location: true } } } },
+    } as const;
+
+    const [leaveRequests, upcomingJobs, finishedJobs] = await Promise.all([
+      db.query.leaveRequests.findMany({
+        where: { status: 'submitted' },
+        with: { user: { columns: { id: true, name: true } } },
+        orderBy: { startDate: 'asc' },
+      }),
+      db.query.jobs.findMany({
+        where: {
+          status: { ne: 'complete' },
+          startDate: { lte: soon },
+          endDate: { gte: today },
+          OR: [{ quote: false }, { rams: false }, { po: false }],
+        },
+        with: jobDetails,
+        orderBy: { startDate: 'asc' },
+      }),
+      db.query.jobs.findMany({
+        where: {
+          endDate: { lt: today },
+          OR: [{ report: false }, { invoice: false }],
+        },
+        with: jobDetails,
+        orderBy: { endDate: 'asc' },
+      }),
+    ]);
+
+    return c.json({ data: { leaveRequests, upcomingJobs, finishedJobs } }, 200);
+  })
+
   .get('/users', async (c) => {
-    const users = await db.select().from(userInNeonAuth);
+    const users = await db.select().from(user);
 
     return c.json({ data: users }, 200);
   })
 
   .get(
     '/users/:id',
-    zValidator('param', z.object({ id: z.uuid() })),
+    zValidator('param', z.object({ id: z.string().min(1) })),
     async (c) => {
       const { id } = c.req.valid('param');
 
-      const user = await db.query.userInNeonAuth.findFirst({
-        where: (user, { eq }) => eq(user.id, id),
+      const member = await db.query.user.findFirst({
+        where: { id },
         columns: { id: true, name: true, email: true, role: true },
         with: {
           leaveRequests: {
-            orderBy: (leave, { desc }) => [desc(leave.startDate)],
+            orderBy: { startDate: 'desc' },
           },
         },
       });
 
-      if (!user) {
+      if (!member) {
         return c.json({ message: 'User not found' }, 404);
       }
 
-      return c.json({ data: user }, 200);
+      return c.json({ data: member }, 200);
     }
   )
+
+  .get('/leave-requests', async (c) => {
+    const openLeaveRequests = await db.query.leaveRequests.findMany({
+      where: { status: 'submitted' },
+      with: { user: { columns: { id: true, name: true } } },
+      orderBy: { startDate: 'asc' },
+    });
+
+    return c.json({ data: openLeaveRequests }, 200);
+  })
 
   .patch(
     '/leave-requests/:id',
@@ -79,14 +181,13 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
       const { from, to } = c.req.valid('query');
 
       const data = await db.query.jobs.findMany({
-        where: (jobs, { and, lte, gte }) =>
-          and(lte(jobs.startDate, to), gte(jobs.endDate, from)),
+        where: { startDate: { lte: to }, endDate: { gte: from } },
         with: {
           customer: { columns: { id: true, name: true } },
           jobMachines: { with: { machine: { columns: { id: true, type: true, location: true } } } },
           jobAssignments: {
             with: {
-              userInNeonAuth: { columns: { id: true, name: true, email: true } },
+              user: { columns: { id: true, name: true, email: true } },
             },
           },
         },
@@ -104,7 +205,7 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
 
       const created = await db.transaction(async (tx) => {
         const team = await tx.query.jobAssignments.findMany({
-          where: (assignment, { eq }) => eq(assignment.jobId, jobId),
+          where: { jobId },
         });
 
         if (team.some((member) => member.userId === userId)) {
@@ -150,7 +251,7 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
 
       const updated = await db.transaction(async (tx) => {
         const assignment = await tx.query.jobAssignments.findFirst({
-          where: (assignment, { eq }) => eq(assignment.id, id),
+          where: { id },
         });
         if (!assignment) return { missing: true as const };
 
@@ -198,7 +299,7 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
 
       const deleted = await db.transaction(async (tx) => {
         const assignment = await tx.query.jobAssignments.findFirst({
-          where: (member, { eq }) => eq(member.id, id),
+          where: { id },
         });
 
         // Distinguishes "already gone" from a successful removal, so a stale grid
@@ -207,8 +308,7 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
 
         if (assignment.role === 'lead') {
           const rest = await tx.query.jobAssignments.findMany({
-            where: (member, { and, eq, ne }) =>
-              and(eq(member.jobId, assignment.jobId), ne(member.id, id)),
+            where: { jobId: assignment.jobId, id: { ne: id } },
             columns: { id: true },
           });
           if (rest.length) return { needsLead: true as const };

@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { deleteJob, updateJob } from '@/lib/api';
-import { STATUS_CONFIG, STATUSES, jobTitle } from '@/lib/v1/jobs';
+import { STATUS_CONFIG, STATUSES, isInNotificationWindow, jobTitle } from '@/lib/v1/jobs';
 
 import type { DataTableFeatures } from '../data-table-features.ts';
 import type { JobResponse } from '@/lib/api';
@@ -90,6 +90,9 @@ export const columns = columnHelper.columns([
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
           queryClient.invalidateQueries({ queryKey: ['schedule'] })
+          if (isInNotificationWindow(job.startDate)) {
+            queryClient.invalidateQueries({ queryKey: ['notifications'] })
+          }
           toast.success('Status updated')
         },
         onError: (error) => {
@@ -145,9 +148,12 @@ export const columns = columnHelper.columns([
       const [draft, setDraft] = useState<DateRange | undefined>(current)
       const update = useMutation({
         mutationFn: (range: { startDate: string; endDate: string }) => updateJob(job.id, range),
-        onSuccess: () => {
+        onSuccess: (_data, range) => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
           queryClient.invalidateQueries({ queryKey: ['schedule'] })
+          if (isInNotificationWindow(job.startDate) || isInNotificationWindow(range.startDate)) {
+            queryClient.invalidateQueries({ queryKey: ['notifications'] })
+          }
           setOpen(false)
           toast.success('Dates updated')
         },
@@ -237,6 +243,9 @@ export const columns = columnHelper.columns([
         onSettled: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
           queryClient.invalidateQueries({ queryKey: ['schedule'] })
+          if (isInNotificationWindow(job.startDate)) {
+            queryClient.invalidateQueries({ queryKey: ['notifications'] })
+          }
           toast.success("Quote updated");
         },
       })
@@ -277,6 +286,9 @@ export const columns = columnHelper.columns([
         onSettled: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
           queryClient.invalidateQueries({ queryKey: ['schedule'] })
+          if (isInNotificationWindow(job.startDate)) {
+            queryClient.invalidateQueries({ queryKey: ['notifications'] })
+          }
           toast.success("RAMS updated");
         },
       })
@@ -317,6 +329,9 @@ export const columns = columnHelper.columns([
         onSettled: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
           queryClient.invalidateQueries({ queryKey: ['schedule'] })
+          if (isInNotificationWindow(job.startDate)) {
+            queryClient.invalidateQueries({ queryKey: ['notifications'] })
+          }
           toast.success("PO updated");
         },
       })
@@ -357,6 +372,9 @@ export const columns = columnHelper.columns([
         onSettled: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
           queryClient.invalidateQueries({ queryKey: ['schedule'] })
+          if (isInNotificationWindow(job.startDate)) {
+            queryClient.invalidateQueries({ queryKey: ['notifications'] })
+          }
           toast.success("Report updated");
         },
       })
@@ -397,6 +415,9 @@ export const columns = columnHelper.columns([
         onSettled: () => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] })
           queryClient.invalidateQueries({ queryKey: ['schedule'] })
+          if (isInNotificationWindow(job.startDate)) {
+            queryClient.invalidateQueries({ queryKey: ['notifications'] })
+          }
           toast.success("Invoice updated");
         },
       })
@@ -429,6 +450,9 @@ export const columns = columnHelper.columns([
           // The schedule grid is built from assignments, which cascade away
           // with the job, so it is stale too.
           queryClient.invalidateQueries({ queryKey: ['schedule'] })
+          if (isInNotificationWindow(data.startDate)) {
+            queryClient.invalidateQueries({ queryKey: ['notifications'] })
+          }
           toast.success('Job deleted')
         },
         onError: (error) => {

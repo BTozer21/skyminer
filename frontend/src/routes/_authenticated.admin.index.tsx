@@ -18,7 +18,7 @@ import { CreateJobForm } from '@/components/forms/v1/create-job-form';
 import { authClient } from '../auth';
 import { getJobAssignments } from '@/lib/api.ts';
 import type { AdminUser, ScheduleJob } from '@/lib/api.ts';
-import { jobTitle } from '@/lib/v1/jobs';
+import { JOB_COLOUR_CONFIG, jobTitle } from '@/lib/v1/jobs';
 
 import { JobAssignmentDialog } from '@/components/dialogs/v1/job-assignments';
 import { AddJobAssignmentDialog } from '@/components/dialogs/v1/add-job-assignment';
@@ -113,7 +113,7 @@ function RouteComponent2() {
       for (const job of page.jobs) {
         byId.set(job.id, job);
         for (const assignment of job.jobAssignments) {
-          const user = assignment.userInNeonAuth;
+          const user = assignment.user;
           if (!user) continue;
           const list = byUser.get(user.id) ?? [];
           list.push(job);
@@ -162,7 +162,7 @@ function RouteComponent2() {
         type="button"
         onClick={() => setSelectedJobId(job.id)}
         title={`Open ${jobTitle(job)}`}
-        className="relative w-full h-full"
+        className={`relative w-full h-full ${JOB_COLOUR_CONFIG[job.colour].className}`}
       >
         {jobTitle(job)}
         {job.quote && job.rams ? (

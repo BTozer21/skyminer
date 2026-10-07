@@ -26,9 +26,13 @@ export function CreateCustomerForm() {
   });
 
   const form = useForm({
-    defaultValues: { name: '', type: '' as 'school' | 'industrial' | '' },
+    defaultValues: { name: '', type: '' as 'school' | 'industrial' | '', postcode: '' },
     onSubmit: async ({ value }) => {
-      await mutation.mutateAsync({ name: value.name.trim(), type: value.type as 'school' | 'industrial' });
+      await mutation.mutateAsync({
+        name: value.name.trim(),
+        type: value.type as 'school' | 'industrial',
+        postcode: value.postcode.trim(),
+      });
       form.reset();
       setOpen(false);
     },
@@ -117,6 +121,36 @@ export function CreateCustomerForm() {
                             <SelectItem value="industrial">Industrial</SelectItem>
                           </SelectContent>
                         </Select>
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                      </Field>
+                    )
+                  }}
+                />
+                <form.Field
+                  name="postcode"
+                  validators={{
+                    onSubmit: ({ value }) =>
+                      /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(value.replace(/\s+/g, '').toUpperCase())
+                        ? undefined
+                        : { message: 'Enter a valid UK postcode' },
+                  }}
+                  children={(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Postcode</FieldLabel>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          placeholder="NG11 8NS"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={isInvalid}
+                          autoComplete="postal-code"
+                          className="uppercase"
+                        />
                         {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
                     )

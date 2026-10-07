@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm, useStore } from '@tanstack/react-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format, isSameDay } from 'date-fns';
+import { addDays, format, isSameDay, subDays } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -9,10 +9,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Field, FieldGroup, FieldLabel, FieldDescription, FieldError, FieldSet, FieldLegend } from '@/components/ui/field';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
-import { CalendarIcon, Crown, Plus } from 'lucide-react';
+import { CalendarIcon, CheckCircle2, Circle, Crown, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { createJob, getCustomerMachines, getCustomers, listUsers } from '@/lib/api';
-import type { JobRole } from '@/lib/api';
+import { createJob, getCustomerMachines, getCustomers, getJobAssignments, getTravelTime, listUsers } from '@/lib/api';
+import type { JobResponse, JobRole } from '@/lib/api';
+import { JOB_TYPES, JOB_TYPE_LABELS, isInNotificationWindow, suggestJobColour } from '@/lib/v1/jobs';
+import { JobColourSwatches } from '@/components/job-colour-swatches';
 
 interface DraftAssignee {
   userId: string
@@ -39,8 +41,11 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
 
   const mutation = useMutation({
     mutationFn: createJob,
-    onSuccess: () => {
+    onSuccess: (job) => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      if (isInNotificationWindow(job.startDate)) {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      }
       toast.success('Job added');
     },
     onError: (error) => {
@@ -56,6 +61,9 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
         : undefined) as DateRange | undefined,
       customerId: '',
       machineIds: [] as number[],
+      hotel: false,
+      colour: undefined as JobResponse['colour'] | undefined,
+      type: undefined as JobResponse['type'] | undefined,
       assignees: (initialAssignee
         ? [{ ...initialAssignee, role: 'lead' }]
         : []) as DraftAssignee[],
@@ -66,7 +74,10 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
         customerId: Number(value.customerId),
         startDate: format(from!, 'yyyy-MM-dd'),
         endDate: format(to!, 'yyyy-MM-dd'),
-        machineIds: value.machineIds,
+        machineIds: isSchool ? [] : value.machineIds,
+        type: isSchool ? value.type : undefined,
+        hotel: value.hotel,
+        colour: (value.colour ?? suggestedColour)!,
         assignees: value.assignees.map((assignee) => ({
           userId: assignee.userId,
           role: assignee.role,
@@ -81,11 +92,33 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
   });
 
   const customerId = useStore(form.store, (state) => state.values.customerId);
+  const selectedCustomer = customers?.find((customer) => String(customer.id) === customerId);
+  const isSchool = selectedCustomer?.type === 'school';
+  const postcode = selectedCustomer?.postcode;
+  const { data: travel, isPending: travelPending, error: travelError } = useQuery({
+    queryKey: ['travel-time', postcode],
+    queryFn: () => getTravelTime(postcode!),
+    enabled: Boolean(postcode),
+    retry: false,
+  });
   const { data: customerMachines, isPending: machinesPending } = useQuery({
     queryKey: ['customers', Number(customerId), 'machines'],
     queryFn: () => getCustomerMachines(Number(customerId)),
-    enabled: Boolean(customerId),
+    enabled: Boolean(customerId) && !isSchool,
   });
+
+  const dateRange = useStore(form.store, (state) => state.values.dateRange);
+  const startDate = dateRange?.from && format(dateRange.from, 'yyyy-MM-dd');
+  const endDate = dateRange?.to && format(dateRange.to, 'yyyy-MM-dd');
+  const windowFrom = dateRange?.from && format(subDays(dateRange.from, 30), 'yyyy-MM-dd');
+  const windowTo = dateRange?.to && format(addDays(dateRange.to, 30), 'yyyy-MM-dd');
+  const { data: nearbyJobs } = useQuery({
+    queryKey: ['schedule', 'colour-window', windowFrom, windowTo],
+    queryFn: () => getJobAssignments(windowFrom!, windowTo!),
+    enabled: Boolean(windowFrom && windowTo),
+  });
+  const suggestedColour =
+    nearbyJobs && startDate && endDate ? suggestJobColour(nearbyJobs, startDate, endDate) : undefined;
 
   return (
     <Dialog
@@ -132,6 +165,7 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                             onValueChange={(value) => {
                               field.handleChange(value);
                               form.setFieldValue('machineIds', []);
+                              form.setFieldValue('type', undefined);
                             }}
                           >
                             <SelectTrigger
@@ -156,6 +190,43 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                       )
                     }}
                   />
+                  {isSchool ? (
+                    <form.Field
+                      name="type"
+                      validators={{
+                        onSubmit: ({ value }) =>
+                          value ? undefined : { message: 'Pick a job type' },
+                      }}
+                      children={(field) => {
+                        const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+
+                        return (
+                          <Field data-invalid={isInvalid}>
+                            <FieldLabel>Job type</FieldLabel>
+                            <ul className="flex flex-col gap-1">
+                              {JOB_TYPES.map((jobType) => (
+                                <li
+                                  key={jobType}
+                                  data-selected={field.state.value === jobType}
+                                  className="bg-muted/40 data-[selected=true]:!border-blue-500 data-[selected=true]:bg-blue-500/10 flex items-center rounded-sm border border-transparent"
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() => field.handleChange(jobType)}
+                                    aria-pressed={field.state.value === jobType}
+                                    className="flex-1 px-2 py-1 text-left text-sm"
+                                  >
+                                    {JOB_TYPE_LABELS[jobType]}
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                            {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                          </Field>
+                        );
+                      }}
+                    />
+                  ) : (
                   <form.Field
                     name="machineIds"
                     validators={{
@@ -216,6 +287,47 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                       )
                     }}
                   />
+                  )}
+                  <form.Field
+                    name="hotel"
+                    children={(field) => (
+                      <Field>
+                        <FieldLabel>Travel</FieldLabel>
+                        {!customerId ? (
+                          <p className="text-muted-foreground text-sm">Select a customer first</p>
+                        ) : !postcode ? (
+                          <p className="text-muted-foreground text-sm">This customer has no postcode</p>
+                        ) : travelPending ? (
+                          <p className="text-muted-foreground text-sm">Working out the drive…</p>
+                        ) : travelError ? (
+                          <p className="text-muted-foreground text-sm">{travelError.message}</p>
+                        ) : (
+                          <p className={`text-sm ${travel.minutes > 120 ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+                            {Math.floor(travel.minutes / 60)}h {travel.minutes % 60}m drive ({travel.miles} miles) from Clifton
+                            <span className="text-muted-foreground text-xs"> · Google Maps</span>
+                          </p>
+                        )}
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => field.handleChange(!field.state.value)}
+                            aria-pressed={field.state.value}
+                            className="flex w-fit items-center gap-2 rounded-sm text-sm hover:opacity-80"
+                          >
+                            {field.state.value ? (
+                              <CheckCircle2 className="size-4 shrink-0 text-green-500" />
+                            ) : (
+                              <Circle className="size-4 shrink-0 text-blue-500" />
+                            )}
+                            Hotel
+                            {travel && travel.minutes > 120 && (
+                              <span className="text-muted-foreground">(Recommended)</span>
+                            )}
+                          </button>
+                        </div>
+                      </Field>
+                    )}
+                  />
                   <form.Field
                     name="dateRange"
                     validators={{
@@ -268,6 +380,46 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                           {isInvalid && <FieldError errors={field.state.meta.errors} />}
                         </Field>
                       )
+                    }}
+                  />
+                  <form.Field
+                    name="colour"
+                    validators={{
+                      onSubmit: ({ value }) =>
+                        value || suggestedColour ? undefined : { message: 'Pick a colour' },
+                    }}
+                    children={(field) => {
+                      const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel>Colour</FieldLabel>
+                          <FieldDescription>
+                            {field.state.value ? (
+                              <>
+                                Picked by you.{' '}
+                                <button
+                                  type="button"
+                                  onClick={() => field.handleChange(undefined)}
+                                  className="underline underline-offset-2"
+                                >
+                                  Use suggestion
+                                </button>
+                              </>
+                            ) : suggestedColour ? (
+                              'Suggested from jobs within a month. Faded colours are already used nearby.'
+                            ) : (
+                              'Pick dates to get a suggestion.'
+                            )}
+                          </FieldDescription>
+                          <JobColourSwatches
+                            value={field.state.value ?? suggestedColour}
+                            taken={new Set(nearbyJobs?.map((job) => job.colour))}
+                            onChange={field.handleChange}
+                          />
+                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                        </Field>
+                      );
                     }}
                   />
                   <form.Field

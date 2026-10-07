@@ -9,13 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AuthConsentRouteImport } from './routes/_auth.consent'
+import { Route as AuthLoginRouteImport } from './routes/_auth.login'
+import { Route as AuthSignupRouteImport } from './routes/_auth.signup'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as AuthenticatedLeaveRequestsRouteImport } from './routes/_authenticated.leave-requests'
-import { Route as AuthPathnameRouteImport } from './routes/auth.$pathname'
-import { Route as AuthenticatedAccountPathnameRouteImport } from './routes/_authenticated.account.$pathname'
+import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated.account.settings'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
+import { Route as AuthenticatedAdminLeaveRequestsRouteImport } from './routes/_authenticated.admin.leave-requests'
 import { Route as AuthenticatedJobsJobIdRouteImport } from './routes/_authenticated.jobs.$jobId'
 import { Route as AuthenticatedAdminCustomersIndexRouteImport } from './routes/_authenticated.admin.customers.index'
 import { Route as AuthenticatedAdminCustomersCustomerIdRouteImport } from './routes/_authenticated.admin.customers.$customerId'
@@ -23,9 +27,28 @@ import { Route as AuthenticatedAdminJobsIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminTeamIndexRouteImport } from './routes/_authenticated.admin.team.index'
 import { Route as AuthenticatedAdminTeamUserIdRouteImport } from './routes/_authenticated.admin.team.$userId'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/_auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthConsentRoute = AuthConsentRouteImport.update({
+  id: '/consent',
+  path: '/consent',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthSignupRoute = AuthSignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
@@ -43,15 +66,10 @@ const AuthenticatedLeaveRequestsRoute =
     path: '/leave-requests',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthPathnameRoute = AuthPathnameRouteImport.update({
-  id: '/auth/$pathname',
-  path: '/auth/$pathname',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedAccountPathnameRoute =
-  AuthenticatedAccountPathnameRouteImport.update({
-    id: '/account/$pathname',
-    path: '/account/$pathname',
+const AuthenticatedAccountSettingsRoute =
+  AuthenticatedAccountSettingsRouteImport.update({
+    id: '/account/settings',
+    path: '/account/settings',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
@@ -59,6 +77,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminLeaveRequestsRoute =
+  AuthenticatedAdminLeaveRequestsRouteImport.update({
+    id: '/leave-requests',
+    path: '/leave-requests',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedJobsJobIdRoute = AuthenticatedJobsJobIdRouteImport.update({
   id: '/jobs/$jobId',
   path: '/jobs/$jobId',
@@ -97,10 +121,13 @@ const AuthenticatedAdminTeamUserIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
+  '/consent': typeof AuthConsentRoute
+  '/login': typeof AuthLoginRoute
+  '/signup': typeof AuthSignupRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/leave-requests': typeof AuthenticatedLeaveRequestsRoute
-  '/auth/$pathname': typeof AuthPathnameRoute
-  '/account/$pathname': typeof AuthenticatedAccountPathnameRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRoute
+  '/admin/leave-requests': typeof AuthenticatedAdminLeaveRequestsRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
@@ -110,10 +137,13 @@ export interface FileRoutesByFullPath {
   '/admin/team/': typeof AuthenticatedAdminTeamIndexRoute
 }
 export interface FileRoutesByTo {
-  '/leave-requests': typeof AuthenticatedLeaveRequestsRoute
-  '/auth/$pathname': typeof AuthPathnameRoute
   '/': typeof AuthenticatedIndexRoute
-  '/account/$pathname': typeof AuthenticatedAccountPathnameRoute
+  '/consent': typeof AuthConsentRoute
+  '/login': typeof AuthLoginRoute
+  '/signup': typeof AuthSignupRoute
+  '/leave-requests': typeof AuthenticatedLeaveRequestsRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRoute
+  '/admin/leave-requests': typeof AuthenticatedAdminLeaveRequestsRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
@@ -124,12 +154,16 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_auth': typeof AuthRouteWithChildren
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/_auth/consent': typeof AuthConsentRoute
+  '/_auth/login': typeof AuthLoginRoute
+  '/_auth/signup': typeof AuthSignupRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/leave-requests': typeof AuthenticatedLeaveRequestsRoute
-  '/auth/$pathname': typeof AuthPathnameRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
-  '/_authenticated/account/$pathname': typeof AuthenticatedAccountPathnameRoute
+  '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRoute
+  '/_authenticated/admin/leave-requests': typeof AuthenticatedAdminLeaveRequestsRoute
   '/_authenticated/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
@@ -142,10 +176,13 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/consent'
+    | '/login'
+    | '/signup'
     | '/admin'
     | '/leave-requests'
-    | '/auth/$pathname'
-    | '/account/$pathname'
+    | '/account/settings'
+    | '/admin/leave-requests'
     | '/jobs/$jobId'
     | '/admin/'
     | '/admin/customers/$customerId'
@@ -155,10 +192,13 @@ export interface FileRouteTypes {
     | '/admin/team/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/leave-requests'
-    | '/auth/$pathname'
     | '/'
-    | '/account/$pathname'
+    | '/consent'
+    | '/login'
+    | '/signup'
+    | '/leave-requests'
+    | '/account/settings'
+    | '/admin/leave-requests'
     | '/jobs/$jobId'
     | '/admin'
     | '/admin/customers/$customerId'
@@ -168,12 +208,16 @@ export interface FileRouteTypes {
     | '/admin/team'
   id:
     | '__root__'
+    | '/_auth'
     | '/_authenticated'
+    | '/_auth/consent'
+    | '/_auth/login'
+    | '/_auth/signup'
     | '/_authenticated/admin'
     | '/_authenticated/leave-requests'
-    | '/auth/$pathname'
     | '/_authenticated/'
-    | '/_authenticated/account/$pathname'
+    | '/_authenticated/account/settings'
+    | '/_authenticated/admin/leave-requests'
     | '/_authenticated/jobs/$jobId'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/customers/$customerId'
@@ -184,18 +228,46 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AuthRoute: typeof AuthRouteWithChildren
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  AuthPathnameRoute: typeof AuthPathnameRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_auth/consent': {
+      id: '/_auth/consent'
+      path: '/consent'
+      fullPath: '/consent'
+      preLoaderRoute: typeof AuthConsentRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/login': {
+      id: '/_auth/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/signup': {
+      id: '/_auth/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof AuthSignupRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_authenticated/': {
       id: '/_authenticated/'
@@ -218,18 +290,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLeaveRequestsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/auth/$pathname': {
-      id: '/auth/$pathname'
-      path: '/auth/$pathname'
-      fullPath: '/auth/$pathname'
-      preLoaderRoute: typeof AuthPathnameRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/account/$pathname': {
-      id: '/_authenticated/account/$pathname'
-      path: '/account/$pathname'
-      fullPath: '/account/$pathname'
-      preLoaderRoute: typeof AuthenticatedAccountPathnameRouteImport
+    '/_authenticated/account/settings': {
+      id: '/_authenticated/account/settings'
+      path: '/account/settings'
+      fullPath: '/account/settings'
+      preLoaderRoute: typeof AuthenticatedAccountSettingsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin/': {
@@ -237,6 +302,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/leave-requests': {
+      id: '/_authenticated/admin/leave-requests'
+      path: '/leave-requests'
+      fullPath: '/admin/leave-requests'
+      preLoaderRoute: typeof AuthenticatedAdminLeaveRequestsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/jobs/$jobId': {
@@ -284,7 +356,22 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthRouteChildren {
+  AuthConsentRoute: typeof AuthConsentRoute
+  AuthLoginRoute: typeof AuthLoginRoute
+  AuthSignupRoute: typeof AuthSignupRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthConsentRoute: AuthConsentRoute,
+  AuthLoginRoute: AuthLoginRoute,
+  AuthSignupRoute: AuthSignupRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminLeaveRequestsRoute: typeof AuthenticatedAdminLeaveRequestsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminCustomersCustomerIdRoute: typeof AuthenticatedAdminCustomersCustomerIdRoute
   AuthenticatedAdminTeamUserIdRoute: typeof AuthenticatedAdminTeamUserIdRoute
@@ -294,6 +381,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminLeaveRequestsRoute: AuthenticatedAdminLeaveRequestsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminCustomersCustomerIdRoute:
     AuthenticatedAdminCustomersCustomerIdRoute,
@@ -310,7 +398,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedLeaveRequestsRoute: typeof AuthenticatedLeaveRequestsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedAccountPathnameRoute: typeof AuthenticatedAccountPathnameRoute
+  AuthenticatedAccountSettingsRoute: typeof AuthenticatedAccountSettingsRoute
   AuthenticatedJobsJobIdRoute: typeof AuthenticatedJobsJobIdRoute
 }
 
@@ -318,7 +406,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedLeaveRequestsRoute: AuthenticatedLeaveRequestsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
-  AuthenticatedAccountPathnameRoute: AuthenticatedAccountPathnameRoute,
+  AuthenticatedAccountSettingsRoute: AuthenticatedAccountSettingsRoute,
   AuthenticatedJobsJobIdRoute: AuthenticatedJobsJobIdRoute,
 }
 
@@ -327,8 +415,8 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  AuthRoute: AuthRouteWithChildren,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  AuthPathnameRoute: AuthPathnameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

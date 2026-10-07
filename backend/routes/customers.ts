@@ -1,15 +1,21 @@
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { getAuthenticatedDb } from '../src/db/index.ts';
-import { customers, jobs, machines } from '../src/db/schema.ts';
+import { db } from '../src/db/index.ts';
+import { customerContacts, customers, jobs, machines } from '../src/db/schema/public.ts';
 import { zValidator } from '@hono/zod-validator';
-import { createInsertSchema } from 'drizzle-zod';
+import { createInsertSchema } from 'drizzle-orm/zod';
 import type { AppVariables } from '../src/types.ts';
 
 const createCustomerSchema = createInsertSchema(customers).pick({
   name: true,
   type: true,
+}).extend({
+  postcode: z
+    .string()
+    .transform((value) => value.replace(/\s+/g, '').toUpperCase())
+    .refine((value) => /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(value), 'Enter a valid UK postcode')
+    .transform((value) => `${value.slice(0, -3)} ${value.slice(-3)}`),
 });
 
 const createMachineSchema = createInsertSchema(machines).pick({
@@ -18,19 +24,24 @@ const createMachineSchema = createInsertSchema(machines).pick({
   customerId: true,
 });
 
+const createContactSchema = createInsertSchema(customerContacts).pick({
+  name: true,
+  phoneNo: true,
+  email: true,
+}).extend({
+  name: z.string().trim().min(1),
+  phoneNo: z.string().trim().min(1),
+  email: z.email().nullish(),
+});
+
 export const customersRoute = new Hono<{ Variables: AppVariables }>()
 .get('/', async(c) => {
-  const userId = c.get('userId');
-  const allCustomers = await getAuthenticatedDb(userId, async (tx) => {
-    const result = await tx.select().from(customers);
-    return result;
-  });
+  const allCustomers = await db.select().from(customers);
 
   return c.json({ data: allCustomers }, 200)
 })
 
 .post('/', zValidator('json', createCustomerSchema), async(c) => {
-  const userId = c.get('userId');
   const userRoles = c.get('userRoles');
   if (!userRoles?.includes('admin')) {
     return c.json({ message: "Not Allowed" }, 403);
@@ -38,27 +49,19 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
 
   const body = c.req.valid('json');
 
-  await getAuthenticatedDb(userId, async (tx) => {
-    await tx.insert(customers).values(body);
-  });
+  await db.insert(customers).values(body);
 
   return c.json({ message: "Uploaded" }, 201);
 })
 
 .get('/:id', zValidator('param', z.object({ id: z.coerce.number().int().positive() })), async(c) => {
-  const userId = c.get('userId');
   const { id } = c.req.valid('param');
 
-  const customer = await getAuthenticatedDb(userId, async (tx) => {
-    const result = await tx.query.customers.findFirst({
-      where: (customers, { eq }) => eq(customers.id, id),
-      with: { machines: true },
-    });
-    return result;
+  const customer = await db.query.customers.findFirst({
+    where: { id },
+    with: { machines: true },
   });
 
-  // RLS makes a job someone can't touch look identical to one that isn't
-  // there; both are a 404 as far as the caller is concerned.
   if (!customer) {
     return c.json({ message: "Customer not found" }, 404);
   }
@@ -68,23 +71,18 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
 
 
 .get('/:id/machines', zValidator('param', z.object({ id: z.coerce.number().int().positive() })), async(c) => {
-  const userId = c.get('userId');
   const { id } = c.req.valid('param');
 
-  const customerMachines = await getAuthenticatedDb(userId, async (tx) => {
-    const result = await tx
-      .select()
-      .from(machines)
-      .where(eq(machines.customerId, id))
-      .orderBy(machines.type, machines.location);
-    return result;
-  });
+  const customerMachines = await db
+    .select()
+    .from(machines)
+    .where(eq(machines.customerId, id))
+    .orderBy(machines.type, machines.location);
 
   return c.json({ data: customerMachines }, 200);
 })
 
 .delete('/:id', zValidator('param', z.object({ id: z.coerce.number().int().positive() })), async(c) => {
-  const userId = c.get('userId');
   const userRoles = c.get('userRoles');
   if (!userRoles?.includes('admin')) {
     return c.json({ message: "Not Allowed" }, 403);
@@ -92,7 +90,7 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
 
   const { id } = c.req.valid('param');
 
-  const result = await getAuthenticatedDb(userId, async (tx) => {
+  const result = await db.transaction(async (tx) => {
     // Deleting a customer doesn't cascade to its jobs, which would silently
     // take everyone scheduled on them with it. Say so instead and let the
     // admin clear the jobs first.
@@ -112,8 +110,6 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
     return c.json({ message: "This customer still has jobs" }, 409);
   }
 
-  // RLS makes a customer someone can't touch look identical to one that isn't
-  // there; both are a 404 as far as the caller is concerned.
   if (!result.deleted) {
     return c.json({ message: "Customer not found" }, 404);
   }
@@ -122,7 +118,6 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
 })
 
 .post('/machine', zValidator('json', createMachineSchema), async (c) => {
-  const userId = c.get('userId');
   const userRoles = c.get('userRoles');
   if (!userRoles?.includes('admin')) {
     return c.json({ message: "Not Allowed" }, 403);
@@ -130,9 +125,74 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
 
   const body = c.req.valid('json');
 
-  await getAuthenticatedDb(userId, async (tx) => {
-    await tx.insert(machines).values(body);
-  });
+  await db.insert(machines).values(body);
 
   return c.json({ message: "Uploaded" }, 201);
 })
+
+.get('/:id/contacts', zValidator('param', z.object({ id: z.coerce.number().int().positive() })), async (c) => {
+  const userRoles = c.get('userRoles');
+  if (!userRoles?.includes('admin')) {
+    return c.json({ message: "Not Allowed" }, 403);
+  }
+
+  const { id } = c.req.valid('param');
+
+  const contacts = await db.query.customerContacts.findMany({
+    where: { customerId: id },
+    orderBy: { name: 'asc' },
+  });
+
+  return c.json({ data: contacts }, 200);
+})
+
+.post(
+  '/:id/contacts',
+  zValidator('param', z.object({ id: z.coerce.number().int().positive() })),
+  zValidator('json', createContactSchema),
+  async (c) => {
+    const userRoles = c.get('userRoles');
+    if (!userRoles?.includes('admin')) {
+      return c.json({ message: "Not Allowed" }, 403);
+    }
+
+    const { id } = c.req.valid('param');
+    const body = c.req.valid('json');
+
+    const customer = await db.query.customers.findFirst({ where: { id }, columns: { id: true } });
+    if (!customer) {
+      return c.json({ message: "Customer not found" }, 404);
+    }
+
+    const [contact] = await db
+      .insert(customerContacts)
+      .values({ ...body, customerId: id })
+      .returning();
+
+    return c.json({ data: contact }, 201);
+  }
+)
+
+.delete(
+  '/contacts/:contactId',
+  zValidator('param', z.object({ contactId: z.coerce.number().int().positive() })),
+  async (c) => {
+    const userRoles = c.get('userRoles');
+    if (!userRoles?.includes('admin')) {
+      return c.json({ message: "Not Allowed" }, 403);
+    }
+
+    const { contactId } = c.req.valid('param');
+
+    const [deleted] = await db
+      .delete(customerContacts)
+      .where(eq(customerContacts.id, contactId))
+      .returning();
+
+    if (!deleted) {
+      return c.json({ message: "Contact not found" }, 404);
+    }
+
+    return c.json({ data: deleted }, 200);
+  }
+)

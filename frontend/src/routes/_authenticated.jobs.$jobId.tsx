@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { differenceInCalendarDays, format } from 'date-fns'
+import { addDays, differenceInCalendarDays, format, subDays } from 'date-fns'
 import { CalendarIcon, CheckCircle2, Circle, Crown, Trash2, Users } from 'lucide-react'
 import type { DateRange } from 'react-day-picker'
 import { toast } from 'sonner'
@@ -11,12 +11,15 @@ import {
   deleteJob,
   deleteJobAssignment,
   getJob,
+  getJobAssignments,
+  getTravelTime,
   listUsers,
   updateJob,
   updateJobAssignmentRole,
 } from '@/lib/api'
 import type { JobResponse, JobRole } from '@/lib/api'
-import { STATUS_CONFIG, STATUSES, jobTitle } from '@/lib/v1/jobs'
+import { JOB_TYPES, JOB_TYPE_LABELS, JOB_COLOUR_CONFIG, STATUS_CONFIG, STATUSES, isInNotificationWindow, jobTitle, suggestJobColour } from '@/lib/v1/jobs'
+import { JobColourSwatches } from '@/components/job-colour-swatches'
 import { useIsAdmin } from '@/auth'
 import {
   AlertDialog,
@@ -124,9 +127,15 @@ function RouteComponent() {
       queryClient.setQueryData(['jobs', jobId], context?.previous)
       toast.error(error.message)
     },
-    onSettled: () => {
+    onSettled: (_data, _error, patch, context) => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
       queryClient.invalidateQueries({ queryKey: ['schedule'] })
+      if (
+        (context?.previous && isInNotificationWindow(context.previous.startDate)) ||
+        (patch.startDate && isInNotificationWindow(patch.startDate))
+      ) {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      }
     },
   })
 
@@ -137,6 +146,34 @@ function RouteComponent() {
       }
     : undefined
   const [datesOpen, setDatesOpen] = useState(false)
+  const [colourOpen, setColourOpen] = useState(false)
+  const postcode = job?.customer.postcode
+  const { data: travel, isPending: travelPending, error: travelError } = useQuery({
+    queryKey: ['travel-time', postcode],
+    queryFn: () => getTravelTime(postcode!),
+    enabled: isAdmin && Boolean(postcode),
+    retry: false,
+  })
+  const { data: nearbyJobs } = useQuery({
+    queryKey: ['schedule', 'colour-window', job?.startDate, job?.endDate],
+    queryFn: () =>
+      getJobAssignments(
+        format(subDays(new Date(job!.startDate), 30), 'yyyy-MM-dd'),
+        format(addDays(new Date(job!.endDate), 30), 'yyyy-MM-dd'),
+      ),
+    enabled: isAdmin && colourOpen && Boolean(job),
+  })
+  const otherNearbyJobs = nearbyJobs?.filter((nearby) => nearby.id !== job?.id) ?? []
+  const pickColour = (colour: JobResponse['colour']) =>
+    update.mutate(
+      { colour },
+      {
+        onSuccess: () => {
+          setColourOpen(false)
+          toast.success('Colour updated')
+        },
+      },
+    )
   const [draft, setDraft] = useState<DateRange | undefined>(dates)
   const dateLabel = !job?.startDate
     ? null
@@ -183,6 +220,9 @@ function RouteComponent() {
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
       // Assignments cascade away with the job, so the schedule is stale too.
       queryClient.invalidateQueries({ queryKey: ['schedule'] })
+      if (job && isInNotificationWindow(job.startDate)) {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      }
       toast.success('Job deleted')
       navigate({ to: '/admin/jobs' })
     },
@@ -199,14 +239,14 @@ function RouteComponent() {
         id: user.id,
         name: user.name,
         email: user.email,
-        assignment: team.find((member) => member.userInNeonAuth.id === user.id),
+        assignment: team.find((member) => member.user.id === user.id),
       }))
     : [...team]
         .sort((a, b) => Number(b.role === 'lead') - Number(a.role === 'lead'))
         .map((member) => ({
-          id: member.userInNeonAuth.id,
-          name: member.userInNeonAuth.name,
-          email: member.userInNeonAuth.email,
+          id: member.user.id,
+          name: member.user.name,
+          email: member.user.email,
           assignment: member,
         }))
 
@@ -286,6 +326,80 @@ function RouteComponent() {
             </>
           )}
 
+          {isAdmin && (
+            <>
+              <dt className="text-muted-foreground">Colour</dt>
+              <dd>
+                {isPending ? (
+                  <Skeleton className="h-5 w-24" />
+                ) : (
+                  <Popover open={colourOpen} onOpenChange={setColourOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        disabled={update.isPending}
+                        className="-m-2 flex w-fit items-center gap-2 rounded-sm p-2 text-left hover:bg-muted disabled:opacity-50"
+                      >
+                        <span className={`size-4 shrink-0 rounded-full ${JOB_COLOUR_CONFIG[job.colour].swatch}`} />
+                        {JOB_COLOUR_CONFIG[job.colour].label}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="flex w-auto flex-col gap-3" align="start">
+                      <JobColourSwatches
+                        value={job.colour}
+                        taken={new Set(otherNearbyJobs.map((nearby) => nearby.colour))}
+                        onChange={pickColour}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!nearbyJobs || update.isPending}
+                        onClick={() =>
+                          pickColour(suggestJobColour(otherNearbyJobs, job.startDate, job.endDate))
+                        }
+                      >
+                        Auto
+                      </Button>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </dd>
+            </>
+          )}
+
+          {isAdmin && job?.type && (
+            <>
+              <dt className="text-muted-foreground">Job type</dt>
+              <dd>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      disabled={update.isPending}
+                      className="-m-2 flex w-fit items-center gap-2 rounded-sm p-2 text-left hover:bg-muted disabled:opacity-50"
+                    >
+                      {JOB_TYPE_LABELS[job.type]}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {JOB_TYPES.map((jobType) => (
+                      <DropdownMenuItem
+                        key={jobType}
+                        className="hover:cursor-pointer"
+                        onClick={() =>
+                          update.mutate(
+                            { type: jobType },
+                            { onSuccess: () => toast.success('Job type updated') },
+                          )
+                        }
+                      >
+                        {JOB_TYPE_LABELS[jobType]}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </dd>
+            </>
+          )}
+
           <dt className="text-muted-foreground">Date</dt>
           <dd>
             {isPending ? (
@@ -350,6 +464,50 @@ function RouteComponent() {
               (dateLabel ?? '-')
             )}
           </dd>
+
+          {isAdmin && (
+            <>
+              <dt className="text-muted-foreground">Travel</dt>
+              <dd className="flex flex-col gap-1">
+                {isPending ? (
+                  <Skeleton className="h-5 w-48" />
+                ) : !postcode ? (
+                  <span className="text-muted-foreground">This customer has no postcode</span>
+                ) : travelPending ? (
+                  <span className="text-muted-foreground">Working out the drive…</span>
+                ) : travelError ? (
+                  <span className="text-muted-foreground">{travelError.message}</span>
+                ) : (
+                  <span className={travel.minutes > 120 ? 'text-amber-600 dark:text-amber-400' : ''}>
+                    {Math.floor(travel.minutes / 60)}h {travel.minutes % 60}m drive ({travel.miles} miles) from Clifton
+                    <span className="text-muted-foreground text-xs"> · Google Maps</span>
+                  </span>
+                )}
+                {!isPending && (
+                  <button
+                    disabled={update.isPending}
+                    onClick={() =>
+                      update.mutate(
+                        { hotel: !job.hotel },
+                        { onSuccess: () => toast.success('Hotel updated') },
+                      )
+                    }
+                    className="flex w-fit items-center gap-2 rounded-sm hover:opacity-80 disabled:opacity-50"
+                  >
+                    {job.hotel ? (
+                      <CheckCircle2 className="size-4 shrink-0 text-green-500" />
+                    ) : (
+                      <Circle className="size-4 shrink-0 text-blue-500" />
+                    )}
+                    Hotel
+                    {travel && travel.minutes > 120 && (
+                      <span className="text-muted-foreground">(Recommended)</span>
+                    )}
+                  </button>
+                )}
+              </dd>
+            </>
+          )}
 
           {/* Internal pricing — day rate per person, so it moves with the team
               and the dates above. Admin-only, like the status. */}
@@ -498,6 +656,25 @@ function RouteComponent() {
       ) : (
         <p className="text-muted-foreground text-sm">No one is assigned to this job.</p>
       )}
+
+      {job?.contacts.length ? (
+        <>
+          <h2 className="mt-6 mb-2 font-medium">Contacts</h2>
+          <ul className="flex max-w-md flex-col gap-1 text-sm">
+            {job.contacts.map((contact) => (
+              <li key={contact.id} className="bg-muted/40 flex flex-col gap-0.5 rounded-sm px-2 py-1">
+                <span>{contact.name}</span>
+                <span className="flex flex-wrap gap-x-3 text-xs">
+                  <a href={`tel:${contact.phoneNo}`} className="hover:underline">{contact.phoneNo}</a>
+                  {contact.email && (
+                    <a href={`mailto:${contact.email}`} className="text-muted-foreground hover:underline">{contact.email}</a>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
 
       {isAdmin && !isError && (
         <div className="mt-10 max-w-md border-t pt-4">

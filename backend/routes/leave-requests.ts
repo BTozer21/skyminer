@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
-import { getAuthenticatedDb } from '../src/db/index.ts';
-import { leaveRequests } from '../src/db/schema.ts';
+import { db } from '../src/db/index.ts';
+import { leaveRequests } from '../src/db/schema/public.ts';
 import { zValidator } from '@hono/zod-validator';
-import { createInsertSchema } from 'drizzle-zod';
+import { createInsertSchema } from 'drizzle-orm/zod';
 import type { AppVariables } from '../src/types.ts';
 
 const createLeaveRequestSchema = createInsertSchema(leaveRequests)
@@ -16,10 +16,9 @@ export const leaveRequestsRoute = new Hono<{ Variables: AppVariables }>()
   .get('/', async (c) => {
     const userId = c.get('userId');
 
-    const userLeaveRequests = await getAuthenticatedDb(userId, async (tx) => {
-      return tx.query.leaveRequests.findMany({
-        orderBy: (leave, { asc }) => [asc(leave.startDate)],
-      });
+    const userLeaveRequests = await db.query.leaveRequests.findMany({
+      where: { userId },
+      orderBy: { startDate: 'asc' },
     });
 
     return c.json({ data: userLeaveRequests }, 200);
@@ -29,14 +28,10 @@ export const leaveRequestsRoute = new Hono<{ Variables: AppVariables }>()
     const userId = c.get('userId');
     const body = c.req.valid('json');
 
-    const newLeaveRequest = await getAuthenticatedDb(userId, async (tx) => {
-      const [result] = await tx
-        .insert(leaveRequests)
-        .values({ ...body, userId })
-        .returning();
-
-      return result;
-    });
+    const [newLeaveRequest] = await db
+      .insert(leaveRequests)
+      .values({ ...body, userId })
+      .returning();
 
     return c.json({ data: newLeaveRequest }, 201);
   })
