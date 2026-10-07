@@ -20,7 +20,46 @@ const updateLeaveRequestSchema = z.object({
   status: z.enum(leaveStatusEnum.enumValues),
 });
 
+const REMINDER_DAYS = 3;
+
 export const adminRoute = new Hono<{ Variables: AppVariables }>()
+  .get('/notifications', async (c) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const soon = new Date(Date.now() + REMINDER_DAYS * 86_400_000).toISOString().slice(0, 10);
+    const jobDetails = {
+      customer: { columns: { id: true, name: true } },
+      jobMachines: { with: { machine: { columns: { id: true, type: true, location: true } } } },
+    } as const;
+
+    const [leaveRequests, upcomingJobs, finishedJobs] = await Promise.all([
+      db.query.leaveRequests.findMany({
+        where: { status: 'submitted' },
+        with: { user: { columns: { id: true, name: true } } },
+        orderBy: { startDate: 'asc' },
+      }),
+      db.query.jobs.findMany({
+        where: {
+          status: { ne: 'complete' },
+          startDate: { lte: soon },
+          endDate: { gte: today },
+          OR: [{ quote: false }, { rams: false }, { po: false }],
+        },
+        with: jobDetails,
+        orderBy: { startDate: 'asc' },
+      }),
+      db.query.jobs.findMany({
+        where: {
+          endDate: { lt: today },
+          OR: [{ report: false }, { invoice: false }],
+        },
+        with: jobDetails,
+        orderBy: { endDate: 'asc' },
+      }),
+    ]);
+
+    return c.json({ data: { leaveRequests, upcomingJobs, finishedJobs } }, 200);
+  })
+
   .get('/users', async (c) => {
     const users = await db.select().from(user);
 

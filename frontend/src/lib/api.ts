@@ -318,3 +318,18 @@ export async function createLeaveRequest(leave: CreateLeaveRequestInput) {
   const { data } = await res.json();
   return data;
 }
+
+export async function getNotifications() {
+  const res = await api.admin.notifications.$get();
+  if (!res.ok) {
+    throw new Error("There was an error here");
+  }
+  const { data } = await res.json();
+  return data;
+}
+
+export const notificationsQuery = {
+  queryKey: ['notifications'],
+  queryFn: getNotifications,
+  refetchInterval: 60_000,
+}
