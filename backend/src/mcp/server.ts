@@ -30,6 +30,37 @@ const createMcpServer = (userId: string) => {
   );
 
   server.registerTool(
+    "list_upcoming_jobs",
+    {
+      title: "List upcoming jobs",
+      description:
+        "List planned or complete jobs taking place in the next 14 days, with who is assigned and the customer and their contacts.",
+    },
+    async () => {
+      const today = new Date();
+      const inFourteenDays = new Date(today);
+      inFourteenDays.setDate(today.getDate() + 14);
+
+      return json(
+        await db.query.jobs.findMany({
+          where: {
+            status: { ne: "planning" },
+            startDate: { lte: inFourteenDays.toISOString().slice(0, 10) },
+            endDate: { gte: today.toISOString().slice(0, 10) },
+          },
+          with: {
+            customer: { with: { contacts: true } },
+            jobAssignments: {
+              with: { user: { columns: { id: true, name: true, email: true } } },
+            },
+          },
+          orderBy: { startDate: "asc" },
+        }),
+      );
+    },
+  );
+
+  server.registerTool(
     "list_my_leave_requests",
     {
       title: "List my leave requests",
@@ -49,8 +80,18 @@ const createMcpServer = (userId: string) => {
 
 const protectedHandler = requireMcpAuth(
   auth,
-  (request, claims) =>
-    createMcpHandler(() => createMcpServer(claims.sub!)).fetch(request),
+  async (request, claims) => {
+    const user = await db.query.user.findFirst({
+      where: { id: claims.sub! },
+      columns: { role: true, banned: true },
+    });
+
+    if (!user || user.banned || !user.role?.split(",").includes("admin")) {
+      return Response.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    return createMcpHandler(() => createMcpServer(claims.sub!)).fetch(request);
+  },
   {
     resource: mcpResource,
   },
