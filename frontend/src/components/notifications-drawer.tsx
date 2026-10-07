@@ -68,7 +68,7 @@ export function NotificationsDrawer() {
             </Button>
           </DrawerTrigger>
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent side="bottom" align="end">
           Notifications <Kbd>N</Kbd>
         </TooltipContent>
       </Tooltip>
