@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { differenceInCalendarDays, format } from 'date-fns'
+import { addDays, differenceInCalendarDays, format, subDays } from 'date-fns'
 import { CalendarIcon, CheckCircle2, Circle, Crown, Trash2, Users } from 'lucide-react'
 import type { DateRange } from 'react-day-picker'
 import { toast } from 'sonner'
@@ -11,12 +11,14 @@ import {
   deleteJob,
   deleteJobAssignment,
   getJob,
+  getJobAssignments,
   listUsers,
   updateJob,
   updateJobAssignmentRole,
 } from '@/lib/api'
 import type { JobResponse, JobRole } from '@/lib/api'
-import { STATUS_CONFIG, STATUSES, jobTitle } from '@/lib/v1/jobs'
+import { JOB_COLOUR_CONFIG, STATUS_CONFIG, STATUSES, jobTitle, suggestJobColour } from '@/lib/v1/jobs'
+import { JobColourSwatches } from '@/components/job-colour-swatches'
 import { useIsAdmin } from '@/auth'
 import {
   AlertDialog,
@@ -137,6 +139,27 @@ function RouteComponent() {
       }
     : undefined
   const [datesOpen, setDatesOpen] = useState(false)
+  const [colourOpen, setColourOpen] = useState(false)
+  const { data: nearbyJobs } = useQuery({
+    queryKey: ['schedule', 'colour-window', job?.startDate, job?.endDate],
+    queryFn: () =>
+      getJobAssignments(
+        format(subDays(new Date(job!.startDate), 30), 'yyyy-MM-dd'),
+        format(addDays(new Date(job!.endDate), 30), 'yyyy-MM-dd'),
+      ),
+    enabled: isAdmin && colourOpen && Boolean(job),
+  })
+  const otherNearbyJobs = nearbyJobs?.filter((nearby) => nearby.id !== job?.id) ?? []
+  const pickColour = (colour: JobResponse['colour']) =>
+    update.mutate(
+      { colour },
+      {
+        onSuccess: () => {
+          setColourOpen(false)
+          toast.success('Colour updated')
+        },
+      },
+    )
   const [draft, setDraft] = useState<DateRange | undefined>(dates)
   const dateLabel = !job?.startDate
     ? null
@@ -281,6 +304,46 @@ function RouteComponent() {
                       })}
                     </DropdownMenuContent>
                   </DropdownMenu>
+                )}
+              </dd>
+            </>
+          )}
+
+          {isAdmin && (
+            <>
+              <dt className="text-muted-foreground">Colour</dt>
+              <dd>
+                {isPending ? (
+                  <Skeleton className="h-5 w-24" />
+                ) : (
+                  <Popover open={colourOpen} onOpenChange={setColourOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        disabled={update.isPending}
+                        className="-m-2 flex w-fit items-center gap-2 rounded-sm p-2 text-left hover:bg-muted disabled:opacity-50"
+                      >
+                        <span className={`size-4 shrink-0 rounded-full ${JOB_COLOUR_CONFIG[job.colour].swatch}`} />
+                        {JOB_COLOUR_CONFIG[job.colour].label}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="flex w-auto flex-col gap-3" align="start">
+                      <JobColourSwatches
+                        value={job.colour}
+                        taken={new Set(otherNearbyJobs.map((nearby) => nearby.colour))}
+                        onChange={pickColour}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!nearbyJobs || update.isPending}
+                        onClick={() =>
+                          pickColour(suggestJobColour(otherNearbyJobs, job.startDate, job.endDate))
+                        }
+                      >
+                        Auto
+                      </Button>
+                    </PopoverContent>
+                  </Popover>
                 )}
               </dd>
             </>

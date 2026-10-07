@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm, useStore } from '@tanstack/react-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format, isSameDay } from 'date-fns';
+import { addDays, format, isSameDay, subDays } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -11,8 +11,10 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 import { CalendarIcon, Crown, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { createJob, getCustomerMachines, getCustomers, listUsers } from '@/lib/api';
-import type { JobRole } from '@/lib/api';
+import { createJob, getCustomerMachines, getCustomers, getJobAssignments, listUsers } from '@/lib/api';
+import type { JobResponse, JobRole } from '@/lib/api';
+import { suggestJobColour } from '@/lib/v1/jobs';
+import { JobColourSwatches } from '@/components/job-colour-swatches';
 
 interface DraftAssignee {
   userId: string
@@ -56,6 +58,7 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
         : undefined) as DateRange | undefined,
       customerId: '',
       machineIds: [] as number[],
+      colour: undefined as JobResponse['colour'] | undefined,
       assignees: (initialAssignee
         ? [{ ...initialAssignee, role: 'lead' }]
         : []) as DraftAssignee[],
@@ -67,6 +70,7 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
         startDate: format(from!, 'yyyy-MM-dd'),
         endDate: format(to!, 'yyyy-MM-dd'),
         machineIds: value.machineIds,
+        colour: (value.colour ?? suggestedColour)!,
         assignees: value.assignees.map((assignee) => ({
           userId: assignee.userId,
           role: assignee.role,
@@ -86,6 +90,19 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
     queryFn: () => getCustomerMachines(Number(customerId)),
     enabled: Boolean(customerId),
   });
+
+  const dateRange = useStore(form.store, (state) => state.values.dateRange);
+  const startDate = dateRange?.from && format(dateRange.from, 'yyyy-MM-dd');
+  const endDate = dateRange?.to && format(dateRange.to, 'yyyy-MM-dd');
+  const windowFrom = dateRange?.from && format(subDays(dateRange.from, 30), 'yyyy-MM-dd');
+  const windowTo = dateRange?.to && format(addDays(dateRange.to, 30), 'yyyy-MM-dd');
+  const { data: nearbyJobs } = useQuery({
+    queryKey: ['schedule', 'colour-window', windowFrom, windowTo],
+    queryFn: () => getJobAssignments(windowFrom!, windowTo!),
+    enabled: Boolean(windowFrom && windowTo),
+  });
+  const suggestedColour =
+    nearbyJobs && startDate && endDate ? suggestJobColour(nearbyJobs, startDate, endDate) : undefined;
 
   return (
     <Dialog
@@ -268,6 +285,46 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                           {isInvalid && <FieldError errors={field.state.meta.errors} />}
                         </Field>
                       )
+                    }}
+                  />
+                  <form.Field
+                    name="colour"
+                    validators={{
+                      onSubmit: ({ value }) =>
+                        value || suggestedColour ? undefined : { message: 'Pick a colour' },
+                    }}
+                    children={(field) => {
+                      const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel>Colour</FieldLabel>
+                          <FieldDescription>
+                            {field.state.value ? (
+                              <>
+                                Picked by you.{' '}
+                                <button
+                                  type="button"
+                                  onClick={() => field.handleChange(undefined)}
+                                  className="underline underline-offset-2"
+                                >
+                                  Use suggestion
+                                </button>
+                              </>
+                            ) : suggestedColour ? (
+                              'Suggested from jobs within a month. Faded colours are already used nearby.'
+                            ) : (
+                              'Pick dates to get a suggestion.'
+                            )}
+                          </FieldDescription>
+                          <JobColourSwatches
+                            value={field.state.value ?? suggestedColour}
+                            taken={new Set(nearbyJobs?.map((job) => job.colour))}
+                            onChange={field.handleChange}
+                          />
+                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                        </Field>
+                      );
                     }}
                   />
                   <form.Field
