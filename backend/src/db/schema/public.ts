@@ -17,6 +17,8 @@ export const statusEnum = pgEnum('status', ['complete', 'planned', 'planning']);
 
 export const jobColours = ['red', 'orange', 'amber', 'lime', 'green', 'teal', 'cyan', 'blue', 'indigo', 'violet', 'fuchsia', 'pink'] as const;
 
+export const jobTypes = ['deep_clean', 'high_level_clean'] as const;
+
 export const jobs = pgTable("jobs", {
   // You can use { mode: "bigint" } if numbers are exceeding js number limitations
   id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "jobs_id_seq", startWith: 1, increment: 1, minValue: 1, cache: 1 }),
@@ -30,6 +32,7 @@ export const jobs = pgTable("jobs", {
   invoice: boolean().default(false),
   hotel: boolean().default(false),
   colour: text({ enum: jobColours }).notNull(),
+  type: text({ enum: jobTypes }),
   customerId: bigint("customer_id", { mode: "number" }).notNull(),
   createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),

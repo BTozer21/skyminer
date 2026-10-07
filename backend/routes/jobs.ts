@@ -12,8 +12,9 @@ const createJobSchema = createInsertSchema(jobs).pick({
   endDate: true,
   customerId: true,
   colour: true,
+  type: true,
 }).extend({
-  machineIds: z.array(z.coerce.number().int().positive()).min(1),
+  machineIds: z.array(z.coerce.number().int().positive()),
   assignees: z
     .array(z.object({ userId: z.string().min(1), role: z.enum(['member', 'lead']) }))
     .default([])
@@ -40,6 +41,7 @@ const updateJobSchema = createInsertSchema(jobs).pick({
   report: true,
   invoice: true,
   colour: true,
+  type: true,
 }).partial();
 
 export const jobsRoute = new Hono<{ Variables: AppVariables }>()
@@ -109,21 +111,39 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
 
     const { machineIds, assignees, ...body } = c.req.valid('json');
 
+    const customer = await db.query.customers.findFirst({
+      where: { id: body.customerId },
+      columns: { type: true },
+    });
+    if (!customer) {
+      return c.json({ message: "Customer not found" }, 400);
+    }
+    if (customer.type === 'school' && (!body.type || machineIds.length)) {
+      return c.json({ message: "A school job needs a job type and no machines" }, 400);
+    }
+    if (customer.type === 'industrial' && (body.type || !machineIds.length)) {
+      return c.json({ message: "An industrial job needs at least one machine and no job type" }, 400);
+    }
+
     const created = await db.transaction(async (tx) => {
-      const owned = await tx
-        .select({ id: machines.id })
-        .from(machines)
-        .where(and(eq(machines.customerId, body.customerId), inArray(machines.id, machineIds)));
-      if (owned.length !== new Set(machineIds).size) {
-        return { mismatch: true as const };
+      if (machineIds.length) {
+        const owned = await tx
+          .select({ id: machines.id })
+          .from(machines)
+          .where(and(eq(machines.customerId, body.customerId), inArray(machines.id, machineIds)));
+        if (owned.length !== new Set(machineIds).size) {
+          return { mismatch: true as const };
+        }
       }
 
       const [job] = await tx.insert(jobs).values(body).returning();
 
       if (job) {
-        await tx
-          .insert(jobMachines)
-          .values(machineIds.map((machineId) => ({ jobId: job.id, machineId })));
+        if (machineIds.length) {
+          await tx
+            .insert(jobMachines)
+            .values(machineIds.map((machineId) => ({ jobId: job.id, machineId })));
+        }
         if (assignees.length) {
           await tx
             .insert(jobAssignments)
