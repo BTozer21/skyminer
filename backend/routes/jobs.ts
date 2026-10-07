@@ -11,6 +11,7 @@ const createJobSchema = createInsertSchema(jobs).pick({
   startDate: true,
   endDate: true,
   customerId: true,
+  colour: true,
 }).extend({
   machineIds: z.array(z.coerce.number().int().positive()).min(1),
   assignees: z
@@ -38,6 +39,7 @@ const updateJobSchema = createInsertSchema(jobs).pick({
   po: true,
   report: true,
   invoice: true,
+  colour: true,
 }).partial();
 
 export const jobsRoute = new Hono<{ Variables: AppVariables }>()
