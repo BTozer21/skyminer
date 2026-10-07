@@ -77,10 +77,10 @@ export function jobTitle(
       machine.location ? `${machine.type} (${machine.location})` : machine.type,
     )
     .join(', ')
-  const work = machines || (job.type ? `Kitchen — ${JOB_TYPE_LABELS[job.type]}` : '')
+  const work = machines || (job.type ? `Kitchen - ${JOB_TYPE_LABELS[job.type]}` : '')
 
   if (!withCustomer) return work
 
   const customer = job.customer?.name ?? 'Unknown customer'
-  return work ? `${customer} — ${work}` : customer
+  return work ? `${customer} - ${work}` : customer
 }
