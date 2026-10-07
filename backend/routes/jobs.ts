@@ -100,7 +100,15 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
       return c.json({ message: "Job not found" }, 404);
     }
 
-    return c.json({ data: { ...job, jobAssignments: team } }, 200);
+    const isLead = team.some((member) => member.userId === userId && member.role === 'lead');
+    const contacts = isAdmin || isLead
+      ? await db.query.customerContacts.findMany({
+          where: { customerId: job.customerId },
+          orderBy: { name: 'asc' },
+        })
+      : [];
+
+    return c.json({ data: { ...job, jobAssignments: team, contacts } }, 200);
   })
 
   .post('/', zValidator('json', createJobSchema), async (c) => {

@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../src/db/index.ts';
-import { customers, jobs, machines } from '../src/db/schema/public.ts';
+import { customerContacts, customers, jobs, machines } from '../src/db/schema/public.ts';
 import { zValidator } from '@hono/zod-validator';
 import { createInsertSchema } from 'drizzle-orm/zod';
 import type { AppVariables } from '../src/types.ts';
@@ -16,6 +16,16 @@ const createMachineSchema = createInsertSchema(machines).pick({
   type: true,
   location: true,
   customerId: true,
+});
+
+const createContactSchema = createInsertSchema(customerContacts).pick({
+  name: true,
+  phoneNo: true,
+  email: true,
+}).extend({
+  name: z.string().trim().min(1),
+  phoneNo: z.string().trim().min(1),
+  email: z.email().nullish(),
 });
 
 export const customersRoute = new Hono<{ Variables: AppVariables }>()
@@ -113,3 +123,70 @@ export const customersRoute = new Hono<{ Variables: AppVariables }>()
 
   return c.json({ message: "Uploaded" }, 201);
 })
+
+.get('/:id/contacts', zValidator('param', z.object({ id: z.coerce.number().int().positive() })), async (c) => {
+  const userRoles = c.get('userRoles');
+  if (!userRoles?.includes('admin')) {
+    return c.json({ message: "Not Allowed" }, 403);
+  }
+
+  const { id } = c.req.valid('param');
+
+  const contacts = await db.query.customerContacts.findMany({
+    where: { customerId: id },
+    orderBy: { name: 'asc' },
+  });
+
+  return c.json({ data: contacts }, 200);
+})
+
+.post(
+  '/:id/contacts',
+  zValidator('param', z.object({ id: z.coerce.number().int().positive() })),
+  zValidator('json', createContactSchema),
+  async (c) => {
+    const userRoles = c.get('userRoles');
+    if (!userRoles?.includes('admin')) {
+      return c.json({ message: "Not Allowed" }, 403);
+    }
+
+    const { id } = c.req.valid('param');
+    const body = c.req.valid('json');
+
+    const customer = await db.query.customers.findFirst({ where: { id }, columns: { id: true } });
+    if (!customer) {
+      return c.json({ message: "Customer not found" }, 404);
+    }
+
+    const [contact] = await db
+      .insert(customerContacts)
+      .values({ ...body, customerId: id })
+      .returning();
+
+    return c.json({ data: contact }, 201);
+  }
+)
+
+.delete(
+  '/contacts/:contactId',
+  zValidator('param', z.object({ contactId: z.coerce.number().int().positive() })),
+  async (c) => {
+    const userRoles = c.get('userRoles');
+    if (!userRoles?.includes('admin')) {
+      return c.json({ message: "Not Allowed" }, 403);
+    }
+
+    const { contactId } = c.req.valid('param');
+
+    const [deleted] = await db
+      .delete(customerContacts)
+      .where(eq(customerContacts.id, contactId))
+      .returning();
+
+    if (!deleted) {
+      return c.json({ message: "Contact not found" }, 404);
+    }
+
+    return c.json({ data: deleted }, 200);
+  }
+)

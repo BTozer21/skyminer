@@ -8,6 +8,15 @@ export const relations = defineRelations(schema, (r) => ({
   customers: {
     jobs: r.many.jobs(),
     machines: r.many.machines(),
+    contacts: r.many.customerContacts(),
+  },
+
+  customerContacts: {
+    customer: r.one.customers({
+      from: r.customerContacts.customerId,
+      to: r.customers.id,
+      optional: false,
+    }),
   },
 
   jobs: {

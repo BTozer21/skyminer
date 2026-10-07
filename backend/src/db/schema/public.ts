@@ -115,3 +115,19 @@ export const leaveRequests = pgTable("leave_requests", {
     name: "leave_requests_user_id_user_id_fk"
   }),
 ]);
+
+export const customerContacts = pgTable("customer_contacts", {
+  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "customer_contacts_id_seq" }),
+  customerId: bigint("customer_id", { mode: "number" }).notNull(),
+  name: text().notNull(),
+  phoneNo: text("phone_no").notNull(),
+  email: text(),
+  createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().$onUpdate(() => new Date().toISOString()).notNull(),
+}, (table) => [
+  foreignKey({
+    columns: [table.customerId],
+    foreignColumns: [customers.id],
+    name: "customer_contacts_customer_id_fk"
+  }).onDelete("cascade"),
+]);
