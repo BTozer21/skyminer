@@ -92,11 +92,11 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Link to={'/account/settings'} onClick={closeOnMobile} className="flex gap-2 items-center">
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link to="/account/settings" onClick={closeOnMobile}>
                   <BadgeCheckIcon />
                   Account
-                </ Link>
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
