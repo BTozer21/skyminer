@@ -57,10 +57,18 @@ export function suggestJobColour(
   return ranked[0].colour
 }
 
+export const JOB_TYPE_LABELS = {
+  deep_clean: 'Deep clean',
+  high_level_clean: 'High level clean',
+} satisfies Record<NonNullable<JobResponse['type']>, string>
+
+export const JOB_TYPES = Object.keys(JOB_TYPE_LABELS) as NonNullable<JobResponse['type']>[]
+
 export function jobTitle(
   job: {
     customer?: { name: string } | null
     jobMachines?: { machine: { type: string; location?: string | null } }[]
+    type?: JobResponse['type']
   },
   { withCustomer = true }: { withCustomer?: boolean } = {},
 ): string {
@@ -69,9 +77,10 @@ export function jobTitle(
       machine.location ? `${machine.type} (${machine.location})` : machine.type,
     )
     .join(', ')
+  const work = machines || (job.type ? `Kitchen — ${JOB_TYPE_LABELS[job.type]}` : '')
 
-  if (!withCustomer) return machines ?? ''
+  if (!withCustomer) return work
 
   const customer = job.customer?.name ?? 'Unknown customer'
-  return machines ? `${customer} — ${machines}` : customer
+  return work ? `${customer} — ${work}` : customer
 }

@@ -17,7 +17,7 @@ import {
   updateJobAssignmentRole,
 } from '@/lib/api'
 import type { JobResponse, JobRole } from '@/lib/api'
-import { JOB_COLOUR_CONFIG, STATUS_CONFIG, STATUSES, jobTitle, suggestJobColour } from '@/lib/v1/jobs'
+import { JOB_TYPES, JOB_TYPE_LABELS, JOB_COLOUR_CONFIG, STATUS_CONFIG, STATUSES, jobTitle, suggestJobColour } from '@/lib/v1/jobs'
 import { JobColourSwatches } from '@/components/job-colour-swatches'
 import { useIsAdmin } from '@/auth'
 import {
@@ -345,6 +345,40 @@ function RouteComponent() {
                     </PopoverContent>
                   </Popover>
                 )}
+              </dd>
+            </>
+          )}
+
+          {isAdmin && job?.type && (
+            <>
+              <dt className="text-muted-foreground">Job type</dt>
+              <dd>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      disabled={update.isPending}
+                      className="-m-2 flex w-fit items-center gap-2 rounded-sm p-2 text-left hover:bg-muted disabled:opacity-50"
+                    >
+                      {JOB_TYPE_LABELS[job.type]}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {JOB_TYPES.map((jobType) => (
+                      <DropdownMenuItem
+                        key={jobType}
+                        className="hover:cursor-pointer"
+                        onClick={() =>
+                          update.mutate(
+                            { type: jobType },
+                            { onSuccess: () => toast.success('Job type updated') },
+                          )
+                        }
+                      >
+                        {JOB_TYPE_LABELS[jobType]}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </dd>
             </>
           )}

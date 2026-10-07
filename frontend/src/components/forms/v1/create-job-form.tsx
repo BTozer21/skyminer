@@ -13,7 +13,7 @@ import { CalendarIcon, Crown, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { createJob, getCustomerMachines, getCustomers, getJobAssignments, listUsers } from '@/lib/api';
 import type { JobResponse, JobRole } from '@/lib/api';
-import { suggestJobColour } from '@/lib/v1/jobs';
+import { JOB_TYPES, JOB_TYPE_LABELS, suggestJobColour } from '@/lib/v1/jobs';
 import { JobColourSwatches } from '@/components/job-colour-swatches';
 
 interface DraftAssignee {
@@ -59,6 +59,7 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
       customerId: '',
       machineIds: [] as number[],
       colour: undefined as JobResponse['colour'] | undefined,
+      type: undefined as JobResponse['type'] | undefined,
       assignees: (initialAssignee
         ? [{ ...initialAssignee, role: 'lead' }]
         : []) as DraftAssignee[],
@@ -69,7 +70,8 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
         customerId: Number(value.customerId),
         startDate: format(from!, 'yyyy-MM-dd'),
         endDate: format(to!, 'yyyy-MM-dd'),
-        machineIds: value.machineIds,
+        machineIds: isSchool ? [] : value.machineIds,
+        type: isSchool ? value.type : undefined,
         colour: (value.colour ?? suggestedColour)!,
         assignees: value.assignees.map((assignee) => ({
           userId: assignee.userId,
@@ -85,10 +87,11 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
   });
 
   const customerId = useStore(form.store, (state) => state.values.customerId);
+  const isSchool = customers?.find((customer) => String(customer.id) === customerId)?.type === 'school';
   const { data: customerMachines, isPending: machinesPending } = useQuery({
     queryKey: ['customers', Number(customerId), 'machines'],
     queryFn: () => getCustomerMachines(Number(customerId)),
-    enabled: Boolean(customerId),
+    enabled: Boolean(customerId) && !isSchool,
   });
 
   const dateRange = useStore(form.store, (state) => state.values.dateRange);
@@ -149,6 +152,7 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                             onValueChange={(value) => {
                               field.handleChange(value);
                               form.setFieldValue('machineIds', []);
+                              form.setFieldValue('type', undefined);
                             }}
                           >
                             <SelectTrigger
@@ -173,6 +177,43 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                       )
                     }}
                   />
+                  {isSchool ? (
+                    <form.Field
+                      name="type"
+                      validators={{
+                        onSubmit: ({ value }) =>
+                          value ? undefined : { message: 'Pick a job type' },
+                      }}
+                      children={(field) => {
+                        const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+
+                        return (
+                          <Field data-invalid={isInvalid}>
+                            <FieldLabel>Job type</FieldLabel>
+                            <ul className="flex flex-col gap-1">
+                              {JOB_TYPES.map((jobType) => (
+                                <li
+                                  key={jobType}
+                                  data-selected={field.state.value === jobType}
+                                  className="bg-muted/40 data-[selected=true]:!border-blue-500 data-[selected=true]:bg-blue-500/10 flex items-center rounded-sm border border-transparent"
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() => field.handleChange(jobType)}
+                                    aria-pressed={field.state.value === jobType}
+                                    className="flex-1 px-2 py-1 text-left text-sm"
+                                  >
+                                    {JOB_TYPE_LABELS[jobType]}
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                            {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                          </Field>
+                        );
+                      }}
+                    />
+                  ) : (
                   <form.Field
                     name="machineIds"
                     validators={{
@@ -233,6 +274,7 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                       )
                     }}
                   />
+                  )}
                   <form.Field
                     name="dateRange"
                     validators={{
