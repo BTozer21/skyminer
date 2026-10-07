@@ -1,8 +1,9 @@
-import { createAuthClient } from '@neondatabase/neon-js/auth'; 
-import { BetterAuthReactAdapter } from '@neondatabase/neon-js/auth/react/adapters';
+import { createAuthClient } from 'better-auth/react';
+import { adminClient } from 'better-auth/client/plugins';
 
-export const authClient = createAuthClient(import.meta.env.VITE_NEON_AUTH_URL, {
-  adapter: BetterAuthReactAdapter(),
+export const authClient = createAuthClient({
+  baseURL: import.meta.env.VITE_API_URL,
+  plugins: [adminClient()],
   fetchOptions: { credentials: 'include' },
 });
 
