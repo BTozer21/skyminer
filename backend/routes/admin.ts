@@ -22,7 +22,59 @@ const updateLeaveRequestSchema = z.object({
 
 const REMINDER_DAYS = 3;
 
+const TRAVEL_ORIGIN = process.env.TRAVEL_ORIGIN ?? 'NG11 8AA';
+
 export const adminRoute = new Hono<{ Variables: AppVariables }>()
+  .get(
+    '/travel-time',
+    zValidator('query', z.object({ postcode: z.string().trim().min(1) })),
+    async (c) => {
+      const apiKey = process.env.GOOGLE_API_KEY;
+      if (!apiKey) {
+        return c.json({ message: 'Travel times are not set up' }, 503);
+      }
+
+      const { postcode } = c.req.valid('query');
+
+      const res = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters',
+        },
+        body: JSON.stringify({
+          origin: { address: `${TRAVEL_ORIGIN}, UK` },
+          destination: { address: `${postcode}, UK` },
+          travelMode: 'DRIVE',
+          routingPreference: 'TRAFFIC_UNAWARE',
+        }),
+      });
+
+      if (!res.ok) {
+        return c.json({ message: 'Could not get a travel time' }, 502);
+      }
+
+      const { routes } = (await res.json()) as {
+        routes?: { duration: string; distanceMeters: number }[];
+      };
+      const route = routes?.[0];
+      if (!route) {
+        return c.json({ message: 'No driving route found' }, 404);
+      }
+
+      return c.json(
+        {
+          data: {
+            minutes: Math.round(parseInt(route.duration, 10) / 60),
+            miles: Math.round(route.distanceMeters / 1609.344),
+          },
+        },
+        200,
+      );
+    }
+  )
+
   .get('/notifications', async (c) => {
     const today = new Date().toISOString().slice(0, 10);
     const soon = new Date(Date.now() + REMINDER_DAYS * 86_400_000).toISOString().slice(0, 10);

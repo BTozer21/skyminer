@@ -9,9 +9,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Field, FieldGroup, FieldLabel, FieldDescription, FieldError, FieldSet, FieldLegend } from '@/components/ui/field';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
-import { CalendarIcon, Crown, Plus } from 'lucide-react';
+import { CalendarIcon, CheckCircle2, Circle, Crown, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { createJob, getCustomerMachines, getCustomers, getJobAssignments, listUsers } from '@/lib/api';
+import { createJob, getCustomerMachines, getCustomers, getJobAssignments, getTravelTime, listUsers } from '@/lib/api';
 import type { JobResponse, JobRole } from '@/lib/api';
 import { JOB_TYPES, JOB_TYPE_LABELS, suggestJobColour } from '@/lib/v1/jobs';
 import { JobColourSwatches } from '@/components/job-colour-swatches';
@@ -58,6 +58,7 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
         : undefined) as DateRange | undefined,
       customerId: '',
       machineIds: [] as number[],
+      hotel: false,
       colour: undefined as JobResponse['colour'] | undefined,
       type: undefined as JobResponse['type'] | undefined,
       assignees: (initialAssignee
@@ -72,6 +73,7 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
         endDate: format(to!, 'yyyy-MM-dd'),
         machineIds: isSchool ? [] : value.machineIds,
         type: isSchool ? value.type : undefined,
+        hotel: value.hotel,
         colour: (value.colour ?? suggestedColour)!,
         assignees: value.assignees.map((assignee) => ({
           userId: assignee.userId,
@@ -87,7 +89,15 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
   });
 
   const customerId = useStore(form.store, (state) => state.values.customerId);
-  const isSchool = customers?.find((customer) => String(customer.id) === customerId)?.type === 'school';
+  const selectedCustomer = customers?.find((customer) => String(customer.id) === customerId);
+  const isSchool = selectedCustomer?.type === 'school';
+  const postcode = selectedCustomer?.postcode;
+  const { data: travel, isPending: travelPending, error: travelError } = useQuery({
+    queryKey: ['travel-time', postcode],
+    queryFn: () => getTravelTime(postcode!),
+    enabled: Boolean(postcode),
+    retry: false,
+  });
   const { data: customerMachines, isPending: machinesPending } = useQuery({
     queryKey: ['customers', Number(customerId), 'machines'],
     queryFn: () => getCustomerMachines(Number(customerId)),
@@ -275,6 +285,46 @@ export function CreateJobForm({ defaultDate, initialAssignee, trigger, onCreated
                     }}
                   />
                   )}
+                  <form.Field
+                    name="hotel"
+                    children={(field) => (
+                      <Field>
+                        <FieldLabel>Travel</FieldLabel>
+                        {!customerId ? (
+                          <p className="text-muted-foreground text-sm">Select a customer first</p>
+                        ) : !postcode ? (
+                          <p className="text-muted-foreground text-sm">This customer has no postcode</p>
+                        ) : travelPending ? (
+                          <p className="text-muted-foreground text-sm">Working out the drive…</p>
+                        ) : travelError ? (
+                          <p className="text-muted-foreground text-sm">{travelError.message}</p>
+                        ) : (
+                          <p className={`text-sm ${travel.minutes > 120 ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+                            {Math.floor(travel.minutes / 60)}h {travel.minutes % 60}m drive ({travel.miles} miles) from Clifton
+                            <span className="text-muted-foreground text-xs"> · Google Maps</span>
+                          </p>
+                        )}
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => field.handleChange(!field.state.value)}
+                            aria-pressed={field.state.value}
+                            className="flex w-fit items-center gap-2 rounded-sm text-sm hover:opacity-80"
+                          >
+                            {field.state.value ? (
+                              <CheckCircle2 className="size-4 shrink-0 text-green-500" />
+                            ) : (
+                              <Circle className="size-4 shrink-0 text-blue-500" />
+                            )}
+                            Hotel
+                            {travel && travel.minutes > 120 && (
+                              <span className="text-muted-foreground">(Recommended)</span>
+                            )}
+                          </button>
+                        </div>
+                      </Field>
+                    )}
+                  />
                   <form.Field
                     name="dateRange"
                     validators={{

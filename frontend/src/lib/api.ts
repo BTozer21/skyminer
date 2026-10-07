@@ -392,3 +392,13 @@ export async function deleteCustomerContact(contactId: number) {
   }
   return res.json();
 }
+
+export async function getTravelTime(postcode: string) {
+  const res = await api.admin['travel-time'].$get({ query: { postcode } });
+  if (!res.ok) {
+    const { message } = (await res.json()) as { message: string };
+    throw new Error(message);
+  }
+  const { data } = await res.json();
+  return data;
+}

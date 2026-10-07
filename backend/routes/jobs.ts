@@ -13,6 +13,7 @@ const createJobSchema = createInsertSchema(jobs).pick({
   customerId: true,
   colour: true,
   type: true,
+  hotel: true,
 }).extend({
   machineIds: z.array(z.coerce.number().int().positive()),
   assignees: z
@@ -40,6 +41,7 @@ const updateJobSchema = createInsertSchema(jobs).pick({
   po: true,
   report: true,
   invoice: true,
+  hotel: true,
   colour: true,
   type: true,
 }).partial();

@@ -12,6 +12,7 @@ import {
   deleteJobAssignment,
   getJob,
   getJobAssignments,
+  getTravelTime,
   listUsers,
   updateJob,
   updateJobAssignmentRole,
@@ -140,6 +141,13 @@ function RouteComponent() {
     : undefined
   const [datesOpen, setDatesOpen] = useState(false)
   const [colourOpen, setColourOpen] = useState(false)
+  const postcode = job?.customer.postcode
+  const { data: travel, isPending: travelPending, error: travelError } = useQuery({
+    queryKey: ['travel-time', postcode],
+    queryFn: () => getTravelTime(postcode!),
+    enabled: isAdmin && Boolean(postcode),
+    retry: false,
+  })
   const { data: nearbyJobs } = useQuery({
     queryKey: ['schedule', 'colour-window', job?.startDate, job?.endDate],
     queryFn: () =>
@@ -447,6 +455,50 @@ function RouteComponent() {
               (dateLabel ?? '-')
             )}
           </dd>
+
+          {isAdmin && (
+            <>
+              <dt className="text-muted-foreground">Travel</dt>
+              <dd className="flex flex-col gap-1">
+                {isPending ? (
+                  <Skeleton className="h-5 w-48" />
+                ) : !postcode ? (
+                  <span className="text-muted-foreground">This customer has no postcode</span>
+                ) : travelPending ? (
+                  <span className="text-muted-foreground">Working out the drive…</span>
+                ) : travelError ? (
+                  <span className="text-muted-foreground">{travelError.message}</span>
+                ) : (
+                  <span className={travel.minutes > 120 ? 'text-amber-600 dark:text-amber-400' : ''}>
+                    {Math.floor(travel.minutes / 60)}h {travel.minutes % 60}m drive ({travel.miles} miles) from Clifton
+                    <span className="text-muted-foreground text-xs"> · Google Maps</span>
+                  </span>
+                )}
+                {!isPending && (
+                  <button
+                    disabled={update.isPending}
+                    onClick={() =>
+                      update.mutate(
+                        { hotel: !job.hotel },
+                        { onSuccess: () => toast.success('Hotel updated') },
+                      )
+                    }
+                    className="flex w-fit items-center gap-2 rounded-sm hover:opacity-80 disabled:opacity-50"
+                  >
+                    {job.hotel ? (
+                      <CheckCircle2 className="size-4 shrink-0 text-green-500" />
+                    ) : (
+                      <Circle className="size-4 shrink-0 text-blue-500" />
+                    )}
+                    Hotel
+                    {travel && travel.minutes > 120 && (
+                      <span className="text-muted-foreground">(Recommended)</span>
+                    )}
+                  </button>
+                )}
+              </dd>
+            </>
+          )}
 
           {/* Internal pricing — day rate per person, so it moves with the team
               and the dates above. Admin-only, like the status. */}
