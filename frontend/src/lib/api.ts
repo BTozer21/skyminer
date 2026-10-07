@@ -333,3 +333,17 @@ export const notificationsQuery = {
   queryFn: getNotifications,
   refetchInterval: 60_000,
 }
+
+export async function getOpenLeaveRequests() {
+  const res = await api.admin['leave-requests'].$get();
+  if (!res.ok) {
+    throw new Error("There was an error here");
+  }
+  const { data } = await res.json();
+  return data;
+}
+
+export const openLeaveRequestsQuery = {
+  queryKey: ['leave-requests', 'open'],
+  queryFn: getOpenLeaveRequests,
+}

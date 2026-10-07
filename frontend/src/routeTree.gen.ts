@@ -19,6 +19,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.
 import { Route as AuthenticatedLeaveRequestsRouteImport } from './routes/_authenticated.leave-requests'
 import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated.account.settings'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
+import { Route as AuthenticatedAdminLeaveRequestsRouteImport } from './routes/_authenticated.admin.leave-requests'
 import { Route as AuthenticatedJobsJobIdRouteImport } from './routes/_authenticated.jobs.$jobId'
 import { Route as AuthenticatedAdminCustomersIndexRouteImport } from './routes/_authenticated.admin.customers.index'
 import { Route as AuthenticatedAdminCustomersCustomerIdRouteImport } from './routes/_authenticated.admin.customers.$customerId'
@@ -76,6 +77,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminLeaveRequestsRoute =
+  AuthenticatedAdminLeaveRequestsRouteImport.update({
+    id: '/leave-requests',
+    path: '/leave-requests',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedJobsJobIdRoute = AuthenticatedJobsJobIdRouteImport.update({
   id: '/jobs/$jobId',
   path: '/jobs/$jobId',
@@ -120,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/leave-requests': typeof AuthenticatedLeaveRequestsRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRoute
+  '/admin/leave-requests': typeof AuthenticatedAdminLeaveRequestsRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
@@ -135,6 +143,7 @@ export interface FileRoutesByTo {
   '/signup': typeof AuthSignupRoute
   '/leave-requests': typeof AuthenticatedLeaveRequestsRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRoute
+  '/admin/leave-requests': typeof AuthenticatedAdminLeaveRequestsRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
@@ -154,6 +163,7 @@ export interface FileRoutesById {
   '/_authenticated/leave-requests': typeof AuthenticatedLeaveRequestsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRoute
+  '/_authenticated/admin/leave-requests': typeof AuthenticatedAdminLeaveRequestsRoute
   '/_authenticated/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/leave-requests'
     | '/account/settings'
+    | '/admin/leave-requests'
     | '/jobs/$jobId'
     | '/admin/'
     | '/admin/customers/$customerId'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/leave-requests'
     | '/account/settings'
+    | '/admin/leave-requests'
     | '/jobs/$jobId'
     | '/admin'
     | '/admin/customers/$customerId'
@@ -205,6 +217,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leave-requests'
     | '/_authenticated/'
     | '/_authenticated/account/settings'
+    | '/_authenticated/admin/leave-requests'
     | '/_authenticated/jobs/$jobId'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/customers/$customerId'
@@ -291,6 +304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/leave-requests': {
+      id: '/_authenticated/admin/leave-requests'
+      path: '/leave-requests'
+      fullPath: '/admin/leave-requests'
+      preLoaderRoute: typeof AuthenticatedAdminLeaveRequestsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/jobs/$jobId': {
       id: '/_authenticated/jobs/$jobId'
       path: '/jobs/$jobId'
@@ -351,6 +371,7 @@ const AuthRouteChildren: AuthRouteChildren = {
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminLeaveRequestsRoute: typeof AuthenticatedAdminLeaveRequestsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminCustomersCustomerIdRoute: typeof AuthenticatedAdminCustomersCustomerIdRoute
   AuthenticatedAdminTeamUserIdRoute: typeof AuthenticatedAdminTeamUserIdRoute
@@ -360,6 +381,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminLeaveRequestsRoute: AuthenticatedAdminLeaveRequestsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminCustomersCustomerIdRoute:
     AuthenticatedAdminCustomersCustomerIdRoute,

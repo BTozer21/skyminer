@@ -90,6 +90,16 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
     }
   )
 
+  .get('/leave-requests', async (c) => {
+    const openLeaveRequests = await db.query.leaveRequests.findMany({
+      where: { status: 'submitted' },
+      with: { user: { columns: { id: true, name: true } } },
+      orderBy: { startDate: 'asc' },
+    });
+
+    return c.json({ data: openLeaveRequests }, 200);
+  })
+
   .patch(
     '/leave-requests/:id',
     zValidator('param', z.object({ id: z.coerce.number().int().positive() })),

@@ -72,6 +72,12 @@ const data: { navMain: NavItem[] } = {
       icon: <Users />,
       admin: true,
     },
+    {
+      title: "Leave Requests",
+      url: "/admin/leave-requests",
+      icon: <Parasol />,
+      admin: true,
+    },
   ],
 }
 

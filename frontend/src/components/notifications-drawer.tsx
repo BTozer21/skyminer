@@ -41,7 +41,7 @@ export function NotificationsDrawer() {
         return
       }
       event.preventDefault()
-      setOpen((open) => !open)
+      setOpen((wasOpen) => !wasOpen)
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -89,7 +89,12 @@ export function NotificationsDrawer() {
             <>
               {data.leaveRequests.length ? (
                 <section className="flex flex-col gap-2">
-                  <h3 className="font-medium">Leave requests</h3>
+                  <div className="flex justify-between items-center ">
+                    <h3 className="font-medium">Leave requests</h3>
+                    <DrawerClose asChild>
+                      <Link to="/admin/leave-requests" className="text-sm text-muted-foreground/70 hover:underline">See all</Link>
+                    </DrawerClose>
+                  </div>
                   {data.leaveRequests.map((request) => (
                     <LeaveRequestItem key={request.id} request={request} />
                   ))}
@@ -182,21 +187,18 @@ function LeaveRequestItem({
 
   return (
     <div className="bg-muted/40 flex flex-col gap-2 rounded-sm px-3 py-2">
-      <span className="flex flex-col">
+      <span className="flex justify-between">
         <span className="font-medium">{request.user.name}</span>
         <span className="text-muted-foreground text-xs">
           {request.startDate === request.endDate
             ? format(new Date(request.startDate), 'dd/MM/yyyy')
-            : `${format(new Date(request.startDate), 'dd/MM/yyyy')} – ${format(new Date(request.endDate), 'dd/MM/yyyy')}`}
+            : `${format(new Date(request.startDate), 'dd/MM')} – ${format(new Date(request.endDate), 'dd/MM/yyyy')}`}
         </span>
-        {request.comment ? (
-          <span className="text-muted-foreground text-xs">{request.comment}</span>
-        ) : null}
       </span>
+        {request.comment ? (
+          <span className="text-muted-foreground text-xs pb-1">{request.comment}</span>
+        ) : null}
       <span className="flex gap-2">
-        <Button size="sm" disabled={update.isPending} onClick={() => update.mutate('approved')}>
-          Approve
-        </Button>
         <Button
           size="sm"
           variant="outline"
@@ -204,6 +206,9 @@ function LeaveRequestItem({
           onClick={() => update.mutate('denied')}
         >
           Deny
+        </Button>
+        <Button size="sm" disabled={update.isPending} onClick={() => update.mutate('approved')}>
+          Approve
         </Button>
       </span>
     </div>
