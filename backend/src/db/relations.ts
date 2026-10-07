@@ -1,103 +1,88 @@
-import { relations } from "drizzle-orm/relations";
-import { organizationInNeonAuth, invitationInNeonAuth, userInNeonAuth, sessionInNeonAuth, accountInNeonAuth, memberInNeonAuth, leaveRequests, jobs, customers, jobAssignments, machines, jobMachines } from "./schema";
+import { defineRelations } from "drizzle-orm";
+import * as authSchema from "./schema/auth";
+import * as publicSchema from "./schema/public";
 
-export const invitationInNeonAuthRelations = relations(invitationInNeonAuth, ({ one }) => ({
-  organizationInNeonAuth: one(organizationInNeonAuth, {
-    fields: [invitationInNeonAuth.organizationId],
-    references: [organizationInNeonAuth.id]
-  }),
-  userInNeonAuth: one(userInNeonAuth, {
-    fields: [invitationInNeonAuth.inviterId],
-    references: [userInNeonAuth.id]
-  }),
-}));
+export const schema = { ...publicSchema, ...authSchema };
 
-export const organizationInNeonAuthRelations = relations(organizationInNeonAuth, ({ many }) => ({
-  invitationInNeonAuths: many(invitationInNeonAuth),
-  memberInNeonAuths: many(memberInNeonAuth),
-}));
+export const relations = defineRelations(schema, (r) => ({
+  customers: {
+    jobs: r.many.jobs(),
+    machines: r.many.machines(),
+  },
 
-export const userInNeonAuthRelations = relations(userInNeonAuth, ({ many }) => ({
-  invitationInNeonAuths: many(invitationInNeonAuth),
-  sessionInNeonAuths: many(sessionInNeonAuth),
-  accountInNeonAuths: many(accountInNeonAuth),
-  memberInNeonAuths: many(memberInNeonAuth),
-  leaveRequests: many(leaveRequests),
-  jobAssignments: many(jobAssignments),
-}));
+  jobs: {
+    customer: r.one.customers({
+      from: r.jobs.customerId,
+      to: r.customers.id,
+      optional: false,
+    }),
+    jobAssignments: r.many.jobAssignments(),
+    jobMachines: r.many.jobMachines(),
+  },
 
-export const sessionInNeonAuthRelations = relations(sessionInNeonAuth, ({ one }) => ({
-  userInNeonAuth: one(userInNeonAuth, {
-    fields: [sessionInNeonAuth.userId],
-    references: [userInNeonAuth.id]
-  }),
-}));
+  jobAssignments: {
+    user: r.one.user({
+      from: r.jobAssignments.userId,
+      to: r.user.id,
+      optional: false,
+    }),
+    job: r.one.jobs({
+      from: r.jobAssignments.jobId,
+      to: r.jobs.id,
+      optional: false,
+    }),
+  },
 
-export const accountInNeonAuthRelations = relations(accountInNeonAuth, ({ one }) => ({
-  userInNeonAuth: one(userInNeonAuth, {
-    fields: [accountInNeonAuth.userId],
-    references: [userInNeonAuth.id]
-  }),
-}));
+  machines: {
+    customer: r.one.customers({
+      from: r.machines.customerId,
+      to: r.customers.id,
+      optional: false,
+    }),
+    jobMachines: r.many.jobMachines(),
+  },
 
-export const memberInNeonAuthRelations = relations(memberInNeonAuth, ({ one }) => ({
-  organizationInNeonAuth: one(organizationInNeonAuth, {
-    fields: [memberInNeonAuth.organizationId],
-    references: [organizationInNeonAuth.id]
-  }),
-  userInNeonAuth: one(userInNeonAuth, {
-    fields: [memberInNeonAuth.userId],
-    references: [userInNeonAuth.id]
-  }),
-}));
+  jobMachines: {
+    job: r.one.jobs({
+      from: r.jobMachines.jobId,
+      to: r.jobs.id,
+      optional: false,
+    }),
+    machine: r.one.machines({
+      from: r.jobMachines.machineId,
+      to: r.machines.id,
+      optional: false,
+    }),
+  },
 
-export const leaveRequestsRelations = relations(leaveRequests, ({ one }) => ({
-  userInNeonAuth: one(userInNeonAuth, {
-    fields: [leaveRequests.userId],
-    references: [userInNeonAuth.id]
-  }),
-}));
+  leaveRequests: {
+    user: r.one.user({
+      from: r.leaveRequests.userId,
+      to: r.user.id,
+      optional: false,
+    }),
+  },
 
-export const jobsRelations = relations(jobs, ({ one, many }) => ({
-  customer: one(customers, {
-    fields: [jobs.customerId],
-    references: [customers.id]
-  }),
-  jobAssignments: many(jobAssignments),
-  jobMachines: many(jobMachines),
-}));
+  user: {
+    sessions: r.many.session(),
+    accounts: r.many.account(),
+    jobAssignments: r.many.jobAssignments(),
+    leaveRequests: r.many.leaveRequests(),
+  },
 
-export const jobAssignmentsRelations = relations(jobAssignments, ({ one }) => ({
-  userInNeonAuth: one(userInNeonAuth, {
-    fields: [jobAssignments.userId],
-    references: [userInNeonAuth.id]
-  }),
-  job: one(jobs, {
-    fields: [jobAssignments.jobId],
-    references: [jobs.id]
-  }),
-}));
+  session: {
+    user: r.one.user({
+      from: r.session.userId,
+      to: r.user.id,
+      optional: false,
+    }),
+  },
 
-export const machinesRelations = relations(machines, ({ one, many }) => ({
-  customer: one(customers, {
-    fields: [machines.customerId],
-    references: [customers.id]
-  }),
-  jobMachines: many(jobMachines),
-}));
-
-export const jobMachinesRelations = relations(jobMachines, ({ one }) => ({
-  job: one(jobs, {
-    fields: [jobMachines.jobId],
-    references: [jobs.id]
-  }),
-  machine: one(machines, {
-    fields: [jobMachines.machineId],
-    references: [machines.id]
-  }),
-}));
-
-export const customersRelations = relations(customers, ({ many }) => ({
-  jobs: many(jobs),
-  machines: many(machines)
+  account: {
+    user: r.one.user({
+      from: r.account.userId,
+      to: r.user.id,
+      optional: false,
+    }),
+  },
 }));

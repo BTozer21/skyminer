@@ -1,10 +1,11 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { createInsertSchema } from 'drizzle-zod';
+import { createInsertSchema } from 'drizzle-orm/zod';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../src/db/index.ts';
-import { jobAssignments, leaveRequests, leaveStatusEnum, userInNeonAuth } from '../src/db/schema.ts';
+import { jobAssignments, leaveRequests, leaveStatusEnum } from '../src/db/schema/public.ts';
+import { user } from '../src/db/schema/auth.ts';
 import type { AppVariables } from '../src/types.ts';
 
 const createJobAssignmentSchema = createInsertSchema(jobAssignments).pick({
@@ -21,32 +22,32 @@ const updateLeaveRequestSchema = z.object({
 
 export const adminRoute = new Hono<{ Variables: AppVariables }>()
   .get('/users', async (c) => {
-    const users = await db.select().from(userInNeonAuth);
+    const users = await db.select().from(user);
 
     return c.json({ data: users }, 200);
   })
 
   .get(
     '/users/:id',
-    zValidator('param', z.object({ id: z.uuid() })),
+    zValidator('param', z.object({ id: z.string().min(1) })),
     async (c) => {
       const { id } = c.req.valid('param');
 
-      const user = await db.query.userInNeonAuth.findFirst({
-        where: (user, { eq }) => eq(user.id, id),
+      const member = await db.query.user.findFirst({
+        where: { id },
         columns: { id: true, name: true, email: true, role: true },
         with: {
           leaveRequests: {
-            orderBy: (leave, { desc }) => [desc(leave.startDate)],
+            orderBy: { startDate: 'desc' },
           },
         },
       });
 
-      if (!user) {
+      if (!member) {
         return c.json({ message: 'User not found' }, 404);
       }
 
-      return c.json({ data: user }, 200);
+      return c.json({ data: member }, 200);
     }
   )
 
@@ -79,14 +80,13 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
       const { from, to } = c.req.valid('query');
 
       const data = await db.query.jobs.findMany({
-        where: (jobs, { and, lte, gte }) =>
-          and(lte(jobs.startDate, to), gte(jobs.endDate, from)),
+        where: { startDate: { lte: to }, endDate: { gte: from } },
         with: {
           customer: { columns: { id: true, name: true } },
           jobMachines: { with: { machine: { columns: { id: true, type: true, location: true } } } },
           jobAssignments: {
             with: {
-              userInNeonAuth: { columns: { id: true, name: true, email: true } },
+              user: { columns: { id: true, name: true, email: true } },
             },
           },
         },
@@ -104,7 +104,7 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
 
       const created = await db.transaction(async (tx) => {
         const team = await tx.query.jobAssignments.findMany({
-          where: (assignment, { eq }) => eq(assignment.jobId, jobId),
+          where: { jobId },
         });
 
         if (team.some((member) => member.userId === userId)) {
@@ -150,7 +150,7 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
 
       const updated = await db.transaction(async (tx) => {
         const assignment = await tx.query.jobAssignments.findFirst({
-          where: (assignment, { eq }) => eq(assignment.id, id),
+          where: { id },
         });
         if (!assignment) return { missing: true as const };
 
@@ -198,7 +198,7 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
 
       const deleted = await db.transaction(async (tx) => {
         const assignment = await tx.query.jobAssignments.findFirst({
-          where: (member, { eq }) => eq(member.id, id),
+          where: { id },
         });
 
         // Distinguishes "already gone" from a successful removal, so a stale grid
@@ -207,8 +207,7 @@ export const adminRoute = new Hono<{ Variables: AppVariables }>()
 
         if (assignment.role === 'lead') {
           const rest = await tx.query.jobAssignments.findMany({
-            where: (member, { and, eq, ne }) =>
-              and(eq(member.jobId, assignment.jobId), ne(member.id, id)),
+            where: { jobId: assignment.jobId, id: { ne: id } },
             columns: { id: true },
           });
           if (rest.length) return { needsLead: true as const };

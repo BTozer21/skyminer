@@ -1,10 +1,10 @@
 import { Hono } from 'hono';
 import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
-import { db, getAuthenticatedDb } from '../src/db/index.ts';
-import { jobAssignments, jobMachines, jobs, machines } from '../src/db/schema.ts';
+import { db } from '../src/db/index.ts';
+import { jobAssignments, jobMachines, jobs, machines } from '../src/db/schema/public.ts';
 import { zValidator } from '@hono/zod-validator';
-import { createInsertSchema } from 'drizzle-zod';
+import { createInsertSchema } from 'drizzle-orm/zod';
 import type { AppVariables } from '../src/types.ts';
 
 const createJobSchema = createInsertSchema(jobs).pick({
@@ -14,7 +14,7 @@ const createJobSchema = createInsertSchema(jobs).pick({
 }).extend({
   machineIds: z.array(z.coerce.number().int().positive()).min(1),
   assignees: z
-    .array(z.object({ userId: z.uuid(), role: z.enum(['member', 'lead']) }))
+    .array(z.object({ userId: z.string().min(1), role: z.enum(['member', 'lead']) }))
     .default([])
     .refine(
       (assignees) => new Set(assignees.map((assignee) => assignee.userId)).size === assignees.length,
@@ -43,12 +43,14 @@ const updateJobSchema = createInsertSchema(jobs).pick({
 export const jobsRoute = new Hono<{ Variables: AppVariables }>()
   .get('/', async (c) => {
     const userId = c.get('userId');
-    const allJobs = await getAuthenticatedDb(userId, async (tx) => {
-      const result = await tx.query.jobs.findMany({
-        with: { customer: true, jobMachines: { with: { machine: true } } },
-        orderBy: (jobs, { desc }) => [desc(jobs.createdAt)],
-      });
-      return result;
+    const userRoles = c.get('userRoles');
+    if (!userRoles?.includes('admin')) {
+      return c.json({ message: "Not Allowed" }, 403);
+    }
+
+    const allJobs = await db.query.jobs.findMany({
+      with: { customer: true, jobMachines: { with: { machine: true } } },
+      orderBy: { createdAt: 'desc' },
     });
 
     return c.json({ data: allJobs, user: userId }, 200)
@@ -56,23 +58,10 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
 
   .get('/mine', async (c) => {
     const userId = c.get('userId');
-    const myJobs = await getAuthenticatedDb(userId, async (tx) => {
-      const result = await tx.query.jobs.findMany({
-        where: (jobs, { and, ne, inArray }) =>
-          and(
-            ne(jobs.status, 'planning'),
-            inArray(
-              jobs.id,
-              tx
-                .select({ jobId: jobAssignments.jobId })
-                .from(jobAssignments)
-                .where(eq(jobAssignments.userId, userId)),
-            ),
-          ),
-        with: { customer: true, jobMachines: { with: { machine: true } } },
-        orderBy: (jobs, { asc }) => [asc(jobs.startDate)],
-      });
-      return result;
+    const myJobs = await db.query.jobs.findMany({
+      where: { status: { ne: 'planning' }, jobAssignments: { userId } },
+      with: { customer: true, jobMachines: { with: { machine: true } } },
+      orderBy: { startDate: 'asc' },
     });
 
     return c.json({ data: myJobs }, 200);
@@ -83,12 +72,9 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
     const userRoles = c.get('userRoles');
     const { id } = c.req.valid('param');
 
-    const job = await getAuthenticatedDb(userId, async (tx) => {
-      const result = await tx.query.jobs.findFirst({
-        where: (jobs, { eq }) => eq(jobs.id, id),
-        with: { customer: true, jobMachines: { with: { machine: true } } },
-      });
-      return result;
+    const job = await db.query.jobs.findFirst({
+      where: { id },
+      with: { customer: true, jobMachines: { with: { machine: true } } },
     });
 
     // there; both are a 404 as far as the caller is concerned.
@@ -97,10 +83,10 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
     }
 
     const team = await db.query.jobAssignments.findMany({
-      where: (assignment, { eq }) => eq(assignment.jobId, id),
-      orderBy: (assignment, { asc }) => [asc(assignment.role), asc(assignment.id)],
+      where: { jobId: id },
+      orderBy: { role: 'asc', id: 'asc' },
       with: {
-        userInNeonAuth: { columns: { id: true, name: true, email: true } },
+        user: { columns: { id: true, name: true, email: true } },
       },
     });
 
@@ -114,7 +100,6 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
   })
 
   .post('/', zValidator('json', createJobSchema), async (c) => {
-    const userId = c.get('userId');
     const userRoles = c.get('userRoles');
     if (!userRoles?.includes('admin')) {
       return c.json({ message: "Not Allowed" }, 403);
@@ -122,7 +107,7 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
 
     const { machineIds, assignees, ...body } = c.req.valid('json');
 
-    const created = await getAuthenticatedDb(userId, async (tx) => {
+    const created = await db.transaction(async (tx) => {
       const owned = await tx
         .select({ id: machines.id })
         .from(machines)
@@ -164,7 +149,6 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
     zValidator('param', z.object({ id: z.coerce.number().int().positive() })),
     zValidator('json', updateJobSchema),
     async (c) => {
-      const userId = c.get('userId');
       const userRoles = c.get('userRoles');
       if (!userRoles?.includes('admin')) {
         return c.json({ message: "Not Allowed" }, 403);
@@ -173,14 +157,8 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
       const { id } = c.req.valid('param');
       const body = c.req.valid('json');
 
-      const updated = await getAuthenticatedDb(userId, async (tx) => {
-        const [result] = await tx.update(jobs).set(body).where(eq(jobs.id, id)).returning();
+      const [updated] = await db.update(jobs).set(body).where(eq(jobs.id, id)).returning();
 
-        return result;
-      });
-
-      // RLS makes a job someone can't touch look identical to one that isn't
-      // there; both are a 404 as far as the caller is concerned.
       if (!updated) {
         return c.json({ message: "Job not found" }, 404);
       }
@@ -189,7 +167,6 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
     })
 
   .delete('/:id', zValidator('param', z.object({ id: z.coerce.number().int().positive() })), async (c) => {
-    const userId = c.get('userId');
     const userRoles = c.get('userRoles');
     if (!userRoles?.includes('admin')) {
       return c.json({ message: "Not Allowed" }, 403);
@@ -197,14 +174,8 @@ export const jobsRoute = new Hono<{ Variables: AppVariables }>()
 
     const { id } = c.req.valid('param');
 
-    const deleted = await getAuthenticatedDb(userId, async (tx) => {
-      const [result] = await tx.delete(jobs).where(eq(jobs.id, id)).returning();
+    const [deleted] = await db.delete(jobs).where(eq(jobs.id, id)).returning();
 
-      return result;
-    });
-
-    // RLS makes a job someone can't touch look identical to one that isn't
-    // there; both are a 404 as far as the caller is concerned.
     if (!deleted) {
       return c.json({ message: "Job not found" }, 404);
     }

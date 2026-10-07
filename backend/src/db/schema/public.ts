@@ -17,7 +17,7 @@ export const statusEnum = pgEnum('status', ['complete', 'planned', 'planning']);
 
 export const jobs = pgTable("jobs", {
   // You can use { mode: "bigint" } if numbers are exceeding js number limitations
-  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "jobs_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "jobs_id_seq", startWith: 1, increment: 1, minValue: 1, cache: 1 }),
   startDate: date().notNull(),
   endDate: date().notNull(),
   status: statusEnum().notNull().default('planning'),
@@ -95,7 +95,7 @@ export const leaveStatusEnum = pgEnum('leave_status', ['submitted', 'approved', 
 
 export const leaveRequests = pgTable("leave_requests", {
   // You can use { mode: "bigint" } if numbers are exceeding js number limitations
-  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "leave_requests_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+  id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity({ name: "leave_requests_id_seq", startWith: 1, increment: 1, minValue: 1, cache: 1 }),
   userId: text("user_id").notNull(),
   startDate: date("start_date").notNull(),
   endDate: date("end_date").notNull(),
