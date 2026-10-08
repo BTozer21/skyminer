@@ -9,7 +9,9 @@ import tailwindcss from '@tailwindcss/vite'
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
-    devtools(),
+    devtools({
+      injectSource: { enabled: true, ignore: { files: [/ops\/pages\/MapView\.tsx$/] } },
+    }),
     tailwindcss(),
     tanstackRouter({ target: 'react', autoCodeSplitting: true }),
     viteReact(),

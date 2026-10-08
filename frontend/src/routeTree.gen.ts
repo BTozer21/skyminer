@@ -15,12 +15,21 @@ import { Route as AuthConsentRouteImport } from './routes/_auth.consent'
 import { Route as AuthLoginRouteImport } from './routes/_auth.login'
 import { Route as AuthSignupRouteImport } from './routes/_auth.signup'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
+import { Route as AuthenticatedOpsRouteImport } from './routes/_authenticated._ops'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as AuthenticatedLeaveRequestsRouteImport } from './routes/_authenticated.leave-requests'
+import { Route as AuthenticatedOpsCustomersRouteImport } from './routes/_authenticated._ops.customers'
+import { Route as AuthenticatedOpsPayrollRouteImport } from './routes/_authenticated._ops.payroll'
+import { Route as AuthenticatedOpsSettingsRouteImport } from './routes/_authenticated._ops.settings'
+import { Route as AuthenticatedOpsTeamRouteImport } from './routes/_authenticated._ops.team'
 import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated.account.settings'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
 import { Route as AuthenticatedAdminLeaveRequestsRouteImport } from './routes/_authenticated.admin.leave-requests'
 import { Route as AuthenticatedJobsJobIdRouteImport } from './routes/_authenticated.jobs.$jobId'
+import { Route as AuthenticatedOpsJobsIndexRouteImport } from './routes/_authenticated._ops.jobs.index'
+import { Route as AuthenticatedOpsPlannerIndexRouteImport } from './routes/_authenticated._ops.planner.index'
+import { Route as AuthenticatedOpsPlannerEmployeeRouteImport } from './routes/_authenticated._ops.planner.employee'
+import { Route as AuthenticatedOpsPlannerMapRouteImport } from './routes/_authenticated._ops.planner.map'
 import { Route as AuthenticatedAdminCustomersIndexRouteImport } from './routes/_authenticated.admin.customers.index'
 import { Route as AuthenticatedAdminCustomersCustomerIdRouteImport } from './routes/_authenticated.admin.customers.$customerId'
 import { Route as AuthenticatedAdminJobsIndexRouteImport } from './routes/_authenticated.admin.jobs.index'
@@ -55,6 +64,10 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedOpsRoute = AuthenticatedOpsRouteImport.update({
+  id: '/_ops',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -66,6 +79,28 @@ const AuthenticatedLeaveRequestsRoute =
     path: '/leave-requests',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedOpsCustomersRoute =
+  AuthenticatedOpsCustomersRouteImport.update({
+    id: '/customers',
+    path: '/customers',
+    getParentRoute: () => AuthenticatedOpsRoute,
+  } as any)
+const AuthenticatedOpsPayrollRoute = AuthenticatedOpsPayrollRouteImport.update({
+  id: '/payroll',
+  path: '/payroll',
+  getParentRoute: () => AuthenticatedOpsRoute,
+} as any)
+const AuthenticatedOpsSettingsRoute =
+  AuthenticatedOpsSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedOpsRoute,
+  } as any)
+const AuthenticatedOpsTeamRoute = AuthenticatedOpsTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AuthenticatedOpsRoute,
+} as any)
 const AuthenticatedAccountSettingsRoute =
   AuthenticatedAccountSettingsRouteImport.update({
     id: '/account/settings',
@@ -88,6 +123,30 @@ const AuthenticatedJobsJobIdRoute = AuthenticatedJobsJobIdRouteImport.update({
   path: '/jobs/$jobId',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedOpsJobsIndexRoute =
+  AuthenticatedOpsJobsIndexRouteImport.update({
+    id: '/jobs/',
+    path: '/jobs/',
+    getParentRoute: () => AuthenticatedOpsRoute,
+  } as any)
+const AuthenticatedOpsPlannerIndexRoute =
+  AuthenticatedOpsPlannerIndexRouteImport.update({
+    id: '/planner/',
+    path: '/planner/',
+    getParentRoute: () => AuthenticatedOpsRoute,
+  } as any)
+const AuthenticatedOpsPlannerEmployeeRoute =
+  AuthenticatedOpsPlannerEmployeeRouteImport.update({
+    id: '/planner/employee',
+    path: '/planner/employee',
+    getParentRoute: () => AuthenticatedOpsRoute,
+  } as any)
+const AuthenticatedOpsPlannerMapRoute =
+  AuthenticatedOpsPlannerMapRouteImport.update({
+    id: '/planner/map',
+    path: '/planner/map',
+    getParentRoute: () => AuthenticatedOpsRoute,
+  } as any)
 const AuthenticatedAdminCustomersIndexRoute =
   AuthenticatedAdminCustomersIndexRouteImport.update({
     id: '/customers/',
@@ -126,12 +185,20 @@ export interface FileRoutesByFullPath {
   '/signup': typeof AuthSignupRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/leave-requests': typeof AuthenticatedLeaveRequestsRoute
+  '/customers': typeof AuthenticatedOpsCustomersRoute
+  '/payroll': typeof AuthenticatedOpsPayrollRoute
+  '/settings': typeof AuthenticatedOpsSettingsRoute
+  '/team': typeof AuthenticatedOpsTeamRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/admin/leave-requests': typeof AuthenticatedAdminLeaveRequestsRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/planner/employee': typeof AuthenticatedOpsPlannerEmployeeRoute
+  '/planner/map': typeof AuthenticatedOpsPlannerMapRoute
   '/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
   '/admin/team/$userId': typeof AuthenticatedAdminTeamUserIdRoute
+  '/jobs/': typeof AuthenticatedOpsJobsIndexRoute
+  '/planner/': typeof AuthenticatedOpsPlannerIndexRoute
   '/admin/customers/': typeof AuthenticatedAdminCustomersIndexRoute
   '/admin/jobs/': typeof AuthenticatedAdminJobsIndexRoute
   '/admin/team/': typeof AuthenticatedAdminTeamIndexRoute
@@ -142,12 +209,20 @@ export interface FileRoutesByTo {
   '/login': typeof AuthLoginRoute
   '/signup': typeof AuthSignupRoute
   '/leave-requests': typeof AuthenticatedLeaveRequestsRoute
+  '/customers': typeof AuthenticatedOpsCustomersRoute
+  '/payroll': typeof AuthenticatedOpsPayrollRoute
+  '/settings': typeof AuthenticatedOpsSettingsRoute
+  '/team': typeof AuthenticatedOpsTeamRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/admin/leave-requests': typeof AuthenticatedAdminLeaveRequestsRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/planner/employee': typeof AuthenticatedOpsPlannerEmployeeRoute
+  '/planner/map': typeof AuthenticatedOpsPlannerMapRoute
   '/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
   '/admin/team/$userId': typeof AuthenticatedAdminTeamUserIdRoute
+  '/jobs': typeof AuthenticatedOpsJobsIndexRoute
+  '/planner': typeof AuthenticatedOpsPlannerIndexRoute
   '/admin/customers': typeof AuthenticatedAdminCustomersIndexRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsIndexRoute
   '/admin/team': typeof AuthenticatedAdminTeamIndexRoute
@@ -159,15 +234,24 @@ export interface FileRoutesById {
   '/_auth/consent': typeof AuthConsentRoute
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/signup': typeof AuthSignupRoute
+  '/_authenticated/_ops': typeof AuthenticatedOpsRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/leave-requests': typeof AuthenticatedLeaveRequestsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/_ops/customers': typeof AuthenticatedOpsCustomersRoute
+  '/_authenticated/_ops/payroll': typeof AuthenticatedOpsPayrollRoute
+  '/_authenticated/_ops/settings': typeof AuthenticatedOpsSettingsRoute
+  '/_authenticated/_ops/team': typeof AuthenticatedOpsTeamRoute
   '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/_authenticated/admin/leave-requests': typeof AuthenticatedAdminLeaveRequestsRoute
   '/_authenticated/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/_ops/planner/employee': typeof AuthenticatedOpsPlannerEmployeeRoute
+  '/_authenticated/_ops/planner/map': typeof AuthenticatedOpsPlannerMapRoute
   '/_authenticated/admin/customers/$customerId': typeof AuthenticatedAdminCustomersCustomerIdRoute
   '/_authenticated/admin/team/$userId': typeof AuthenticatedAdminTeamUserIdRoute
+  '/_authenticated/_ops/jobs/': typeof AuthenticatedOpsJobsIndexRoute
+  '/_authenticated/_ops/planner/': typeof AuthenticatedOpsPlannerIndexRoute
   '/_authenticated/admin/customers/': typeof AuthenticatedAdminCustomersIndexRoute
   '/_authenticated/admin/jobs/': typeof AuthenticatedAdminJobsIndexRoute
   '/_authenticated/admin/team/': typeof AuthenticatedAdminTeamIndexRoute
@@ -181,12 +265,20 @@ export interface FileRouteTypes {
     | '/signup'
     | '/admin'
     | '/leave-requests'
+    | '/customers'
+    | '/payroll'
+    | '/settings'
+    | '/team'
     | '/account/settings'
     | '/admin/leave-requests'
     | '/jobs/$jobId'
     | '/admin/'
+    | '/planner/employee'
+    | '/planner/map'
     | '/admin/customers/$customerId'
     | '/admin/team/$userId'
+    | '/jobs/'
+    | '/planner/'
     | '/admin/customers/'
     | '/admin/jobs/'
     | '/admin/team/'
@@ -197,12 +289,20 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/leave-requests'
+    | '/customers'
+    | '/payroll'
+    | '/settings'
+    | '/team'
     | '/account/settings'
     | '/admin/leave-requests'
     | '/jobs/$jobId'
     | '/admin'
+    | '/planner/employee'
+    | '/planner/map'
     | '/admin/customers/$customerId'
     | '/admin/team/$userId'
+    | '/jobs'
+    | '/planner'
     | '/admin/customers'
     | '/admin/jobs'
     | '/admin/team'
@@ -213,15 +313,24 @@ export interface FileRouteTypes {
     | '/_auth/consent'
     | '/_auth/login'
     | '/_auth/signup'
+    | '/_authenticated/_ops'
     | '/_authenticated/admin'
     | '/_authenticated/leave-requests'
     | '/_authenticated/'
+    | '/_authenticated/_ops/customers'
+    | '/_authenticated/_ops/payroll'
+    | '/_authenticated/_ops/settings'
+    | '/_authenticated/_ops/team'
     | '/_authenticated/account/settings'
     | '/_authenticated/admin/leave-requests'
     | '/_authenticated/jobs/$jobId'
     | '/_authenticated/admin/'
+    | '/_authenticated/_ops/planner/employee'
+    | '/_authenticated/_ops/planner/map'
     | '/_authenticated/admin/customers/$customerId'
     | '/_authenticated/admin/team/$userId'
+    | '/_authenticated/_ops/jobs/'
+    | '/_authenticated/_ops/planner/'
     | '/_authenticated/admin/customers/'
     | '/_authenticated/admin/jobs/'
     | '/_authenticated/admin/team/'
@@ -276,6 +385,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/_ops': {
+      id: '/_authenticated/_ops'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedOpsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -289,6 +405,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/leave-requests'
       preLoaderRoute: typeof AuthenticatedLeaveRequestsRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/_ops/customers': {
+      id: '/_authenticated/_ops/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof AuthenticatedOpsCustomersRouteImport
+      parentRoute: typeof AuthenticatedOpsRoute
+    }
+    '/_authenticated/_ops/payroll': {
+      id: '/_authenticated/_ops/payroll'
+      path: '/payroll'
+      fullPath: '/payroll'
+      preLoaderRoute: typeof AuthenticatedOpsPayrollRouteImport
+      parentRoute: typeof AuthenticatedOpsRoute
+    }
+    '/_authenticated/_ops/settings': {
+      id: '/_authenticated/_ops/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedOpsSettingsRouteImport
+      parentRoute: typeof AuthenticatedOpsRoute
+    }
+    '/_authenticated/_ops/team': {
+      id: '/_authenticated/_ops/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof AuthenticatedOpsTeamRouteImport
+      parentRoute: typeof AuthenticatedOpsRoute
     }
     '/_authenticated/account/settings': {
       id: '/_authenticated/account/settings'
@@ -317,6 +461,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/jobs/$jobId'
       preLoaderRoute: typeof AuthenticatedJobsJobIdRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/_ops/jobs/': {
+      id: '/_authenticated/_ops/jobs/'
+      path: '/jobs'
+      fullPath: '/jobs/'
+      preLoaderRoute: typeof AuthenticatedOpsJobsIndexRouteImport
+      parentRoute: typeof AuthenticatedOpsRoute
+    }
+    '/_authenticated/_ops/planner/': {
+      id: '/_authenticated/_ops/planner/'
+      path: '/planner'
+      fullPath: '/planner/'
+      preLoaderRoute: typeof AuthenticatedOpsPlannerIndexRouteImport
+      parentRoute: typeof AuthenticatedOpsRoute
+    }
+    '/_authenticated/_ops/planner/employee': {
+      id: '/_authenticated/_ops/planner/employee'
+      path: '/planner/employee'
+      fullPath: '/planner/employee'
+      preLoaderRoute: typeof AuthenticatedOpsPlannerEmployeeRouteImport
+      parentRoute: typeof AuthenticatedOpsRoute
+    }
+    '/_authenticated/_ops/planner/map': {
+      id: '/_authenticated/_ops/planner/map'
+      path: '/planner/map'
+      fullPath: '/planner/map'
+      preLoaderRoute: typeof AuthenticatedOpsPlannerMapRouteImport
+      parentRoute: typeof AuthenticatedOpsRoute
     }
     '/_authenticated/admin/customers/': {
       id: '/_authenticated/admin/customers/'
@@ -370,6 +542,31 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface AuthenticatedOpsRouteChildren {
+  AuthenticatedOpsCustomersRoute: typeof AuthenticatedOpsCustomersRoute
+  AuthenticatedOpsPayrollRoute: typeof AuthenticatedOpsPayrollRoute
+  AuthenticatedOpsSettingsRoute: typeof AuthenticatedOpsSettingsRoute
+  AuthenticatedOpsTeamRoute: typeof AuthenticatedOpsTeamRoute
+  AuthenticatedOpsPlannerEmployeeRoute: typeof AuthenticatedOpsPlannerEmployeeRoute
+  AuthenticatedOpsPlannerMapRoute: typeof AuthenticatedOpsPlannerMapRoute
+  AuthenticatedOpsJobsIndexRoute: typeof AuthenticatedOpsJobsIndexRoute
+  AuthenticatedOpsPlannerIndexRoute: typeof AuthenticatedOpsPlannerIndexRoute
+}
+
+const AuthenticatedOpsRouteChildren: AuthenticatedOpsRouteChildren = {
+  AuthenticatedOpsCustomersRoute: AuthenticatedOpsCustomersRoute,
+  AuthenticatedOpsPayrollRoute: AuthenticatedOpsPayrollRoute,
+  AuthenticatedOpsSettingsRoute: AuthenticatedOpsSettingsRoute,
+  AuthenticatedOpsTeamRoute: AuthenticatedOpsTeamRoute,
+  AuthenticatedOpsPlannerEmployeeRoute: AuthenticatedOpsPlannerEmployeeRoute,
+  AuthenticatedOpsPlannerMapRoute: AuthenticatedOpsPlannerMapRoute,
+  AuthenticatedOpsJobsIndexRoute: AuthenticatedOpsJobsIndexRoute,
+  AuthenticatedOpsPlannerIndexRoute: AuthenticatedOpsPlannerIndexRoute,
+}
+
+const AuthenticatedOpsRouteWithChildren =
+  AuthenticatedOpsRoute._addFileChildren(AuthenticatedOpsRouteChildren)
+
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminLeaveRequestsRoute: typeof AuthenticatedAdminLeaveRequestsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -395,6 +592,7 @@ const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedOpsRoute: typeof AuthenticatedOpsRouteWithChildren
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedLeaveRequestsRoute: typeof AuthenticatedLeaveRequestsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -403,6 +601,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedOpsRoute: AuthenticatedOpsRouteWithChildren,
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedLeaveRequestsRoute: AuthenticatedLeaveRequestsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
